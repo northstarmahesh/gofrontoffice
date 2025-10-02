@@ -1,54 +1,72 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle2, Circle, Clock, AlertCircle, Bot, User } from "lucide-react";
 import { toast } from "sonner";
 
 const Tasks = () => {
-  const tasks = [
+  const assistantTasks = [
     {
       id: 1,
+      title: "Sent appointment reminders",
+      description: "3 appointments scheduled for tomorrow",
+      priority: "low",
+      status: "completed",
+      date: "Today",
+      time: "9:00 AM",
+      source: "Auto",
+    },
+    {
+      id: 2,
+      title: "Auto-replied to appointment confirmation",
+      description: "Sarah Smith - SMS confirmation sent",
+      priority: "medium",
+      status: "completed",
+      date: "Today",
+      time: "9:45 AM",
+      source: "SMS",
+    },
+    {
+      id: 3,
+      title: "Processing insurance verification",
+      description: "John Doe - Awaiting provider response",
+      priority: "medium",
+      status: "in-progress",
+      date: "Today",
+      time: "10:15 AM",
+      source: "Phone",
+    },
+  ];
+
+  const humanTasks = [
+    {
+      id: 4,
       title: "Review prescription refill request",
       description: "Mike Johnson - WhatsApp inquiry needs doctor approval",
       priority: "high",
       status: "pending",
-      dueDate: "Today",
+      date: "Today",
+      time: "8:30 AM",
       source: "WhatsApp",
     },
     {
-      id: 2,
+      id: 5,
       title: "Approve draft reply for new patient",
       description: "Instagram DM about services and pricing",
       priority: "medium",
       status: "pending",
-      dueDate: "Today",
+      date: "Today",
+      time: "2:30 PM",
       source: "Instagram",
     },
     {
-      id: 3,
+      id: 6,
       title: "Follow up on insurance verification",
-      description: "Patient John Doe needs insurance confirmation",
+      description: "Patient needs confirmation call",
       priority: "medium",
-      status: "in-progress",
-      dueDate: "Tomorrow",
+      status: "pending",
+      date: "Tomorrow",
+      time: "9:00 AM",
       source: "Phone",
-    },
-    {
-      id: 4,
-      title: "Send appointment reminders",
-      description: "3 appointments scheduled for tomorrow",
-      priority: "low",
-      status: "completed",
-      dueDate: "Completed",
-      source: "Auto",
-    },
-    {
-      id: 5,
-      title: "Update patient contact information",
-      description: "Sarah Smith requested update",
-      priority: "low",
-      status: "completed",
-      dueDate: "Completed",
-      source: "SMS",
     },
   ];
 
@@ -91,69 +109,113 @@ const Tasks = () => {
     }
   };
 
-  const pendingTasks = tasks.filter((t) => t.status === "pending").length;
-  const inProgressTasks = tasks.filter((t) => t.status === "in-progress").length;
-  const completedTasks = tasks.filter((t) => t.status === "completed").length;
+  const allTasks = [...assistantTasks, ...humanTasks];
+  const pendingTasks = humanTasks.filter((t) => t.status === "pending").length;
+  const inProgressTasks = allTasks.filter((t) => t.status === "in-progress").length;
+  const completedTasks = allTasks.filter((t) => t.status === "completed").length;
+
+  const renderTaskCard = (task: any, isAssistant: boolean) => (
+    <Card
+      key={task.id}
+      className="cursor-pointer border-0 p-3 shadow-sm transition-all hover:shadow-md"
+      onClick={() => handleTaskClick(task.id)}
+    >
+      <div className="flex gap-3">
+        <div className="pt-0.5">{getStatusIcon(task.status)}</div>
+        
+        <div className="flex-1 space-y-1.5">
+          <div className="flex items-start justify-between gap-2">
+            <h4 className={`text-sm font-semibold ${
+              task.status === "completed"
+                ? "text-muted-foreground line-through"
+                : "text-foreground"
+            }`}>
+              {task.title}
+            </h4>
+            {getPriorityBadge(task.priority)}
+          </div>
+
+          <p className="text-xs text-muted-foreground">{task.description}</p>
+
+          <div className="flex items-center justify-between">
+            <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              {task.source}
+            </span>
+            <span className="text-xs text-muted-foreground">{task.time}</span>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+
+  const groupTasksByDate = (tasks: any[]) => {
+    const grouped: { [key: string]: any[] } = {};
+    tasks.forEach((task) => {
+      if (!grouped[task.date]) {
+        grouped[task.date] = [];
+      }
+      grouped[task.date].push(task);
+    });
+    return grouped;
+  };
+
+  const humanTasksByDate = groupTasksByDate(humanTasks);
+  const assistantTasksByDate = groupTasksByDate(assistantTasks);
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="mb-2 text-2xl font-bold text-foreground">Tasks</h2>
         <p className="text-sm text-muted-foreground">
-          Manage your to-dos and follow-ups
+          Track what your assistant is doing and what needs your attention
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="border-0 p-4 text-center shadow-sm">
-          <p className="text-2xl font-bold text-warning">{pendingTasks}</p>
+      <div className="grid grid-cols-3 gap-2">
+        <Card className="border-0 p-3 text-center shadow-sm">
+          <p className="text-xl font-bold text-warning">{pendingTasks}</p>
           <p className="text-xs text-muted-foreground">Pending</p>
         </Card>
-        <Card className="border-0 p-4 text-center shadow-sm">
-          <p className="text-2xl font-bold text-info">{inProgressTasks}</p>
+        <Card className="border-0 p-3 text-center shadow-sm">
+          <p className="text-xl font-bold text-info">{inProgressTasks}</p>
           <p className="text-xs text-muted-foreground">In Progress</p>
         </Card>
-        <Card className="border-0 p-4 text-center shadow-sm">
-          <p className="text-2xl font-bold text-success">{completedTasks}</p>
+        <Card className="border-0 p-3 text-center shadow-sm">
+          <p className="text-xl font-bold text-success">{completedTasks}</p>
           <p className="text-xs text-muted-foreground">Done</p>
         </Card>
       </div>
 
-      {/* Task List */}
+      {/* Your Tasks (Human) */}
       <div className="space-y-3">
-        {tasks.map((task) => (
-          <Card
-            key={task.id}
-            className="cursor-pointer border-0 p-4 shadow-sm transition-all hover:shadow-md"
-            onClick={() => handleTaskClick(task.id)}
-          >
-            <div className="flex gap-3">
-              <div className="pt-0.5">{getStatusIcon(task.status)}</div>
-              
-              <div className="flex-1 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h4 className={`font-semibold ${
-                    task.status === "completed"
-                      ? "text-muted-foreground line-through"
-                      : "text-foreground"
-                  }`}>
-                    {task.title}
-                  </h4>
-                  {getPriorityBadge(task.priority)}
-                </div>
-
-                <p className="text-sm text-muted-foreground">{task.description}</p>
-
-                <div className="flex items-center justify-between">
-                  <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-                    {task.source}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{task.dueDate}</span>
-                </div>
-              </div>
+        <div className="flex items-center gap-2">
+          <User className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">Your Tasks</h3>
+        </div>
+        {Object.entries(humanTasksByDate).map(([date, tasks]) => (
+          <div key={date} className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{date}</p>
+            <div className="space-y-2">
+              {tasks.map((task) => renderTaskCard(task, false))}
             </div>
-          </Card>
+          </div>
+        ))}
+      </div>
+
+      {/* Assistant Tasks */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Bot className="h-5 w-5 text-secondary" />
+          <h3 className="text-lg font-semibold text-foreground">Assistant Activity</h3>
+        </div>
+        {Object.entries(assistantTasksByDate).map(([date, tasks]) => (
+          <div key={date} className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{date}</p>
+            <div className="space-y-2">
+              {tasks.map((task) => renderTaskCard(task, true))}
+            </div>
+          </div>
         ))}
       </div>
     </div>
