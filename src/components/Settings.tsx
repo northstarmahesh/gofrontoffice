@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Phone, MessageSquare, Instagram, Facebook, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Settings = () => {
+  const [loading, setLoading] = useState(true);
+  const [settingsId, setSettingsId] = useState<string | null>(null);
   const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
   const [channels, setChannels] = useState({
     sms: true,
@@ -14,16 +17,74 @@ const Settings = () => {
     messenger: false,
   });
 
-  const handlePhoneModeChange = (mode: "on" | "passive" | "off") => {
+  // Load settings from database
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("assistant_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setSettingsId(data.id);
+        setPhoneMode(data.phone_mode as "on" | "passive" | "off");
+        setChannels({
+          sms: data.sms_enabled,
+          whatsapp: data.whatsapp_enabled,
+          instagram: data.instagram_enabled,
+          messenger: data.messenger_enabled,
+        });
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateSettings = async (updates: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("assistant_settings")
+        .update(updates)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      toast.error("Failed to save settings");
+    }
+  };
+
+  const handlePhoneModeChange = async (mode: "on" | "passive" | "off") => {
     setPhoneMode(mode);
+    await updateSettings({ phone_mode: mode });
     toast.success(`Phone mode set to ${mode.toUpperCase()}`);
   };
 
-  const handleChannelToggle = (channel: keyof typeof channels) => {
-    setChannels((prev) => ({ ...prev, [channel]: !prev[channel] }));
+  const handleChannelToggle = async (channel: keyof typeof channels) => {
+    const newValue = !channels[channel];
+    setChannels((prev) => ({ ...prev, [channel]: newValue }));
+    
+    const updateKey = `${channel}_enabled`;
+    await updateSettings({ [updateKey]: newValue });
+    
     toast.success(
       `${channel.charAt(0).toUpperCase() + channel.slice(1)} ${
-        !channels[channel] ? "enabled" : "disabled"
+        newValue ? "enabled" : "disabled"
       }`
     );
   };
@@ -35,6 +96,17 @@ const Settings = () => {
     { name: "CRM", status: "pending", icon: CheckCircle2 },
     { name: "Knowledge Base", status: "connected", icon: CheckCircle2 },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-pulse rounded-xl bg-primary/20" />
+          <p className="text-sm text-muted-foreground">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
