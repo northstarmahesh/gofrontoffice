@@ -1,7 +1,7 @@
-import { Home, Settings, FileText, CheckSquare, BarChart3, Building2 } from "lucide-react";
+import { Home, Users, CheckSquare, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type View = "dashboard" | "settings" | "logs" | "tasks" | "reports" | "clinic";
+type View = "dashboard" | "contacts" | "tasks" | "settings";
 
 interface NavigationProps {
   currentView: View;
@@ -11,8 +11,7 @@ interface NavigationProps {
 const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
   const navItems = [
     { id: "dashboard" as View, icon: Home, label: "Home" },
-    { id: "clinic" as View, icon: Building2, label: "Clinic" },
-    { id: "logs" as View, icon: FileText, label: "Logs" },
+    { id: "contacts" as View, icon: Users, label: "Contacts" },
     { id: "tasks" as View, icon: CheckSquare, label: "Tasks" },
     { id: "settings" as View, icon: Settings, label: "Settings" },
   ];

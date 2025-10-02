@@ -6,14 +6,12 @@ import { Button } from "@/components/ui/button";
 import frontOfficeLogo from "@/assets/front-office-logo.png";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
-import ActivityLogs from "@/components/ActivityLogs";
+import Contacts from "@/components/Contacts";
 import Tasks from "@/components/Tasks";
-import Reports from "@/components/Reports";
-import ClinicManagement from "@/components/ClinicManagement";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 
-type View = "dashboard" | "settings" | "logs" | "tasks" | "reports" | "clinic";
+type View = "dashboard" | "contacts" | "tasks" | "settings";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -65,16 +63,12 @@ const Index = () => {
     switch (currentView) {
       case "dashboard":
         return <Dashboard />;
-      case "clinic":
-        return <ClinicManagement />;
-      case "settings":
-        return <Settings />;
-      case "logs":
-        return <ActivityLogs />;
+      case "contacts":
+        return <Contacts />;
       case "tasks":
         return <Tasks />;
-      case "reports":
-        return <Reports />;
+      case "settings":
+        return <Settings />;
       default:
         return <Dashboard />;
     }

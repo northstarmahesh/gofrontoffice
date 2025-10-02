@@ -1,5 +1,6 @@
 import { Phone, MessageSquare, CheckCircle2, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import ActivityLogs from "./ActivityLogs";
 
 const Dashboard = () => {
   const stats = [
@@ -33,13 +34,6 @@ const Dashboard = () => {
     },
   ];
 
-  const recentActivity = [
-    { type: "call", time: "2 min ago", message: "Incoming call from John Doe", status: "completed" },
-    { type: "sms", time: "15 min ago", message: "SMS: Appointment confirmation", status: "auto-replied" },
-    { type: "whatsapp", time: "1 hour ago", message: "WhatsApp: Prescription inquiry", status: "pending" },
-    { type: "call", time: "2 hours ago", message: "Call from Sarah Smith", status: "completed" },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
@@ -70,42 +64,8 @@ const Dashboard = () => {
         })}
       </div>
 
-      {/* Recent Activity */}
-      <div>
-        <h3 className="mb-4 text-lg font-semibold text-foreground">Recent Activity</h3>
-        <div className="space-y-3">
-          {recentActivity.map((activity, index) => (
-            <Card key={index} className="border-0 p-4 shadow-sm transition-all hover:shadow-md">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  {activity.type === "call" ? (
-                    <Phone className="h-5 w-5 text-primary" />
-                  ) : (
-                    <MessageSquare className="h-5 w-5 text-secondary" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between">
-                    <p className="text-sm font-medium text-foreground">{activity.message}</p>
-                    <span className="text-xs text-muted-foreground">{activity.time}</span>
-                  </div>
-                  <span
-                    className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                      activity.status === "completed"
-                        ? "bg-success/10 text-success"
-                        : activity.status === "auto-replied"
-                        ? "bg-info/10 text-info"
-                        : "bg-warning/10 text-warning"
-                    }`}
-                  >
-                    {activity.status}
-                  </span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
+      {/* Activity Logs */}
+      <ActivityLogs />
     </div>
   );
 };
