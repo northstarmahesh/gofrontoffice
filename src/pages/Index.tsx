@@ -9,7 +9,7 @@ import Settings from "@/components/Settings";
 import ActivityLogs from "@/components/ActivityLogs";
 import Tasks from "@/components/Tasks";
 import Reports from "@/components/Reports";
-import { ClinicManagement } from "@/components/ClinicManagement";
+import ClinicManagement from "@/components/ClinicManagement";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 

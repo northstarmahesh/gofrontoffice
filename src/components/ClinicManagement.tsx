@@ -112,3 +112,5 @@ export const ClinicManagement = () => {
     </div>
   );
 };
+
+export default ClinicManagement;
