@@ -9,10 +9,11 @@ import Settings from "@/components/Settings";
 import ActivityLogs from "@/components/ActivityLogs";
 import Tasks from "@/components/Tasks";
 import Reports from "@/components/Reports";
+import { ClinicManagement } from "@/components/ClinicManagement";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 
-type View = "dashboard" | "settings" | "logs" | "tasks" | "reports";
+type View = "dashboard" | "settings" | "logs" | "tasks" | "reports" | "clinic";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -64,6 +65,8 @@ const Index = () => {
     switch (currentView) {
       case "dashboard":
         return <Dashboard />;
+      case "clinic":
+        return <ClinicManagement />;
       case "settings":
         return <Settings />;
       case "logs":
