@@ -17,6 +17,7 @@ export type Database = {
       activity_logs: {
         Row: {
           actions: string[] | null
+          clinic_id: string | null
           contact_info: string | null
           contact_name: string | null
           created_at: string | null
@@ -29,6 +30,7 @@ export type Database = {
         }
         Insert: {
           actions?: string[] | null
+          clinic_id?: string | null
           contact_info?: string | null
           contact_name?: string | null
           created_at?: string | null
@@ -41,6 +43,7 @@ export type Database = {
         }
         Update: {
           actions?: string[] | null
+          clinic_id?: string | null
           contact_info?: string | null
           contact_name?: string | null
           created_at?: string | null
@@ -52,6 +55,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "activity_logs_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "activity_logs_user_id_fkey"
             columns: ["user_id"]
@@ -108,9 +118,208 @@ export type Database = {
           },
         ]
       }
+      clinic_knowledge_base: {
+        Row: {
+          answer: string
+          category: string
+          clinic_id: string
+          created_at: string | null
+          id: string
+          priority: number | null
+          question: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          answer: string
+          category: string
+          clinic_id: string
+          created_at?: string | null
+          id?: string
+          priority?: number | null
+          question?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: string
+          category?: string
+          clinic_id?: string
+          created_at?: string | null
+          id?: string
+          priority?: number | null
+          question?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_knowledge_base_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinic_phone_numbers: {
+        Row: {
+          channel: string
+          clinic_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          phone_number: string
+          updated_at: string | null
+        }
+        Insert: {
+          channel?: string
+          clinic_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone_number: string
+          updated_at?: string | null
+        }
+        Update: {
+          channel?: string
+          clinic_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone_number?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_phone_numbers_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinic_schedules: {
+        Row: {
+          clinic_id: string
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean | null
+          start_time: string
+          updated_at: string | null
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string | null
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          start_time: string
+          updated_at?: string | null
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          start_time?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_schedules_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinic_users: {
+        Row: {
+          clinic_id: string
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_users_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinics: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          slug: string
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          slug: string
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          slug?: string
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       draft_replies: {
         Row: {
           approved_at: string | null
+          clinic_id: string | null
           created_at: string | null
           draft_content: string
           id: string
@@ -120,6 +329,7 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
+          clinic_id?: string | null
           created_at?: string | null
           draft_content: string
           id?: string
@@ -129,6 +339,7 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
+          clinic_id?: string | null
           created_at?: string | null
           draft_content?: string
           id?: string
@@ -137,6 +348,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "draft_replies_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "draft_replies_log_id_fkey"
             columns: ["log_id"]
@@ -182,6 +400,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          clinic_id: string | null
           completed_at: string | null
           created_at: string | null
           description: string | null
@@ -195,6 +414,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          clinic_id?: string | null
           completed_at?: string | null
           created_at?: string | null
           description?: string | null
@@ -208,6 +428,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          clinic_id?: string | null
           completed_at?: string | null
           created_at?: string | null
           description?: string | null
@@ -221,6 +442,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_related_log_id_fkey"
             columns: ["related_log_id"]
