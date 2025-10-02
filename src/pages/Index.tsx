@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Stethoscope, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import frontOfficeLogo from "@/assets/front-office-logo.png";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import ActivityLogs from "@/components/ActivityLogs";
@@ -82,11 +83,13 @@ const Index = () => {
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-md">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-light shadow-lg">
-              <Stethoscope className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <img 
+              src={frontOfficeLogo} 
+              alt="Front Office Logo" 
+              className="h-10 w-10 object-contain"
+            />
             <div>
-              <h1 className="text-lg font-bold text-foreground">Clinic Assistant</h1>
+              <h1 className="text-lg font-bold text-foreground">Front Office</h1>
               <p className="text-xs text-muted-foreground">Always here to help</p>
             </div>
           </div>
