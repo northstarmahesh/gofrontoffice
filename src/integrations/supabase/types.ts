@@ -14,7 +14,229 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activity_logs: {
+        Row: {
+          actions: string[] | null
+          contact_info: string | null
+          contact_name: string | null
+          created_at: string | null
+          id: string
+          status: string | null
+          summary: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actions?: string[] | null
+          contact_info?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          summary?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          actions?: string[] | null
+          contact_info?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          summary?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_settings: {
+        Row: {
+          auto_pilot_enabled: boolean | null
+          created_at: string | null
+          id: string
+          instagram_enabled: boolean | null
+          messenger_enabled: boolean | null
+          phone_mode: string | null
+          sms_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+          whatsapp_enabled: boolean | null
+        }
+        Insert: {
+          auto_pilot_enabled?: boolean | null
+          created_at?: string | null
+          id?: string
+          instagram_enabled?: boolean | null
+          messenger_enabled?: boolean | null
+          phone_mode?: string | null
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          whatsapp_enabled?: boolean | null
+        }
+        Update: {
+          auto_pilot_enabled?: boolean | null
+          created_at?: string | null
+          id?: string
+          instagram_enabled?: boolean | null
+          messenger_enabled?: boolean | null
+          phone_mode?: string | null
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          whatsapp_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      draft_replies: {
+        Row: {
+          approved_at: string | null
+          created_at: string | null
+          draft_content: string
+          id: string
+          log_id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string | null
+          draft_content: string
+          id?: string
+          log_id: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string | null
+          draft_content?: string
+          id?: string
+          log_id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draft_replies_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "activity_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draft_replies_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          related_log_id: string | null
+          source: string | null
+          status: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          related_log_id?: string | null
+          source?: string | null
+          status?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          related_log_id?: string | null
+          source?: string | null
+          status?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_related_log_id_fkey"
+            columns: ["related_log_id"]
+            isOneToOne: false
+            referencedRelation: "activity_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
