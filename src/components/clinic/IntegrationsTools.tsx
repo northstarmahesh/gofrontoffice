@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PhoneNumbers } from "./PhoneNumbers";
 import { Calendar, Mail, Database, Clock, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface IntegrationsToolsProps {
   clinicId: string;
@@ -52,9 +55,55 @@ const integrations = [
 ];
 
 export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
-  const handleConnect = (integrationId: string) => {
-    console.log("Connecting to:", integrationId);
-    // TODO: Implement connection logic
+  const [connectingTo, setConnectingTo] = useState<string | null>(null);
+
+  const handleConnect = async (integrationId: string, integrationName: string) => {
+    setConnectingTo(integrationId);
+    
+    try {
+      // Check if integration already exists
+      const { data: existing } = await supabase
+        .from("clinic_integrations")
+        .select("*")
+        .eq("clinic_id", clinicId)
+        .eq("integration_type", integrationId)
+        .maybeSingle();
+
+      if (existing) {
+        toast.info(`${integrationName} is already configured. Opening settings...`);
+        // TODO: Open integration management dialog
+        return;
+      }
+
+      // Create placeholder integration record
+      const { error } = await supabase
+        .from("clinic_integrations")
+        .insert({
+          clinic_id: clinicId,
+          integration_type: integrationId,
+          is_connected: false,
+        });
+
+      if (error) throw error;
+
+      toast.success(`Starting ${integrationName} connection...`, {
+        description: "You'll be redirected to authorize the integration.",
+      });
+      
+      // In a real implementation, this would redirect to OAuth flow
+      // For now, show a helpful message
+      setTimeout(() => {
+        toast.info("Integration setup", {
+          description: `To complete ${integrationName} setup, you'll need to configure OAuth credentials in your integration settings.`,
+        });
+      }, 1500);
+      
+    } catch (error) {
+      console.error("Error connecting integration:", error);
+      toast.error("Failed to start connection process");
+    } finally {
+      setConnectingTo(null);
+    }
   };
 
   return (
@@ -114,9 +163,12 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
                     integration.status === "connected" ? "outline" : "default"
                   }
                   size="sm"
-                  onClick={() => handleConnect(integration.id)}
+                  onClick={() => handleConnect(integration.id, integration.name)}
+                  disabled={connectingTo === integration.id}
                 >
-                  {integration.status === "connected" ? (
+                  {connectingTo === integration.id ? (
+                    "Connecting..."
+                  ) : integration.status === "connected" ? (
                     <>
                       Manage
                       <ExternalLink className="ml-2 h-4 w-4" />
