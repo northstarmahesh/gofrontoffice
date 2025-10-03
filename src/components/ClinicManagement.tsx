@@ -98,7 +98,7 @@ export const ClinicManagement = () => {
         </p>
       </div>
 
-      <Tabs defaultValue={defaultTab} className="w-full">
+      <Tabs value={defaultTab} onValueChange={setDefaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="info">Info</TabsTrigger>
           <TabsTrigger value="intelligence">Assistant Intelligence</TabsTrigger>
@@ -108,7 +108,10 @@ export const ClinicManagement = () => {
         </TabsList>
 
         <TabsContent value="info" className="mt-6">
-          <ClinicInfo clinicId={clinicId!} />
+          <ClinicInfo 
+            clinicId={clinicId!} 
+            onNavigateToTools={() => setDefaultTab("tools")}
+          />
         </TabsContent>
 
         <TabsContent value="intelligence" className="mt-6">

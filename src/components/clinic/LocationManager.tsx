@@ -34,9 +34,10 @@ interface PhoneNumber {
 interface LocationManagerProps {
   clinicId: string;
   onUpdate?: () => void;
+  onNavigateToTools?: () => void;
 }
 
-export const LocationManager = ({ clinicId, onUpdate }: LocationManagerProps) => {
+export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: LocationManagerProps) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -490,6 +491,28 @@ export const LocationManager = ({ clinicId, onUpdate }: LocationManagerProps) =>
 
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium">Social Media Connections</h3>
+                    
+                    {!formData.instagram_connected && !formData.facebook_connected && (
+                      <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Connect your Instagram and Facebook accounts to enable direct messaging.
+                        </p>
+                        {onNavigateToTools && (
+                          <Button
+                            type="button"
+                            variant="link"
+                            size="sm"
+                            onClick={() => {
+                              setDialogOpen(false);
+                              onNavigateToTools();
+                            }}
+                            className="h-auto p-0 text-primary"
+                          >
+                            Go to Tools to connect social accounts →
+                          </Button>
+                        )}
+                      </div>
+                    )}
                     
                     <div className="space-y-2">
                       <Label htmlFor="instagram_handle">Instagram Handle</Label>

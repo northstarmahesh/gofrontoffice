@@ -111,16 +111,22 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("clinic_phone_numbers")
         .insert({
           clinic_id: clinicId,
           ...formData,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
-      toast.success("Phone number added!");
+      
+      // Immediately prompt for verification
+      toast.success("Phone number added! Please verify it now.");
       setDialogOpen(false);
+      setSelectedPhoneForVerification(data);
+      setVerificationDialogOpen(true);
       setFormData({ phone_number: "", location_id: "", channels: ["sms"] });
       loadPhoneNumbers();
     } catch (error: any) {

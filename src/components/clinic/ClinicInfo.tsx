@@ -13,9 +13,10 @@ import { LocationManager } from "./LocationManager";
 interface ClinicInfoProps {
   clinicId?: string;
   onSaved?: (clinicId: string) => void;
+  onNavigateToTools?: () => void;
 }
 
-export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
+export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoProps) => {
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(!clinicId); // Collapsed if editing existing clinic
   const [isLocked, setIsLocked] = useState(!!clinicId); // Locked if editing existing clinic
@@ -216,7 +217,7 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
       </Collapsible>
 
       {/* Locations Section */}
-      {clinicId && <LocationManager clinicId={clinicId} />}
+      {clinicId && <LocationManager clinicId={clinicId} onNavigateToTools={onNavigateToTools} />}
     </div>
   );
 };
