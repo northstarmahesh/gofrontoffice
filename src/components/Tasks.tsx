@@ -62,6 +62,31 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       time: "8:30 AM",
       source: "WhatsApp",
       draft_message: "Hi Mike, I've reviewed your prescription refill request. Your doctor has approved the refill for 30 days. Please pick up your prescription at the pharmacy within 48 hours. Let me know if you have any questions!",
+      contact_name: "Mike Johnson",
+      contact_info: "+1 (555) 123-4567",
+      message_history: [
+        {
+          id: "h1",
+          title: "Patient requested prescription refill",
+          type: "WhatsApp",
+          summary: "Mike: Hi, I need a refill on my blood pressure medication. Can you help?",
+          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+        },
+        {
+          id: "h2",
+          title: "AI draft created",
+          type: "Draft",
+          summary: "System generated draft response for approval",
+          created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+        },
+        {
+          id: "h3",
+          title: "Previous interaction",
+          type: "SMS",
+          summary: "Appointment confirmation for next Tuesday at 3 PM",
+          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+        },
+      ],
     },
     {
       id: 5,
@@ -73,6 +98,24 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       time: "2:30 PM",
       source: "Instagram",
       draft_message: "Thank you for your interest in our services! We offer comprehensive dental care including cleanings ($150), fillings ($200-$400), and cosmetic procedures. Would you like to schedule a consultation? We have availability next week.",
+      contact_name: "Sarah Williams",
+      contact_info: "@sarahw_insta",
+      message_history: [
+        {
+          id: "h4",
+          title: "New patient inquiry",
+          type: "Instagram DM",
+          summary: "Sarah: Hi! What services do you offer and what are your prices?",
+          created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
+        },
+        {
+          id: "h5",
+          title: "AI draft created",
+          type: "Draft",
+          summary: "System generated pricing response",
+          created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+        },
+      ],
     },
   ];
 

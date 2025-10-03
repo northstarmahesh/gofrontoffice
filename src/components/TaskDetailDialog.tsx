@@ -21,6 +21,15 @@ interface Task {
   created_at: string;
   related_log_id: string | null;
   draft_message?: string;
+  contact_name?: string;
+  contact_info?: string;
+  message_history?: Array<{
+    id: string;
+    title: string;
+    type: string;
+    summary: string;
+    created_at: string;
+  }>;
 }
 
 interface ActivityLog {
@@ -54,7 +63,21 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
     if (task && open) {
       setMessage(task.draft_message || task.description || "");
       setShowAllHistory(false);
-      if (task.related_log_id) {
+      
+      // Use mock history if available, otherwise load from database
+      if (task.message_history) {
+        setActivityHistory(task.message_history as any);
+        setRelatedLog({
+          id: task.id,
+          title: task.title,
+          type: task.source || "message",
+          summary: task.description,
+          contact_name: task.contact_name || null,
+          contact_info: task.contact_info || null,
+          status: task.status,
+          created_at: task.created_at || new Date().toISOString(),
+        });
+      } else if (task.related_log_id) {
         loadTaskDetails();
       }
     }
