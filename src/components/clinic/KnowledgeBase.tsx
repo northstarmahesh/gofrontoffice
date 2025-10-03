@@ -7,40 +7,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { BookOpen, Plus, Trash2, Link as LinkIcon, FileText, Globe, Loader2 } from "lucide-react";
+import { BookOpen, Plus, Trash2, Globe, FileText } from "lucide-react";
 
 interface KnowledgeBaseProps {
   clinicId: string;
 }
 
-interface KBSource {
+interface KBEntry {
   id: string;
   source_type: "website" | "url" | "pdf";
-  source_url: string | null;
-  file_path: string | null;
-  title: string | null;
-  content: string | null;
-  created_at: string;
+  source_url?: string;
+  file_path?: string;
+  content?: string;
+  title?: string;
 }
 
 export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
-  const [sources, setSources] = useState<KBSource[]>([]);
+  const [entries, setEntries] = useState<KBEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
-  
-  // URL source state
-  const [urlInputs, setUrlInputs] = useState(["", "", ""]);
-  
-  // PDF source state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [urls, setUrls] = useState(["", "", ""]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [pdfTitle, setPdfTitle] = useState("");
 
   useEffect(() => {
-    loadSources();
+    loadEntries();
   }, [clinicId]);
 
-  const loadSources = async () => {
+  const loadEntries = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("clinic_knowledge_base")
@@ -49,16 +43,16 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      toast.error("Failed to load knowledge sources");
+      toast.error("Failed to load knowledge base");
       console.error(error);
     } else {
-      setSources((data as KBSource[]) || []);
+      setEntries((data || []) as KBEntry[]);
     }
     setLoading(false);
   };
 
   const handleAddUrls = async () => {
-    const validUrls = urlInputs.filter(url => url.trim() !== "");
+    const validUrls = urls.filter(url => url.trim() !== "");
     
     if (validUrls.length === 0) {
       toast.error("Please enter at least one URL");
@@ -66,26 +60,24 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
     }
 
     setUploading(true);
-
     try {
-      for (const url of validUrls) {
-        const { error } = await supabase
-          .from("clinic_knowledge_base")
-          .insert({
-            clinic_id: clinicId,
-            source_type: "url",
-            source_url: url,
-            title: url,
-            content: "Content will be fetched when processing",
-          });
+      const entries = validUrls.map(url => ({
+        clinic_id: clinicId,
+        source_type: "url",
+        source_url: url,
+        title: new URL(url).hostname,
+      }));
 
-        if (error) throw error;
-      }
+      const { error } = await supabase
+        .from("clinic_knowledge_base")
+        .insert(entries);
 
+      if (error) throw error;
+      
       toast.success(`Added ${validUrls.length} URL source(s)`);
-      setUrlInputs(["", "", ""]);
+      setUrls(["", "", ""]);
       setDialogOpen(false);
-      loadSources();
+      loadEntries();
     } catch (error: any) {
       console.error("Error adding URLs:", error);
       toast.error(error.message || "Failed to add URLs");
@@ -100,42 +92,32 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
       return;
     }
 
-    if (!pdfTitle.trim()) {
-      toast.error("Please enter a title for the PDF");
-      return;
-    }
-
     setUploading(true);
-
     try {
-      // Upload file to storage
-      const fileExt = pdfFile.name.split(".").pop();
+      const fileExt = pdfFile.name.split('.').pop();
       const fileName = `${clinicId}/${Date.now()}.${fileExt}`;
       
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("knowledge-base-pdfs")
         .upload(fileName, pdfFile);
 
       if (uploadError) throw uploadError;
 
-      // Create database entry
       const { error: dbError } = await supabase
         .from("clinic_knowledge_base")
         .insert({
           clinic_id: clinicId,
           source_type: "pdf",
           file_path: fileName,
-          title: pdfTitle,
-          content: "PDF content will be extracted when processing",
+          title: pdfFile.name,
         });
 
       if (dbError) throw dbError;
 
       toast.success("PDF uploaded successfully");
       setPdfFile(null);
-      setPdfTitle("");
       setDialogOpen(false);
-      loadSources();
+      loadEntries();
     } catch (error: any) {
       console.error("Error uploading PDF:", error);
       toast.error(error.message || "Failed to upload PDF");
@@ -144,45 +126,31 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
     }
   };
 
-  const handleDelete = async (id: string, filePath: string | null) => {
+  const handleDelete = async (entry: KBEntry) => {
     if (!confirm("Are you sure you want to delete this source?")) return;
 
     try {
-      // Delete from storage if it's a PDF
-      if (filePath) {
+      // Delete file from storage if it's a PDF
+      if (entry.source_type === "pdf" && entry.file_path) {
         const { error: storageError } = await supabase.storage
           .from("knowledge-base-pdfs")
-          .remove([filePath]);
+          .remove([entry.file_path]);
         
-        if (storageError) console.error("Storage deletion error:", storageError);
+        if (storageError) console.error("Storage delete error:", storageError);
       }
 
-      // Delete from database
       const { error } = await supabase
         .from("clinic_knowledge_base")
         .delete()
-        .eq("id", id);
+        .eq("id", entry.id);
 
       if (error) throw error;
-
-      toast.success("Source deleted");
-      loadSources();
+      
+      toast.success("Source deleted!");
+      loadEntries();
     } catch (error: any) {
-      console.error("Error deleting source:", error);
+      console.error("Error deleting:", error);
       toast.error("Failed to delete source");
-    }
-  };
-
-  const getSourceIcon = (type: string) => {
-    switch (type) {
-      case "website":
-        return <Globe className="h-4 w-4" />;
-      case "url":
-        return <LinkIcon className="h-4 w-4" />;
-      case "pdf":
-        return <FileText className="h-4 w-4" />;
-      default:
-        return <BookOpen className="h-4 w-4" />;
     }
   };
 
@@ -209,21 +177,20 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
               <Tabs defaultValue="urls" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="urls">
-                    <LinkIcon className="h-4 w-4 mr-2" />
-                    URLs
+                    <Globe className="h-4 w-4 mr-2" />
+                    Website URLs
                   </TabsTrigger>
                   <TabsTrigger value="pdf">
                     <FileText className="h-4 w-4 mr-2" />
-                    PDF
+                    PDF Document
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="urls" className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Add up to 3 URLs to your knowledge base
+                    Add up to 3 website URLs to use as knowledge sources
                   </p>
-                  
-                  {urlInputs.map((url, index) => (
+                  {urls.map((url, index) => (
                     <div key={index} className="space-y-2">
                       <Label htmlFor={`url-${index}`}>URL {index + 1}</Label>
                       <Input
@@ -232,68 +199,46 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
                         placeholder="https://example.com"
                         value={url}
                         onChange={(e) => {
-                          const newInputs = [...urlInputs];
-                          newInputs[index] = e.target.value;
-                          setUrlInputs(newInputs);
+                          const newUrls = [...urls];
+                          newUrls[index] = e.target.value;
+                          setUrls(newUrls);
                         }}
                       />
                     </div>
                   ))}
-
                   <Button 
                     onClick={handleAddUrls} 
-                    className="w-full"
                     disabled={uploading}
+                    className="w-full"
                   >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Adding...
-                      </>
-                    ) : (
-                      "Add URLs"
-                    )}
+                    {uploading ? "Adding..." : "Add URLs"}
                   </Button>
                 </TabsContent>
 
                 <TabsContent value="pdf" className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Upload a PDF document (max 20MB)
+                    Upload a PDF document to extract knowledge from
                   </p>
-
                   <div className="space-y-2">
-                    <Label htmlFor="pdf-title">Document Title *</Label>
-                    <Input
-                      id="pdf-title"
-                      placeholder="e.g., Office Policies"
-                      value={pdfTitle}
-                      onChange={(e) => setPdfTitle(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="pdf-file">PDF File *</Label>
+                    <Label htmlFor="pdf-file">PDF File (Max 20MB)</Label>
                     <Input
                       id="pdf-file"
                       type="file"
                       accept=".pdf"
                       onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
                     />
+                    {pdfFile && (
+                      <p className="text-sm text-muted-foreground">
+                        Selected: {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    )}
                   </div>
-
                   <Button 
                     onClick={handleUploadPdf} 
+                    disabled={uploading || !pdfFile}
                     className="w-full"
-                    disabled={uploading}
                   >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      "Upload PDF"
-                    )}
+                    {uploading ? "Uploading..." : "Upload PDF"}
                   </Button>
                 </TabsContent>
               </Tabs>
@@ -301,46 +246,40 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
           </Dialog>
         </div>
         <CardDescription>
-          Add websites and documents to power your AI assistant's knowledge
+          Add website URLs or PDF documents to build your clinic's knowledge base
         </CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : sources.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">
-            No sources yet. Add URLs or PDFs to get started!
-          </p>
+          <p className="text-muted-foreground">Loading...</p>
+        ) : entries.length === 0 ? (
+          <p className="text-muted-foreground">No sources yet. Add your first one!</p>
         ) : (
           <div className="space-y-3">
-            {sources.map((source) => (
-              <div key={source.id} className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="mt-1 text-muted-foreground">
-                    {getSourceIcon(source.source_type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium px-2 py-1 rounded bg-primary/10 text-primary uppercase">
-                        {source.source_type}
-                      </span>
-                    </div>
-                    <p className="font-medium text-sm truncate">
-                      {source.title || "Untitled"}
-                    </p>
-                    {source.source_url && (
-                      <p className="text-xs text-muted-foreground truncate mt-1">
-                        {source.source_url}
+            {entries.map((entry) => (
+              <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  {entry.source_type === "pdf" ? (
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <Globe className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <div>
+                    <p className="font-medium">{entry.title || "Untitled"}</p>
+                    {entry.source_url && (
+                      <p className="text-sm text-muted-foreground truncate max-w-md">
+                        {entry.source_url}
                       </p>
                     )}
+                    <span className="text-xs text-muted-foreground">
+                      {entry.source_type === "pdf" ? "PDF Document" : "Website"}
+                    </span>
                   </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDelete(source.id, source.file_path)}
+                  onClick={() => handleDelete(entry)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
