@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,14 @@ export const PhoneVerificationDialog = ({
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+
+  // Automatically send code when dialog opens
+  useEffect(() => {
+    if (open && !codeSent) {
+      handleSendCode();
+    }
+  }, [open]);
 
   const handleSendCode = async () => {
     setSending(true);
@@ -34,6 +42,7 @@ export const PhoneVerificationDialog = ({
       });
 
       if (error) throw error;
+      setCodeSent(true);
       toast.success("Verification code sent to " + phoneNumber);
     } catch (error: any) {
       console.error("Error sending code:", error);
@@ -80,6 +89,13 @@ export const PhoneVerificationDialog = ({
         </DialogHeader>
 
         <div className="space-y-4">
+          {sending && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Sending verification code...
+            </div>
+          )}
+          
           <div className="space-y-2">
             <Label htmlFor="code">Verification Code</Label>
             <Input
@@ -88,7 +104,11 @@ export const PhoneVerificationDialog = ({
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="Enter 6-digit code"
               maxLength={6}
+              disabled={sending}
             />
+            <p className="text-xs text-muted-foreground">
+              Enter the 6-digit code sent to {phoneNumber}
+            </p>
           </div>
 
           <div className="flex gap-2">
@@ -104,13 +124,13 @@ export const PhoneVerificationDialog = ({
                   Sending...
                 </>
               ) : (
-                "Send Code"
+                "Resend Code"
               )}
             </Button>
 
             <Button
               onClick={handleVerify}
-              disabled={loading || code.length !== 6}
+              disabled={loading || code.length !== 6 || sending}
               className="flex-1"
             >
               {loading ? (
