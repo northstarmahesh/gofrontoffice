@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight, Calendar, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -20,33 +21,52 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
   const navigate = useNavigate();
   const { greeting, weather, backgroundGradient, emoji } = useGreetingAndWeather();
   const [loading, setLoading] = useState(true);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
+  const [messagingMode, setMessagingMode] = useState<"autopilot" | "copilot">("autopilot");
   const [channels, setChannels] = useState({
     sms: true,
     whatsapp: true,
     instagram: false,
     messenger: false,
   });
-  const [channelModes, setChannelModes] = useState({
-    sms: true,
-    whatsapp: true,
-    instagram: true,
-    messenger: true,
-  });
-  const [delays, setDelays] = useState({
-    sms: 3,
-    whatsapp: 3,
-    instagram: 3,
-    messenger: 3,
-  });
   const [schedules, setSchedules] = useState<any[]>([]);
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
 
   useEffect(() => {
+    loadLocations();
     loadSettings();
     loadSchedules();
     loadPendingTasks();
   }, []);
+
+  const loadLocations = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: clinicUsers } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (clinicUsers?.clinic_id) {
+        const { data: locationData } = await supabase
+          .from("clinic_locations")
+          .select("*")
+          .eq("clinic_id", clinicUsers.clinic_id);
+
+        if (locationData && locationData.length > 0) {
+          setLocations(locationData);
+          setSelectedLocation(locationData[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading locations:", error);
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -63,23 +83,12 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
 
       if (data) {
         setPhoneMode(data.phone_mode as "on" | "passive" | "off");
+        setMessagingMode(data.auto_pilot_enabled ? "autopilot" : "copilot");
         setChannels({
           sms: data.sms_enabled,
           whatsapp: data.whatsapp_enabled,
           instagram: data.instagram_enabled,
           messenger: data.messenger_enabled,
-        });
-        setChannelModes({
-          sms: data.auto_pilot_enabled ?? true,
-          whatsapp: data.auto_pilot_enabled ?? true,
-          instagram: data.auto_pilot_enabled ?? true,
-          messenger: data.auto_pilot_enabled ?? true,
-        });
-        setDelays({
-          sms: data.sms_delay_seconds ?? 3,
-          whatsapp: data.whatsapp_delay_seconds ?? 3,
-          instagram: data.instagram_delay_seconds ?? 3,
-          messenger: data.messenger_delay_seconds ?? 3,
         });
       }
     } catch (error) {
@@ -176,18 +185,13 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     );
   };
 
-  const handleChannelModeToggle = async (channel: keyof typeof channelModes) => {
-    const newValue = !channelModes[channel];
-    setChannelModes((prev) => ({ ...prev, [channel]: newValue }));
-    await updateSettings({ auto_pilot_enabled: newValue });
-    toast.success(`${channel} mode: ${newValue ? "Autopilot" : "Co-pilot"}`);
+  const handleMessagingModeToggle = async () => {
+    const newMode = messagingMode === "autopilot" ? "copilot" : "autopilot";
+    setMessagingMode(newMode);
+    await updateSettings({ auto_pilot_enabled: newMode === "autopilot" });
+    toast.success(`Messaging mode: ${newMode === "autopilot" ? "Autopilot" : "Co-pilot"}`);
   };
 
-  const handleDelayChange = async (channel: keyof typeof delays, value: number) => {
-    setDelays((prev) => ({ ...prev, [channel]: value }));
-    const updateKey = `${channel}_delay_seconds`;
-    await updateSettings({ [updateKey]: value });
-  };
 
   const handleScheduleSave = async () => {
     try {
@@ -287,8 +291,32 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     }
   };
 
+  if (locations.length === 0 && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-lg font-semibold text-foreground mb-2">No Locations Found</p>
+        <p className="text-sm text-muted-foreground">Please add a location in Clinic Settings to get started.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Location Tabs */}
+      {locations.length > 0 && (
+        <Tabs value={selectedLocation} onValueChange={setSelectedLocation} className="w-full">
+          <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${locations.length}, 1fr)` }}>
+            {locations.map((location) => (
+              <TabsTrigger key={location.id} value={location.id} className="gap-2">
+                <MapPin className="h-4 w-4" />
+                {location.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {locations.map((location) => (
+            <TabsContent key={location.id} value={location.id} className="space-y-6 mt-6">
       {/* Needs Attention Section - TOP */}
       {pendingTasks.length > 0 && (
         <Card className="border-0 p-6 shadow-lg bg-gradient-to-br from-warning/10 to-warning/5">
@@ -427,192 +455,102 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
         </div>
       </Card>
 
-      {/* Messaging Channels */}
+      {/* Messaging System */}
       <Card className="border-0 p-6 shadow-lg">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-xl bg-secondary/10 p-3">
-            <MessageSquare className="h-6 w-6 text-secondary" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-foreground">Messaging Channels</h3>
-            <p className="text-sm text-muted-foreground">Configure each channel independently</p>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-secondary/10 p-3">
+                <MessageSquare className="h-6 w-6 text-secondary" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-foreground">AI Response System</h3>
+                <p className="text-sm text-muted-foreground">
+                  {messagingMode === "autopilot" ? "AI replies automatically to all channels" : (
+                    <>
+                      AI drafts replies for your approval as{" "}
+                      <button
+                        onClick={() => navigate("/?tab=tasks")}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        your todos
+                      </button>
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-base font-semibold text-foreground">
+                {messagingMode === "autopilot" ? "Autopilot" : "Co-pilot"}
+              </span>
+              <Switch
+                checked={messagingMode === "autopilot"}
+                onCheckedChange={handleMessagingModeToggle}
+                className="scale-125"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="space-y-4">
-          {/* SMS */}
-          <div className="p-4 rounded-xl border-2 border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
+        <div className="border-t pt-4">
+          <p className="text-sm font-semibold text-muted-foreground mb-4">Active Channels</p>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="sms" className="text-base font-semibold cursor-pointer">SMS</Label>
+                <Label htmlFor="sms" className="text-sm font-medium cursor-pointer">SMS</Label>
               </div>
               <Switch
                 id="sms"
                 checked={channels.sms}
                 onCheckedChange={() => handleChannelToggle("sms")}
-                className="scale-110"
               />
             </div>
-            {channels.sms && (
-              <div className="space-y-2 pl-8">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleChannelModeToggle("sms")}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      channelModes.sms
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    Autopilot
-                  </button>
-                  <button
-                    onClick={() => handleChannelModeToggle("sms")}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      !channelModes.sms
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    Co-pilot
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* WhatsApp */}
-          <div className="p-4 rounded-xl border-2 border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="whatsapp" className="text-base font-semibold cursor-pointer">WhatsApp</Label>
+                <Label htmlFor="whatsapp" className="text-sm font-medium cursor-pointer">WhatsApp</Label>
               </div>
               <Switch
                 id="whatsapp"
                 checked={channels.whatsapp}
                 onCheckedChange={() => handleChannelToggle("whatsapp")}
-                className="scale-110"
               />
             </div>
-            {channels.whatsapp && (
-              <div className="space-y-2 pl-8">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleChannelModeToggle("whatsapp")}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      channelModes.whatsapp
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    Autopilot
-                  </button>
-                  <button
-                    onClick={() => handleChannelModeToggle("whatsapp")}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      !channelModes.whatsapp
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    Co-pilot
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Instagram */}
-          <div className="p-4 rounded-xl border-2 border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div className="flex items-center gap-2">
                 <Instagram className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="instagram" className="text-base font-semibold cursor-pointer">Instagram DM</Label>
+                <Label htmlFor="instagram" className="text-sm font-medium cursor-pointer">Instagram</Label>
               </div>
               <Switch
                 id="instagram"
                 checked={channels.instagram}
                 onCheckedChange={() => handleChannelToggle("instagram")}
-                className="scale-110"
               />
             </div>
-            {channels.instagram && (
-              <div className="space-y-2 pl-8">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleChannelModeToggle("instagram")}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      channelModes.instagram
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    Autopilot
-                  </button>
-                  <button
-                    onClick={() => handleChannelModeToggle("instagram")}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      !channelModes.instagram
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    Co-pilot
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Messenger */}
-          <div className="p-4 rounded-xl border-2 border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div className="flex items-center gap-2">
                 <Facebook className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="messenger" className="text-base font-semibold cursor-pointer">Messenger</Label>
+                <Label htmlFor="messenger" className="text-sm font-medium cursor-pointer">Messenger</Label>
               </div>
               <Switch
                 id="messenger"
                 checked={channels.messenger}
                 onCheckedChange={() => handleChannelToggle("messenger")}
-                className="scale-110"
               />
             </div>
-            {channels.messenger && (
-              <div className="space-y-2 pl-8">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleChannelModeToggle("messenger")}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      channelModes.messenger
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    Autopilot
-                  </button>
-                  <button
-                    onClick={() => handleChannelModeToggle("messenger")}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      !channelModes.messenger
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    Co-pilot
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </Card>
 
       {/* Assistant Schedule */}
       <Card className="border-0 p-6 shadow-lg">
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-6 flex items-center gap-3">
           <div className="rounded-xl bg-primary/10 p-3">
             <Calendar className="h-6 w-6 text-primary" />
           </div>
@@ -622,52 +560,54 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="space-y-2">
           {schedules.map((schedule) => (
             <div
               key={schedule.day_of_week}
-              className="flex flex-col gap-2 p-3 border rounded-lg"
+              className="flex items-center gap-2 p-3 border rounded-lg"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-28">
                 <Switch
                   checked={schedule.is_available}
                   onCheckedChange={(checked) =>
                     updateSchedule(schedule.day_of_week, "is_available", checked)
                   }
-                  className="scale-90"
                 />
-                <Label className="text-sm font-semibold">
-                  {DAYS[schedule.day_of_week].slice(0, 3)}
+                <Label className="text-sm font-medium">
+                  {DAYS[schedule.day_of_week]}
                 </Label>
               </div>
 
-              {schedule.is_available ? (
-                <div className="flex flex-col gap-1">
+              {schedule.is_available && (
+                <div className="flex items-center gap-2 flex-1">
                   <input
                     type="time"
                     value={schedule.start_time}
                     onChange={(e) =>
                       updateSchedule(schedule.day_of_week, "start_time", e.target.value)
                     }
-                    className="px-2 py-1 border rounded-md text-xs w-full"
+                    className="px-2 py-1 border rounded-md text-sm w-28"
                   />
+                  <span className="text-muted-foreground text-sm">to</span>
                   <input
                     type="time"
                     value={schedule.end_time}
                     onChange={(e) =>
                       updateSchedule(schedule.day_of_week, "end_time", e.target.value)
                     }
-                    className="px-2 py-1 border rounded-md text-xs w-full"
+                    className="px-2 py-1 border rounded-md text-sm w-28"
                   />
                 </div>
-              ) : (
-                <span className="text-muted-foreground text-xs">Closed</span>
+              )}
+
+              {!schedule.is_available && (
+                <span className="text-muted-foreground text-sm flex-1">Closed</span>
               )}
             </div>
           ))}
         </div>
 
-        <Button onClick={handleScheduleSave} className="w-full">
+        <Button onClick={handleScheduleSave} className="w-full mt-4">
           Save Schedule
         </Button>
       </Card>
@@ -698,6 +638,11 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
           })}
         </div>
       </div>
+
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
     </div>
   );
 };
