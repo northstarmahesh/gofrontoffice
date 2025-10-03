@@ -50,6 +50,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
 
   useEffect(() => {
     if (selectedLocation) {
+      setLoading(true);
       loadSettings();
       loadSchedules();
     }
@@ -83,16 +84,30 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
   };
 
   const loadSettings = async () => {
-    if (!selectedLocation) return;
+    if (!selectedLocation) {
+      setLoading(false);
+      return;
+    }
     
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("assistant_settings")
         .select("*")
         .eq("location_id", selectedLocation)
+        .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error("Error loading settings:", error);
+        setLoading(false);
+        return;
+      }
 
       if (data) {
         const globalMode = data.auto_pilot_enabled ? "autopilot" : "copilot";
@@ -112,17 +127,26 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
         });
       } else {
         // Create default settings for this location
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        
         const { error: insertError } = await supabase
           .from("assistant_settings")
           .insert({
             user_id: user.id,
             location_id: selectedLocation,
+            auto_pilot_enabled: true,
+            phone_mode: 'on',
+            sms_enabled: true,
+            whatsapp_enabled: true,
+            instagram_enabled: false,
+            messenger_enabled: false,
           });
         
-        if (insertError) console.error("Error creating default settings:", insertError);
+        if (insertError) {
+          console.error("Error creating default settings:", insertError);
+        } else {
+          // Reload after creating defaults
+          await loadSettings();
+          return;
+        }
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -184,10 +208,14 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     if (!selectedLocation) return;
     
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { error } = await supabase
         .from("assistant_settings")
         .update(updates)
-        .eq("location_id", selectedLocation);
+        .eq("location_id", selectedLocation)
+        .eq("user_id", user.id);
 
       if (error) throw error;
     } catch (error) {
