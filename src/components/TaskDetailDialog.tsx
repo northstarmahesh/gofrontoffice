@@ -250,17 +250,17 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
   const getChannelIcon = (type: string) => {
     const typeUpper = type.toUpperCase();
     if (typeUpper.includes('SMS') || typeUpper.includes('TEXT')) {
-      return <MessageSquare className="h-4 w-4" />;
+      return <MessageSquare className="h-5 w-5" />;
     } else if (typeUpper.includes('WHATSAPP')) {
-      return <Phone className="h-4 w-4" />;
+      return <Phone className="h-5 w-5" />;
     } else if (typeUpper.includes('EMAIL') || typeUpper.includes('MAIL')) {
-      return <Mail className="h-4 w-4" />;
+      return <Mail className="h-5 w-5" />;
     } else if (typeUpper.includes('INSTAGRAM') || typeUpper.includes('DM')) {
-      return <Instagram className="h-4 w-4" />;
+      return <Instagram className="h-5 w-5" />;
     } else if (typeUpper.includes('MESSENGER') || typeUpper.includes('FACEBOOK')) {
-      return <Facebook className="h-4 w-4" />;
+      return <Facebook className="h-5 w-5" />;
     }
-    return <MessageSquare className="h-4 w-4" />;
+    return <MessageSquare className="h-5 w-5" />;
   };
 
   const isFromAI = (title: string, type: string) => {
@@ -345,6 +345,17 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                     const fromAI = isFromAI(log.title, log.type);
                     const phoneCall = isPhoneCall(log.type);
                     
+                    // Extract contact name from summary if present (format: "Name: message")
+                    let displayName = relatedLog?.contact_name || null;
+                    let messageText = log.summary || "";
+                    if (!fromAI && messageText) {
+                      const nameMatch = messageText.match(/^([^:]+):\s*(.+)$/);
+                      if (nameMatch) {
+                        displayName = nameMatch[1];
+                        messageText = nameMatch[2];
+                      }
+                    }
+                    
                     // Render phone call summary card
                     if (phoneCall) {
                       return (
@@ -395,7 +406,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                         {/* Channel icon on left for received messages */}
                         {!fromAI && (
                           <div className="shrink-0 mt-1">
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                               {getChannelIcon(log.type)}
                             </div>
                           </div>
@@ -403,14 +414,19 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                         
                         {/* Message bubble */}
                         <div className={`flex flex-col max-w-[75%] ${fromAI ? 'items-end' : 'items-start'}`}>
+                          {/* Contact name above bubble for received messages */}
+                          {!fromAI && displayName && (
+                            <span className="text-xs font-semibold text-foreground mb-1 px-1">
+                              {displayName}
+                            </span>
+                          )}
+                          
                           <div className={`rounded-2xl px-4 py-2 ${
                             fromAI 
                               ? 'bg-primary text-primary-foreground' 
                               : 'bg-background border border-border'
                           }`}>
-                            {log.summary && (
-                              <p className="text-sm">{log.summary}</p>
-                            )}
+                            <p className="text-sm">{messageText}</p>
                           </div>
                           
                           {/* Timestamp and type */}
@@ -429,8 +445,8 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                         {/* AI icon on right for sent messages */}
                         {fromAI && (
                           <div className="shrink-0 mt-1">
-                            <div className="h-8 w-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                              <MessageSquare className="h-4 w-4" />
+                            <div className="h-9 w-9 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+                              <MessageSquare className="h-5 w-5" />
                             </div>
                           </div>
                         )}
