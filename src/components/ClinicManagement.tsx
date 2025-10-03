@@ -5,6 +5,7 @@ import { ClinicProfile } from "./clinic/ClinicProfile";
 import { KnowledgeBase } from "./clinic/KnowledgeBase";
 import { ScheduleManagement } from "./clinic/ScheduleManagement";
 import { PhoneNumbers } from "./clinic/PhoneNumbers";
+import { TeamManagement } from "./clinic/TeamManagement";
 import { toast } from "sonner";
 
 export const ClinicManagement = () => {
@@ -86,15 +87,20 @@ export const ClinicManagement = () => {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
-          <TabsTrigger value="phones">Phone Numbers</TabsTrigger>
+          <TabsTrigger value="phones">Phones</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
           <ClinicProfile clinicId={clinicId!} />
+        </TabsContent>
+
+        <TabsContent value="team" className="mt-6">
+          <TeamManagement clinicId={clinicId!} />
         </TabsContent>
 
         <TabsContent value="knowledge" className="mt-6">
