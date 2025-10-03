@@ -29,6 +29,31 @@ const integrations = [
     providers: ["Outlook Calendar", "Microsoft Teams", "OneDrive", "Exchange"],
   },
   {
+    id: "whatsapp-business",
+    name: "WhatsApp Business",
+    description: "Connect WhatsApp Business API for messaging",
+    icon: Mail,
+    status: "not_connected",
+    providers: ["WhatsApp Business API"],
+    note: "One WhatsApp number per location",
+  },
+  {
+    id: "instagram",
+    name: "Instagram",
+    description: "Connect Instagram for direct messaging",
+    icon: Mail,
+    status: "not_connected",
+    providers: ["Instagram Direct Messages"],
+  },
+  {
+    id: "messenger",
+    name: "Facebook Messenger",
+    description: "Connect Facebook Messenger for customer chat",
+    icon: Mail,
+    status: "not_connected",
+    providers: ["Facebook Messenger"],
+  },
+  {
     id: "swedish-crm",
     name: "Swedish CRMs",
     description: "Popular CRM systems in the Swedish market",
@@ -156,6 +181,11 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
                         </Badge>
                       ))}
                     </div>
+                    {(integration as any).note && (
+                      <p className="text-xs text-muted-foreground mt-2 italic">
+                        {(integration as any).note}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Button

@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Phone, Plus, Trash2 } from "lucide-react";
+import { Phone, Plus, Trash2, MessageSquare } from "lucide-react";
 
 interface PhoneNumbersProps {
   clinicId: string;
@@ -16,29 +18,55 @@ interface PhoneNumbersProps {
 interface PhoneNumber {
   id: string;
   phone_number: string;
-  channel: string;
+  channels: string[];
   is_active: boolean;
+  location_id: string;
+}
+
+interface Location {
+  id: string;
+  name: string;
 }
 
 export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
   const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     phone_number: "",
-    channel: "sms",
+    location_id: "",
+    channels: ["sms"] as string[],
   });
 
   useEffect(() => {
+    loadLocations();
     loadPhoneNumbers();
   }, [clinicId]);
+
+  const loadLocations = async () => {
+    const { data, error } = await supabase
+      .from("clinic_locations")
+      .select("id, name")
+      .eq("clinic_id", clinicId);
+
+    if (error) {
+      console.error("Error loading locations:", error);
+      toast.error("Failed to load locations");
+    } else {
+      setLocations(data || []);
+    }
+  };
 
   const loadPhoneNumbers = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("clinic_phone_numbers")
-      .select("*")
-      .eq("clinic_id", clinicId);
+      .select(`
+        *,
+        clinic_locations!inner(name)
+      `)
+      .eq("clinic_locations.clinic_id", clinicId);
 
     if (error) {
       console.error("Error loading phone numbers:", error);
@@ -52,6 +80,31 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.location_id) {
+      toast.error("Please select a location");
+      return;
+    }
+
+    if (formData.channels.length === 0) {
+      toast.error("Please select at least one channel");
+      return;
+    }
+
+    // Check if WhatsApp is selected and already exists for this location
+    if (formData.channels.includes("whatsapp")) {
+      const { data: existing } = await supabase
+        .from("clinic_phone_numbers")
+        .select("id")
+        .eq("location_id", formData.location_id)
+        .contains("channels", ["whatsapp"])
+        .maybeSingle();
+
+      if (existing) {
+        toast.error("This location already has a WhatsApp number. Only one WhatsApp number is allowed per location.");
+        return;
+      }
+    }
+
     try {
       const { error } = await supabase
         .from("clinic_phone_numbers")
@@ -63,12 +116,21 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
       if (error) throw error;
       toast.success("Phone number added!");
       setDialogOpen(false);
-      setFormData({ phone_number: "", channel: "sms" });
+      setFormData({ phone_number: "", location_id: "", channels: ["sms"] });
       loadPhoneNumbers();
     } catch (error: any) {
       console.error("Error adding phone number:", error);
       toast.error(error.message || "Failed to add phone number");
     }
+  };
+
+  const toggleChannel = (channel: string) => {
+    setFormData(prev => ({
+      ...prev,
+      channels: prev.channels.includes(channel)
+        ? prev.channels.filter(c => c !== channel)
+        : [...prev.channels, channel]
+    }));
   };
 
   const handleToggle = async (id: string, isActive: boolean) => {
@@ -122,6 +184,25 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="location">Location *</Label>
+                  <Select
+                    value={formData.location_id}
+                    onValueChange={(value) => setFormData({ ...formData, location_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="phone_number">Phone Number *</Label>
                   <Input
                     id="phone_number"
@@ -135,19 +216,43 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="channel">Channel *</Label>
-                  <select
-                    id="channel"
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                    value={formData.channel}
-                    onChange={(e) => setFormData({ ...formData, channel: e.target.value })}
-                    required
-                  >
-                    <option value="sms">SMS</option>
-                    <option value="whatsapp">WhatsApp</option>
-                    <option value="voice">Voice</option>
-                  </select>
+                <div className="space-y-3">
+                  <Label>Channels *</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="sms"
+                        checked={formData.channels.includes("sms")}
+                        onCheckedChange={() => toggleChannel("sms")}
+                      />
+                      <label htmlFor="sms" className="text-sm font-medium cursor-pointer">
+                        SMS
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="voice"
+                        checked={formData.channels.includes("voice")}
+                        onCheckedChange={() => toggleChannel("voice")}
+                      />
+                      <label htmlFor="voice" className="text-sm font-medium cursor-pointer">
+                        Voice
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="whatsapp"
+                        checked={formData.channels.includes("whatsapp")}
+                        onCheckedChange={() => toggleChannel("whatsapp")}
+                      />
+                      <label htmlFor="whatsapp" className="text-sm font-medium cursor-pointer">
+                        WhatsApp
+                      </label>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Note: Only one WhatsApp number per location
+                  </p>
                 </div>
 
                 <Button type="submit" className="w-full">
@@ -173,14 +278,28 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
                 key={phone.id}
                 className="flex items-center justify-between p-4 border rounded-lg"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
                   <Switch
                     checked={phone.is_active}
                     onCheckedChange={(checked) => handleToggle(phone.id, checked)}
                   />
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">{phone.phone_number}</p>
-                    <p className="text-sm text-muted-foreground capitalize">{phone.channel}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(phone as any).clinic_locations?.name || 'Unknown Location'}
+                    </p>
+                    <div className="flex gap-2 mt-1">
+                      {phone.channels?.map((channel) => (
+                        <span
+                          key={channel}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-muted"
+                        >
+                          {channel === "whatsapp" && <MessageSquare className="h-3 w-3" />}
+                          {channel === "voice" && <Phone className="h-3 w-3" />}
+                          <span className="capitalize">{channel}</span>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <Button

@@ -322,28 +322,34 @@ export type Database = {
       clinic_phone_numbers: {
         Row: {
           channel: string
+          channels: string[] | null
           clinic_id: string
           created_at: string | null
           id: string
           is_active: boolean | null
+          location_id: string | null
           phone_number: string
           updated_at: string | null
         }
         Insert: {
           channel?: string
+          channels?: string[] | null
           clinic_id: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          location_id?: string | null
           phone_number: string
           updated_at?: string | null
         }
         Update: {
           channel?: string
+          channels?: string[] | null
           clinic_id?: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          location_id?: string | null
           phone_number?: string
           updated_at?: string | null
         }
@@ -353,6 +359,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_phone_numbers_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_locations"
             referencedColumns: ["id"]
           },
         ]
