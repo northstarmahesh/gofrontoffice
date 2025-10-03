@@ -56,7 +56,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
     notes: ""
   });
   const [message, setMessage] = useState("");
-  const [selectedChannel, setSelectedChannel] = useState<string>("sms");
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(["sms"]);
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
@@ -114,13 +114,13 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         const lastLog = historyData[historyData.length - 1];
         const type = lastLog.type.toLowerCase();
         if (type.includes('whatsapp')) {
-          setSelectedChannel('whatsapp');
+          setSelectedChannels(['whatsapp']);
         } else if (type.includes('instagram')) {
-          setSelectedChannel('instagram');
+          setSelectedChannels(['instagram']);
         } else if (type.includes('messenger') || type.includes('facebook')) {
-          setSelectedChannel('messenger');
+          setSelectedChannels(['messenger']);
         } else {
-          setSelectedChannel('sms');
+          setSelectedChannels(['sms']);
         }
       }
     } catch (error) {
@@ -182,7 +182,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !contactName) return;
+    if (!message.trim() || !contactName || selectedChannels.length === 0) return;
 
     setIsSending(true);
     try {
@@ -202,23 +202,34 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         return;
       }
 
-      const { error } = await supabase
-        .from("activity_logs")
-        .insert({
-          user_id: user.id,
-          clinic_id: clinicData.clinic_id,
-          type: selectedChannel,
-          title: `${selectedChannel.toUpperCase()} message`,
-          summary: message,
-          contact_name: contactName,
-          contact_info: contactInfo || contact?.phone,
-          status: 'pending',
-          direction: 'outbound'
-        });
+      // Send message to all selected channels
+      const insertPromises = selectedChannels.map(channel =>
+        supabase
+          .from("activity_logs")
+          .insert({
+            user_id: user.id,
+            clinic_id: clinicData.clinic_id,
+            type: channel,
+            title: `${channel.toUpperCase()} message`,
+            summary: message,
+            contact_name: contactName,
+            contact_info: contactInfo || contact?.phone,
+            status: 'pending',
+            direction: 'outbound'
+          })
+      );
 
-      if (error) throw error;
+      const results = await Promise.all(insertPromises);
+      const errors = results.filter(r => r.error);
+      
+      if (errors.length > 0) {
+        throw new Error("Failed to send to some channels");
+      }
 
-      toast.success("Message sent successfully");
+      const channelText = selectedChannels.length === 1 
+        ? selectedChannels[0].toUpperCase()
+        : `${selectedChannels.length} channels`;
+      toast.success(`Message sent via ${channelText}`);
       setMessage("");
       loadContactHistory();
     } catch (error) {
@@ -227,6 +238,18 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
     } finally {
       setIsSending(false);
     }
+  };
+
+  const toggleChannel = (channel: string) => {
+    setSelectedChannels(prev => {
+      if (prev.includes(channel)) {
+        // Don't allow deselecting if it's the only channel
+        if (prev.length === 1) return prev;
+        return prev.filter(c => c !== channel);
+      } else {
+        return [...prev, channel];
+      }
+    });
   };
 
   const formatDateTime = (dateString: string) => {
@@ -586,33 +609,33 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                         <div className="flex gap-1">
                           <Button
                             type="button"
-                            variant={selectedChannel === 'sms' ? 'default' : 'outline'}
+                            variant={selectedChannels.includes('sms') ? 'default' : 'outline'}
                             size="sm"
-                            onClick={() => setSelectedChannel('sms')}
+                            onClick={() => toggleChannel('sms')}
                           >
                             <MessageSquare className="h-4 w-4" />
                           </Button>
                           <Button
                             type="button"
-                            variant={selectedChannel === 'whatsapp' ? 'default' : 'outline'}
+                            variant={selectedChannels.includes('whatsapp') ? 'default' : 'outline'}
                             size="sm"
-                            onClick={() => setSelectedChannel('whatsapp')}
+                            onClick={() => toggleChannel('whatsapp')}
                           >
                             WhatsApp
                           </Button>
                           <Button
                             type="button"
-                            variant={selectedChannel === 'instagram' ? 'default' : 'outline'}
+                            variant={selectedChannels.includes('instagram') ? 'default' : 'outline'}
                             size="sm"
-                            onClick={() => setSelectedChannel('instagram')}
+                            onClick={() => toggleChannel('instagram')}
                           >
                             <Instagram className="h-4 w-4" />
                           </Button>
                           <Button
                             type="button"
-                            variant={selectedChannel === 'messenger' ? 'default' : 'outline'}
+                            variant={selectedChannels.includes('messenger') ? 'default' : 'outline'}
                             size="sm"
-                            onClick={() => setSelectedChannel('messenger')}
+                            onClick={() => toggleChannel('messenger')}
                           >
                             <Facebook className="h-4 w-4" />
                           </Button>
@@ -626,10 +649,13 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                       />
                       <Button 
                         onClick={handleSendMessage} 
-                        disabled={!message.trim() || isSending}
+                        disabled={!message.trim() || isSending || selectedChannels.length === 0}
                         className="w-full"
                       >
-                        {isSending ? "Sending..." : `Send via ${selectedChannel.toUpperCase()}`}
+                        {isSending ? "Sending..." : selectedChannels.length === 1 
+                          ? `Send via ${selectedChannels[0].toUpperCase()}` 
+                          : `Send to ${selectedChannels.length} channels`
+                        }
                       </Button>
                     </div>
                   </Card>
