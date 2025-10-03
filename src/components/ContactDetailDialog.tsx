@@ -572,7 +572,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                             size="sm"
                             onClick={() => setSelectedChannel('whatsapp')}
                           >
-                            <Phone className="h-4 w-4" />
+                            WhatsApp
                           </Button>
                           <Button
                             type="button"
