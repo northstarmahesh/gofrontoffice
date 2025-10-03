@@ -47,6 +47,11 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     instagram: false,
     messenger: false,
   });
+  const [connectedNumbers, setConnectedNumbers] = useState<{
+    phone?: string;
+    sms?: string;
+    whatsapp?: string;
+  }>({});
 
   useEffect(() => {
     loadLocations();
@@ -59,6 +64,28 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       loadSettings();
       loadSchedules();
       checkConnectionStatus();
+
+      // Set up real-time subscription for phone number changes
+      const channel = supabase
+        .channel(`phone-numbers-${selectedLocation}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'clinic_phone_numbers',
+            filter: `location_id=eq.${selectedLocation}`
+          },
+          () => {
+            console.log('Phone number changed, refreshing status...');
+            checkConnectionStatus();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [selectedLocation]);
 
@@ -197,7 +224,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       // Check phone numbers
       const { data: phoneNumbers } = await supabase
         .from("clinic_phone_numbers")
-        .select("channels, is_verified")
+        .select("phone_number, channels, is_verified")
         .eq("location_id", selectedLocation)
         .eq("is_active", true);
 
@@ -212,17 +239,29 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
         messenger: currentLocation?.facebook_connected || false,
       };
 
+      const numbers: { phone?: string; sms?: string; whatsapp?: string } = {};
+
       if (phoneNumbers) {
         phoneNumbers.forEach((phone) => {
           if (phone.is_verified && phone.channels) {
-            if (phone.channels.includes("voice")) status.phone = true;
-            if (phone.channels.includes("sms")) status.sms = true;
-            if (phone.channels.includes("whatsapp")) status.whatsapp = true;
+            if (phone.channels.includes("voice")) {
+              status.phone = true;
+              numbers.phone = phone.phone_number;
+            }
+            if (phone.channels.includes("sms")) {
+              status.sms = true;
+              numbers.sms = phone.phone_number;
+            }
+            if (phone.channels.includes("whatsapp")) {
+              status.whatsapp = true;
+              numbers.whatsapp = phone.phone_number;
+            }
           }
         });
       }
 
       setConnectionStatus(status);
+      setConnectedNumbers(numbers);
     } catch (error) {
       console.error("Error checking connection status:", error);
     }
@@ -519,12 +558,17 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Phone className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="phone" className="text-sm font-semibold cursor-pointer">Phone Calls</Label>
-                    {!connectionStatus.phone && (
-                      <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20 text-xs">
-                        Not Connected
-                      </Badge>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="phone" className="text-sm font-semibold cursor-pointer">Phone Calls</Label>
+                      {!connectionStatus.phone && (
+                        <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20 text-xs">
+                          Not Connected
+                        </Badge>
+                      )}
+                    </div>
+                    {connectionStatus.phone && connectedNumbers.phone && (
+                      <p className="text-xs text-muted-foreground">{connectedNumbers.phone}</p>
                     )}
                   </div>
                 </div>
@@ -588,12 +632,17 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="sms" className="text-sm font-semibold cursor-pointer">SMS</Label>
-                    {!connectionStatus.sms && (
-                      <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20 text-xs">
-                        Not Connected
-                      </Badge>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="sms" className="text-sm font-semibold cursor-pointer">SMS</Label>
+                      {!connectionStatus.sms && (
+                        <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20 text-xs">
+                          Not Connected
+                        </Badge>
+                      )}
+                    </div>
+                    {connectionStatus.sms && connectedNumbers.sms && (
+                      <p className="text-xs text-muted-foreground">{connectedNumbers.sms}</p>
                     )}
                   </div>
                 </div>
@@ -657,12 +706,17 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="whatsapp" className="text-sm font-semibold cursor-pointer">WhatsApp</Label>
-                    {!connectionStatus.whatsapp && (
-                      <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20 text-xs">
-                        Not Connected
-                      </Badge>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="whatsapp" className="text-sm font-semibold cursor-pointer">WhatsApp</Label>
+                      {!connectionStatus.whatsapp && (
+                        <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20 text-xs">
+                          Not Connected
+                        </Badge>
+                      )}
+                    </div>
+                    {connectionStatus.whatsapp && connectedNumbers.whatsapp && (
+                      <p className="text-xs text-muted-foreground">{connectedNumbers.whatsapp}</p>
                     )}
                   </div>
                 </div>
