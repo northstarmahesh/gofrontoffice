@@ -534,9 +534,22 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   id="phone"
                   checked={channels.phone}
                   onCheckedChange={() => handleChannelToggle("phone")}
+                  disabled={!connectionStatus.phone}
                 />
               </div>
-              {channels.phone && (
+              {!connectionStatus.phone ? (
+                <div className="pl-8 text-sm text-muted-foreground bg-muted/30 p-3 rounded">
+                  <p className="font-medium text-foreground mb-1">Setup Required</p>
+                  <p>Connect a phone number to enable voice calls.</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-primary"
+                    onClick={() => navigate("/?tab=clinic-management")}
+                  >
+                    Go to Integrations & Tools →
+                  </Button>
+                </div>
+              ) : channels.phone && (
                 <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
@@ -590,9 +603,22 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   id="sms"
                   checked={channels.sms}
                   onCheckedChange={() => handleChannelToggle("sms")}
+                  disabled={!connectionStatus.sms}
                 />
               </div>
-              {channels.sms && (
+              {!connectionStatus.sms ? (
+                <div className="pl-8 text-sm text-muted-foreground bg-muted/30 p-3 rounded">
+                  <p className="font-medium text-foreground mb-1">Setup Required</p>
+                  <p>Connect a phone number with SMS capability.</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-primary"
+                    onClick={() => navigate("/?tab=clinic-management")}
+                  >
+                    Go to Integrations & Tools →
+                  </Button>
+                </div>
+              ) : channels.sms && (
                 <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
@@ -646,9 +672,22 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   id="whatsapp"
                   checked={channels.whatsapp}
                   onCheckedChange={() => handleChannelToggle("whatsapp")}
+                  disabled={!connectionStatus.whatsapp}
                 />
               </div>
-              {channels.whatsapp && (
+              {!connectionStatus.whatsapp ? (
+                <div className="pl-8 text-sm text-muted-foreground bg-muted/30 p-3 rounded">
+                  <p className="font-medium text-foreground mb-1">Setup Required</p>
+                  <p>Connect a WhatsApp Business number.</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-primary"
+                    onClick={() => navigate("/?tab=clinic-management")}
+                  >
+                    Go to Integrations & Tools →
+                  </Button>
+                </div>
+              ) : channels.whatsapp && (
                 <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
@@ -702,9 +741,22 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   id="instagram"
                   checked={channels.instagram}
                   onCheckedChange={() => handleChannelToggle("instagram")}
+                  disabled={!connectionStatus.instagram}
                 />
               </div>
-              {channels.instagram && (
+              {!connectionStatus.instagram ? (
+                <div className="pl-8 text-sm text-muted-foreground bg-muted/30 p-3 rounded">
+                  <p className="font-medium text-foreground mb-1">Setup Required</p>
+                  <p>Connect your Instagram account.</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-primary"
+                    onClick={() => navigate("/?tab=clinic-management")}
+                  >
+                    Go to Integrations & Tools →
+                  </Button>
+                </div>
+              ) : channels.instagram && (
                 <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
@@ -758,9 +810,22 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   id="messenger"
                   checked={channels.messenger}
                   onCheckedChange={() => handleChannelToggle("messenger")}
+                  disabled={!connectionStatus.messenger}
                 />
               </div>
-              {channels.messenger && (
+              {!connectionStatus.messenger ? (
+                <div className="pl-8 text-sm text-muted-foreground bg-muted/30 p-3 rounded">
+                  <p className="font-medium text-foreground mb-1">Setup Required</p>
+                  <p>Connect your Facebook Messenger.</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-primary"
+                    onClick={() => navigate("/?tab=clinic-management")}
+                  >
+                    Go to Integrations & Tools →
+                  </Button>
+                </div>
+              ) : channels.messenger && (
                 <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button

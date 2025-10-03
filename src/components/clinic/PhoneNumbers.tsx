@@ -184,18 +184,18 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Phone className="h-5 w-5 text-primary" />
-            <CardTitle>Phone Numbers</CardTitle>
+            <CardTitle>Buy Phone Numbers</CardTitle>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Number
+                Buy Number
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Phone Number</DialogTitle>
+                <DialogTitle>Buy Phone Number</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -271,14 +271,14 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
                 </div>
 
                 <Button type="submit" className="w-full">
-                  Add Phone Number
+                  Buy Phone Number
                 </Button>
               </form>
             </DialogContent>
           </Dialog>
         </div>
         <CardDescription>
-          Manage phone numbers for your clinic locations. Add new numbers or edit existing ones configured during location setup.
+          Purchase phone numbers for your clinic locations. Add new numbers or edit existing ones configured during location setup.
         </CardDescription>
       </CardHeader>
       <CardContent>

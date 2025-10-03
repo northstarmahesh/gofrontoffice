@@ -54,20 +54,12 @@ const integrations = [
     providers: ["Facebook Messenger"],
   },
   {
-    id: "swedish-crm",
-    name: "Swedish CRMs",
-    description: "Popular CRM systems in the Swedish market",
+    id: "crm",
+    name: "CRM Systems",
+    description: "Connect your customer relationship management platform",
     icon: Database,
     status: "not_connected",
-    providers: ["Lime CRM", "Visma", "Fortnox", "Ongoing WMS"],
-  },
-  {
-    id: "international-crm",
-    name: "International CRMs",
-    description: "Connect to major international CRM platforms",
-    icon: Database,
-    status: "not_connected",
-    providers: ["Salesforce", "HubSpot", "Zoho CRM", "Pipedrive"],
+    providers: ["Salesforce", "HubSpot", "Zoho CRM", "Pipedrive", "Lime CRM"],
   },
   {
     id: "booking",
@@ -75,7 +67,7 @@ const integrations = [
     description: "Connect appointment booking platforms",
     icon: Clock,
     status: "not_connected",
-    providers: ["Calendly", "Calendar.com", "Acuity Scheduling", "Booksy"],
+    providers: ["Clinicbuddy", "Bokadirekt", "Google Sheets", "Airtable"],
   },
 ];
 
