@@ -25,6 +25,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [aiSystemOpen, setAiSystemOpen] = useState(true);
   const [channels, setChannels] = useState({
     phone: true,
     sms: true,
@@ -399,23 +400,29 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
         )}
       </div>
 
-      {/* AI Response System */}
+      {/* AI Response System - Collapsible */}
       <Card className="border-0 p-6 shadow-lg">
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="rounded-xl bg-secondary/10 p-3">
-              <Bot className="h-6 w-6 text-secondary" />
+        <Collapsible open={aiSystemOpen} onOpenChange={setAiSystemOpen}>
+          <CollapsibleTrigger className="w-full">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-secondary/10 p-3">
+                  <Bot className="h-6 w-6 text-secondary" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-foreground">AI Response System</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {aiSystemOpen ? "Configure how AI handles each channel" : "Click to expand channel settings"}
+                  </p>
+                </div>
+              </div>
+              <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${aiSystemOpen ? "rotate-180" : ""}`} />
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-foreground">AI Response System</h3>
-              <p className="text-sm text-muted-foreground">Configure how AI handles each channel</p>
-            </div>
-          </div>
+          </CollapsibleTrigger>
 
-        </div>
-
-        <div className="border-t pt-4">
-          <p className="text-sm font-semibold text-muted-foreground mb-4">Channel Settings</p>
+          <CollapsibleContent className="mt-6">
+            <div className="border-t pt-4">
+              <p className="text-sm font-semibold text-muted-foreground mb-4">Channel Settings</p>
           
           <div className="grid gap-3">
             {/* Phone Calls */}
@@ -663,7 +670,9 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
               )}
             </div>
           </div>
-        </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       {/* Assistant Schedule - Collapsible */}
