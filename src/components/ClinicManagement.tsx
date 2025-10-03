@@ -7,10 +7,12 @@ import { TeamManagement } from "./clinic/TeamManagement";
 import { ConnectedServices } from "./clinic/ConnectedServices";
 import { ClinicOnboarding } from "./clinic/ClinicOnboarding";
 import { IntegrationsTools } from "./clinic/IntegrationsTools";
+import { TaskRouting } from "./clinic/TaskRouting";
 import { toast } from "sonner";
 
 export const ClinicManagement = () => {
   const [clinicId, setClinicId] = useState<string | null>(null);
+  const [locationId, setLocationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState(false);
 
@@ -42,6 +44,18 @@ export const ClinicManagement = () => {
       if (clinicUser) {
         setClinicId(clinicUser.clinic_id);
         setHasClinic(true);
+        
+        // Load first location for this clinic
+        const { data: locationData } = await supabase
+          .from("clinic_locations")
+          .select("id")
+          .eq("clinic_id", clinicUser.clinic_id)
+          .limit(1)
+          .maybeSingle();
+        
+        if (locationData) {
+          setLocationId(locationData.id);
+        }
       }
     } catch (error) {
       console.error("Error:", error);
@@ -79,10 +93,11 @@ export const ClinicManagement = () => {
       </div>
 
       <Tabs defaultValue="info" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="info">Info</TabsTrigger>
           <TabsTrigger value="intelligence">Assistant Intelligence</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
+          <TabsTrigger value="routing">Task Routing</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
 
@@ -96,6 +111,16 @@ export const ClinicManagement = () => {
 
         <TabsContent value="tools" className="mt-6">
           <IntegrationsTools clinicId={clinicId!} />
+        </TabsContent>
+
+        <TabsContent value="routing" className="mt-6">
+          {locationId ? (
+            <TaskRouting clinicId={clinicId!} locationId={locationId} />
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Please create a location first to configure task routing</p>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="team" className="mt-6">

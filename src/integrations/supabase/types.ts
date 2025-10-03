@@ -84,6 +84,7 @@ export type Database = {
           end_time: string
           id: string
           is_available: boolean | null
+          location_id: string | null
           start_time: string
           updated_at: string | null
           user_id: string
@@ -94,6 +95,7 @@ export type Database = {
           end_time?: string
           id?: string
           is_available?: boolean | null
+          location_id?: string | null
           start_time?: string
           updated_at?: string | null
           user_id: string
@@ -104,11 +106,20 @@ export type Database = {
           end_time?: string
           id?: string
           is_available?: boolean | null
+          location_id?: string | null
           start_time?: string
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "assistant_schedules_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       assistant_settings: {
         Row: {
@@ -117,6 +128,7 @@ export type Database = {
           id: string
           instagram_delay_seconds: number | null
           instagram_enabled: boolean | null
+          location_id: string | null
           messenger_delay_seconds: number | null
           messenger_enabled: boolean | null
           phone_mode: string | null
@@ -133,6 +145,7 @@ export type Database = {
           id?: string
           instagram_delay_seconds?: number | null
           instagram_enabled?: boolean | null
+          location_id?: string | null
           messenger_delay_seconds?: number | null
           messenger_enabled?: boolean | null
           phone_mode?: string | null
@@ -149,6 +162,7 @@ export type Database = {
           id?: string
           instagram_delay_seconds?: number | null
           instagram_enabled?: boolean | null
+          location_id?: string | null
           messenger_delay_seconds?: number | null
           messenger_enabled?: boolean | null
           phone_mode?: string | null
@@ -160,6 +174,13 @@ export type Database = {
           whatsapp_enabled?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "assistant_settings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assistant_settings_user_id_fkey"
             columns: ["user_id"]
@@ -584,6 +605,53 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      task_routing_rules: {
+        Row: {
+          assigned_user_ids: string[] | null
+          assignment_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          location_id: string
+          priority_filter: string | null
+          rule_name: string
+          source_filter: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_user_ids?: string[] | null
+          assignment_type: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id: string
+          priority_filter?: string | null
+          rule_name: string
+          source_filter?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_user_ids?: string[] | null
+          assignment_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id?: string
+          priority_filter?: string | null
+          rule_name?: string
+          source_filter?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_routing_rules_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {

@@ -45,10 +45,15 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
 
   useEffect(() => {
     loadLocations();
-    loadSettings();
-    loadSchedules();
     loadPendingTasks();
   }, []);
+
+  useEffect(() => {
+    if (selectedLocation) {
+      loadSettings();
+      loadSchedules();
+    }
+  }, [selectedLocation]);
 
   const loadLocations = async () => {
     try {
@@ -78,17 +83,16 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
   };
 
   const loadSettings = async () => {
+    if (!selectedLocation) return;
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { data, error } = await supabase
         .from("assistant_settings")
         .select("*")
-        .eq("user_id", user.id)
-        .single();
+        .eq("location_id", selectedLocation)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') throw error;
 
       if (data) {
         const globalMode = data.auto_pilot_enabled ? "autopilot" : "copilot";
@@ -99,7 +103,6 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
           instagram: data.instagram_enabled,
           messenger: data.messenger_enabled,
         });
-        // For now, use the same mode for all channels (can be customized per channel later)
         setChannelModes({
           phone: globalMode,
           sms: globalMode,
@@ -107,6 +110,19 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
           instagram: globalMode,
           messenger: globalMode,
         });
+      } else {
+        // Create default settings for this location
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { error: insertError } = await supabase
+          .from("assistant_settings")
+          .insert({
+            user_id: user.id,
+            location_id: selectedLocation,
+          });
+        
+        if (insertError) console.error("Error creating default settings:", insertError);
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -116,14 +132,13 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
   };
 
   const loadSchedules = async () => {
+    if (!selectedLocation) return;
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { data, error } = await supabase
         .from("assistant_schedules")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("location_id", selectedLocation)
         .order("day_of_week");
 
       if (error) throw error;
@@ -166,14 +181,13 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
   };
 
   const updateSettings = async (updates: any) => {
+    if (!selectedLocation) return;
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { error } = await supabase
         .from("assistant_settings")
         .update(updates)
-        .eq("user_id", user.id);
+        .eq("location_id", selectedLocation);
 
       if (error) throw error;
     } catch (error) {
@@ -217,19 +231,22 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
 
 
   const handleScheduleSave = async () => {
+    if (!selectedLocation) return;
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Delete existing schedules
+      // Delete existing schedules for this location
       await supabase
         .from("assistant_schedules")
         .delete()
-        .eq("user_id", user.id);
+        .eq("location_id", selectedLocation);
 
       // Insert new schedules
       const schedulesToInsert = schedules.map((schedule) => ({
         user_id: user.id,
+        location_id: selectedLocation,
         day_of_week: schedule.day_of_week,
         start_time: schedule.start_time,
         end_time: schedule.end_time,
