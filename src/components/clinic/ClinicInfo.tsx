@@ -3,13 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Building2, BookOpen, Plus, Trash2, Globe, FileText, MapPin, Lock, Search } from "lucide-react";
+import { Building2, BookOpen, Plus, Trash2, Globe as GlobeIcon, FileText, Mail } from "lucide-react";
+import { LocationManager } from "./LocationManager";
 
 interface ClinicInfoProps {
   clinicId?: string;
@@ -30,9 +30,8 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
-    email: "",
-    phone: "",
-    address: "",
+    website: "",
+    admin_email: "",
   });
 
   // Knowledge Base state
@@ -42,10 +41,6 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [urls, setUrls] = useState(["", "", ""]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [addressLocked, setAddressLocked] = useState(false);
-  const [addressQuery, setAddressQuery] = useState("");
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     if (clinicId) {
@@ -60,32 +55,6 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
       loadEntries();
     }
   }, [clinicId]);
-
-  // Debounced address search
-  useEffect(() => {
-    if (!addressQuery || addressLocked) {
-      setAddressSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            addressQuery
-          )}&limit=5`
-        );
-        const data = await response.json();
-        setAddressSuggestions(data);
-        setShowSuggestions(data.length > 0);
-      } catch (error) {
-        console.error("Address search error:", error);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [addressQuery, addressLocked]);
 
   const loadClinicData = async () => {
     const { data, error } = await supabase
@@ -103,14 +72,9 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
       setFormData({
         name: data.name || "",
         slug: data.slug || "",
-        email: data.email || "",
-        phone: data.phone || "",
-        address: data.address || "",
+        website: data.website || "",
+        admin_email: data.admin_email || "",
       });
-      setAddressQuery(data.address || "");
-      if (data.address) {
-        setAddressLocked(true);
-      }
     }
   };
 
@@ -166,20 +130,6 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAddressSelect = (suggestion: any) => {
-    const fullAddress = suggestion.display_name;
-    setFormData({ ...formData, address: fullAddress });
-    setAddressQuery(fullAddress);
-    setAddressLocked(true);
-    setShowSuggestions(false);
-    toast.success("Address selected");
-  };
-
-  const handleAddressUnlock = () => {
-    setAddressLocked(false);
-    setAddressQuery(formData.address);
   };
 
   const generateSlug = () => {
@@ -303,7 +253,7 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
             <CardTitle>Clinic Information</CardTitle>
           </div>
           <CardDescription>
-            Basic information about your clinic
+            Main information about your clinic organization
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -334,101 +284,32 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="contact@clinic.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="website" className="flex items-center gap-2">
+                <GlobeIcon className="h-4 w-4" />
+                Website
+              </Label>
+              <Input
+                id="website"
+                type="url"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                placeholder="https://www.example.com"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address" className="flex items-center gap-2 justify-between">
-                <span className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Address
-                </span>
-                {addressLocked && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleAddressUnlock}
-                    className="h-auto py-1 px-2 text-xs"
-                  >
-                    <Lock className="h-3 w-3 mr-1" />
-                    Unlock to edit
-                  </Button>
-                )}
+              <Label htmlFor="admin_email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Main Admin Email
               </Label>
-              <div className="relative">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="address"
-                    value={addressLocked ? formData.address : addressQuery}
-                    onChange={(e) => {
-                      setAddressQuery(e.target.value);
-                      if (!addressLocked) {
-                        setFormData({ ...formData, address: e.target.value });
-                      }
-                    }}
-                    onFocus={() => {
-                      if (!addressLocked && addressQuery) {
-                        setShowSuggestions(true);
-                      }
-                    }}
-                    placeholder="Start typing an address..."
-                    disabled={addressLocked}
-                    className={`pl-9 ${addressLocked ? "opacity-75" : ""}`}
-                  />
-                </div>
-                {showSuggestions && addressSuggestions.length > 0 && !addressLocked && (
-                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
-                    {addressSuggestions.map((suggestion, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => handleAddressSelect(suggestion)}
-                        className="w-full px-4 py-3 text-left hover:bg-accent transition-colors border-b last:border-b-0"
-                      >
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {suggestion.display_name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {suggestion.type}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {addressLocked 
-                  ? "Address selected. Click 'Unlock to edit' to change." 
-                  : "Start typing to see address suggestions"}
-              </p>
+              <Input
+                id="admin_email"
+                type="email"
+                value={formData.admin_email}
+                onChange={(e) => setFormData({ ...formData, admin_email: e.target.value })}
+                placeholder="admin@clinic.com"
+              />
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
@@ -437,6 +318,9 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Locations Section */}
+      {clinicId && <LocationManager clinicId={clinicId} />}
 
       {/* Knowledge Base Section */}
       {clinicId && (
@@ -462,7 +346,7 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
                   <Tabs defaultValue="urls" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="urls">
-                        <Globe className="h-4 w-4 mr-2" />
+                        <GlobeIcon className="h-4 w-4 mr-2" />
                         Website URLs
                       </TabsTrigger>
                       <TabsTrigger value="pdf">
@@ -547,7 +431,7 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
                       {entry.source_type === "pdf" ? (
                         <FileText className="h-5 w-5 text-muted-foreground" />
                       ) : (
-                        <Globe className="h-5 w-5 text-muted-foreground" />
+                        <GlobeIcon className="h-5 w-5 text-muted-foreground" />
                       )}
                       <div>
                         <p className="font-medium">{entry.title || "Untitled"}</p>

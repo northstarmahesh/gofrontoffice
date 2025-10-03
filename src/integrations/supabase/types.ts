@@ -257,6 +257,47 @@ export type Database = {
           },
         ]
       }
+      clinic_locations: {
+        Row: {
+          address: string | null
+          admin_email: string | null
+          clinic_id: string
+          created_at: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          admin_email?: string | null
+          clinic_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          admin_email?: string | null
+          clinic_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_locations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_phone_numbers: {
         Row: {
           channel: string
@@ -378,6 +419,7 @@ export type Database = {
       clinics: {
         Row: {
           address: string | null
+          admin_email: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -387,9 +429,11 @@ export type Database = {
           slug: string
           timezone: string | null
           updated_at: string | null
+          website: string | null
         }
         Insert: {
           address?: string | null
+          admin_email?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -399,9 +443,11 @@ export type Database = {
           slug: string
           timezone?: string | null
           updated_at?: string | null
+          website?: string | null
         }
         Update: {
           address?: string | null
+          admin_email?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -411,6 +457,7 @@ export type Database = {
           slug?: string
           timezone?: string | null
           updated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }
