@@ -21,6 +21,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     name: string;
     info: string;
     id?: string;
+    draftMessage?: string;
   } | null>(null);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
@@ -96,6 +97,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       isInternal: false,
       contact_name: "Emma Rodriguez",
       contact_info: "+46 76 345 6789",
+      draftMessage: "Hi Emma! Thanks for reaching out. I'd be happy to help you reschedule your appointment. We have availability next Tuesday at 2 PM or Thursday at 10 AM. Which time works better for you?",
     },
     {
       id: "dummy2",
@@ -109,6 +111,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       isInternal: false,
       contact_name: "Mike Johnson",
       contact_info: "+46 70 123 4567",
+      draftMessage: "Hello Mike! For your prescription refill, please call us at least 48 hours before you run out. We'll need to check with your doctor for authorization. You can also use our online refill request form on our website.",
     },
     {
       id: "dummy3",
@@ -122,6 +125,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       isInternal: false,
       contact_name: "Sarah Williams",
       contact_info: "@sarah_williams",
+      draftMessage: "Hi Sarah! Thanks for your interest! Our teeth whitening packages start at 2,500 SEK for a single session, or 4,500 SEK for a complete package (3 sessions). The full cleaning and whitening combo is 5,800 SEK. Would you like to book a free consultation?",
     },
   ];
 
@@ -173,11 +177,12 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     const isContactTask = task.contact_name || !task.isInternal;
     
     if (isContactTask && task.contact_name) {
-      // Open contact history dialog for contact tasks
+      // Open contact history dialog for contact tasks with draft message
       setSelectedContactForHistory({
         name: task.contact_name,
         info: task.contact_info || "",
-        id: undefined // Will be looked up in ContactDetailDialog
+        id: undefined, // Will be looked up in ContactDetailDialog
+        draftMessage: task.draftMessage,
       });
       setContactDialogOpen(true);
     } else {
@@ -359,6 +364,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           open={contactDialogOpen}
           onOpenChange={setContactDialogOpen}
           onContactUpdated={loadTasks}
+          draftMessage={selectedContactForHistory.draftMessage}
           onViewFullProfile={() => {
             if (onNavigateToContact && selectedContactForHistory.name) {
               onNavigateToContact(selectedContactForHistory.name);

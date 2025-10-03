@@ -33,6 +33,7 @@ interface ContactDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   onContactUpdated?: () => void;
   onViewFullProfile?: () => void;
+  draftMessage?: string;
 }
 
 interface Contact {
@@ -43,7 +44,7 @@ interface Contact {
   notes?: string;
 }
 
-const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpenChange, onContactUpdated, onViewFullProfile }: ContactDetailDialogProps) => {
+const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpenChange, onContactUpdated, onViewFullProfile, draftMessage }: ContactDetailDialogProps) => {
   const [activityHistory, setActivityHistory] = useState<ActivityLog[]>([]);
   const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(false);
@@ -62,8 +63,15 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
     if (open && (contactId || contactName)) {
       loadContactData();
       loadContactHistory();
+      // Pre-fill message with draft if provided
+      if (draftMessage) {
+        setMessage(draftMessage);
+      }
+    } else {
+      // Clear message when dialog closes
+      setMessage("");
     }
-  }, [open, contactId, contactName]);
+  }, [open, contactId, contactName, draftMessage]);
 
   const loadContactData = async () => {
     if (contactId) {
@@ -567,7 +575,14 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                   <Card className="border-2 mt-4">
                     <div className="p-4 space-y-3">
                       <div className="flex items-center justify-between mb-2">
-                        <Label className="text-sm font-semibold">Send Message</Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-sm font-semibold">Send Message</Label>
+                          {draftMessage && (
+                            <Badge variant="secondary" className="text-xs">
+                              AI Draft
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex gap-1">
                           <Button
                             type="button"
