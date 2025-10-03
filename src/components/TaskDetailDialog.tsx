@@ -101,7 +101,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
         .single();
 
       if (logError) throw logError;
-      setRelatedLog(logData);
+      setRelatedLog(logData as ActivityLog);
 
       // Load activity history for the same contact
       if (logData?.contact_name) {
@@ -109,11 +109,11 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
           .from("activity_logs")
           .select("*")
           .eq("contact_name", logData.contact_name)
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: true })
           .limit(10);
 
         if (historyError) throw historyError;
-        setActivityHistory(historyData || []);
+        setActivityHistory((historyData as ActivityLog[]) || []);
       }
     } catch (error) {
       console.error("Error loading task details:", error);
@@ -270,8 +270,8 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
   };
 
   const isPhoneCall = (type: string) => {
-    const typeUpper = type.toUpperCase();
-    return typeUpper.includes('PHONE') || typeUpper.includes('CALL') || typeUpper.includes('VOICE');
+    const typeLower = type.toLowerCase();
+    return typeLower === 'call' || typeLower.includes('phone') || typeLower.includes('voice');
   };
 
   if (!task) return null;

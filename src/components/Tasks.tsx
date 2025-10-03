@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Clock, AlertCircle, Bot, User } from "lucide-react";
 import ActivityLogs from "./ActivityLogs";
 import TaskDetailDialog from "./TaskDetailDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TasksProps {
   onNavigateToContact?: (contactName: string) => void;
@@ -13,6 +14,66 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [humanTasks, setHumanTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadTasks();
+  }, [refreshKey]);
+
+  const loadTasks = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch tasks with their related activity logs
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          activity_logs!tasks_related_log_id_fkey (
+            contact_name,
+            contact_info,
+            summary,
+            type
+          )
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch message history for each task
+      const tasksWithHistory = await Promise.all(
+        (tasks || []).map(async (task) => {
+          const contactName = task.activity_logs?.contact_name;
+          if (!contactName) return task;
+
+          // Fetch all activity logs for this contact
+          const { data: history } = await supabase
+            .from('activity_logs')
+            .select('*')
+            .eq('contact_name', contactName)
+            .order('created_at', { ascending: true });
+
+          return {
+            ...task,
+            contact_name: contactName,
+            contact_info: task.activity_logs?.contact_info,
+            draft_message: task.description,
+            message_history: history,
+          };
+        })
+      );
+
+      setHumanTasks(tasksWithHistory);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTaskComplete = () => {
     setRefreshKey(prev => prev + 1);
@@ -48,83 +109,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       date: "Today",
       time: "10:15 AM",
       source: "Phone",
-    },
-  ];
-
-  const humanTasks = [
-    {
-      id: 4,
-      title: "Review prescription refill request",
-      description: "Mike Johnson - WhatsApp inquiry needs doctor approval",
-      priority: "high",
-      status: "pending",
-      date: "Today",
-      time: "8:30 AM",
-      source: "WhatsApp",
-      draft_message: "Hi Mike, I've reviewed your prescription refill request. Your doctor has approved the refill for 30 days. Please pick up your prescription at the pharmacy within 48 hours. Let me know if you have any questions!",
-      contact_name: "Mike Johnson",
-      contact_info: "+1 (555) 123-4567",
-      message_history: [
-        {
-          id: "h3",
-          title: "Previous interaction",
-          type: "SMS",
-          summary: "Appointment confirmation for next Tuesday at 3 PM",
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
-        },
-        {
-          id: "h4",
-          title: "Phone call",
-          type: "Phone Call",
-          summary: "Patient called requesting prescription refill for blood pressure medication. Confirmed dosage (10mg Lisinopril) and discussed potential side effects. Patient reported no current issues. Advised to schedule follow-up appointment next month.",
-          created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-          duration: "5:23",
-          direction: "inbound" as const,
-        },
-        {
-          id: "h1",
-          title: "Patient requested prescription refill",
-          type: "WhatsApp",
-          summary: "Mike: Hi, I need a refill on my blood pressure medication. Can you help?",
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        },
-        {
-          id: "h2",
-          title: "AI draft created",
-          type: "Draft",
-          summary: "Hi Mike, I've reviewed your prescription refill request. Your doctor has approved the refill for 30 days. Please pick up your prescription at the pharmacy within 48 hours. Let me know if you have any questions!",
-          created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-        },
-      ],
-    },
-    {
-      id: 5,
-      title: "Approve draft reply for new patient",
-      description: "Instagram DM about services and pricing",
-      priority: "medium",
-      status: "pending",
-      date: "Today",
-      time: "2:30 PM",
-      source: "Instagram",
-      draft_message: "Thank you for your interest in our services! We offer comprehensive dental care including cleanings ($150), fillings ($200-$400), and cosmetic procedures. Would you like to schedule a consultation? We have availability next week.",
-      contact_name: "Sarah Williams",
-      contact_info: "@sarahw_insta",
-      message_history: [
-        {
-          id: "h4",
-          title: "New patient inquiry",
-          type: "Instagram DM",
-          summary: "Sarah: Hi! What services do you offer and what are your prices?",
-          created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
-        },
-        {
-          id: "h5",
-          title: "AI draft created",
-          type: "Draft",
-          summary: "Thank you for your interest in our services! We offer comprehensive dental care including cleanings ($150), fillings ($200-$400), and cosmetic procedures. Would you like to schedule a consultation? We have availability next week.",
-          created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-        },
-      ],
     },
   ];
 
