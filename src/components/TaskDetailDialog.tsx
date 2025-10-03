@@ -328,9 +328,9 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                   )}
                 </div>
                 
-                {/* Chat-style messages */}
+                {/* Chat-style messages - reversed to show oldest first */}
                 <div className="space-y-3 bg-muted/30 rounded-lg p-4 max-h-[250px] overflow-y-auto">
-                  {(showAllHistory ? activityHistory : activityHistory.slice(0, 3)).map((log) => {
+                  {(showAllHistory ? [...activityHistory].reverse() : [...activityHistory].slice(0, 3).reverse()).map((log) => {
                     const fromAI = isFromAI(log.title, log.type);
                     return (
                       <div key={log.id} className={`flex gap-2 ${fromAI ? 'justify-end' : 'justify-start'}`}>
@@ -396,16 +396,17 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
 
             <Separator />
 
-            {/* Message Editor */}
+            {/* Draft Message to Send - At Bottom like WhatsApp */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">
-                Draft Message
+              <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Send className="h-4 w-4" />
+                Your Reply
               </label>
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message here..."
-                className="min-h-[150px] resize-none"
+                className="min-h-[120px] resize-none"
               />
             </div>
 
