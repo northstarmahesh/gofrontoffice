@@ -77,41 +77,86 @@ export type Database = {
           },
         ]
       }
+      assistant_schedules: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean | null
+          start_time: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          start_time?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          start_time?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       assistant_settings: {
         Row: {
           auto_pilot_enabled: boolean | null
           created_at: string | null
           id: string
+          instagram_delay_seconds: number | null
           instagram_enabled: boolean | null
+          messenger_delay_seconds: number | null
           messenger_enabled: boolean | null
           phone_mode: string | null
+          sms_delay_seconds: number | null
           sms_enabled: boolean | null
           updated_at: string | null
           user_id: string
+          whatsapp_delay_seconds: number | null
           whatsapp_enabled: boolean | null
         }
         Insert: {
           auto_pilot_enabled?: boolean | null
           created_at?: string | null
           id?: string
+          instagram_delay_seconds?: number | null
           instagram_enabled?: boolean | null
+          messenger_delay_seconds?: number | null
           messenger_enabled?: boolean | null
           phone_mode?: string | null
+          sms_delay_seconds?: number | null
           sms_enabled?: boolean | null
           updated_at?: string | null
           user_id: string
+          whatsapp_delay_seconds?: number | null
           whatsapp_enabled?: boolean | null
         }
         Update: {
           auto_pilot_enabled?: boolean | null
           created_at?: string | null
           id?: string
+          instagram_delay_seconds?: number | null
           instagram_enabled?: boolean | null
+          messenger_delay_seconds?: number | null
           messenger_enabled?: boolean | null
           phone_mode?: string | null
+          sms_delay_seconds?: number | null
           sms_enabled?: boolean | null
           updated_at?: string | null
           user_id?: string
+          whatsapp_delay_seconds?: number | null
           whatsapp_enabled?: boolean | null
         }
         Relationships: [

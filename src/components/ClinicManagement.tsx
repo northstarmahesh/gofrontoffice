@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClinicProfile } from "./clinic/ClinicProfile";
 import { KnowledgeBase } from "./clinic/KnowledgeBase";
-import { ScheduleManagement } from "./clinic/ScheduleManagement";
 import { PhoneNumbers } from "./clinic/PhoneNumbers";
 import { TeamManagement } from "./clinic/TeamManagement";
 import { ConnectedServices } from "./clinic/ConnectedServices";
@@ -80,11 +79,10 @@ export const ClinicManagement = () => {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="phones">Phones</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
@@ -99,10 +97,6 @@ export const ClinicManagement = () => {
 
         <TabsContent value="knowledge" className="mt-6">
           <KnowledgeBase clinicId={clinicId!} />
-        </TabsContent>
-
-        <TabsContent value="schedule" className="mt-6">
-          <ScheduleManagement clinicId={clinicId!} />
         </TabsContent>
 
         <TabsContent value="phones" className="mt-6">

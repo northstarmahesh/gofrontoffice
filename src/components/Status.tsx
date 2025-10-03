@@ -7,10 +7,21 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 
 interface StatusProps {
   onNavigateToTasks?: () => void;
 }
+
+interface Schedule {
+  id?: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+}
+
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const Status = ({ onNavigateToTasks }: StatusProps) => {
   const [loading, setLoading] = useState(true);
@@ -22,11 +33,19 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     instagram: false,
     messenger: false,
   });
+  const [delays, setDelays] = useState({
+    sms: 3,
+    whatsapp: 3,
+    instagram: 3,
+    messenger: 3,
+  });
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
 
   useEffect(() => {
     loadSettings();
     loadPendingTasks();
+    loadSchedules();
   }, []);
 
   const loadSettings = async () => {
@@ -50,6 +69,12 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
           whatsapp: data.whatsapp_enabled,
           instagram: data.instagram_enabled,
           messenger: data.messenger_enabled,
+        });
+        setDelays({
+          sms: data.sms_delay_seconds ?? 3,
+          whatsapp: data.whatsapp_delay_seconds ?? 3,
+          instagram: data.instagram_delay_seconds ?? 3,
+          messenger: data.messenger_delay_seconds ?? 3,
         });
       }
     } catch (error) {
@@ -76,6 +101,36 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
       setPendingTasks(data || []);
     } catch (error) {
       console.error("Error loading pending tasks:", error);
+    }
+  };
+
+  const loadSchedules = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("assistant_schedules")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("day_of_week");
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setSchedules(data);
+      } else {
+        // Initialize default schedules (24/7)
+        const defaultSchedules = DAYS.map((_, index) => ({
+          day_of_week: index,
+          start_time: "00:00",
+          end_time: "23:59",
+          is_available: true,
+        }));
+        setSchedules(defaultSchedules);
+      }
+    } catch (error) {
+      console.error("Error loading schedules:", error);
     }
   };
 
@@ -121,6 +176,55 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     setAutoPilotEnabled(newValue);
     await updateSettings({ auto_pilot_enabled: newValue });
     toast.success(`Messaging mode: ${newValue ? "Autopilot" : "Co-pilot"}`);
+  };
+
+  const handleDelayChange = async (channel: keyof typeof delays, value: number) => {
+    setDelays((prev) => ({ ...prev, [channel]: value }));
+    const updateKey = `${channel}_delay_seconds`;
+    await updateSettings({ [updateKey]: value });
+  };
+
+  const updateSchedule = (dayIndex: number, field: keyof Schedule, value: any) => {
+    setSchedules((prev) =>
+      prev.map((schedule) =>
+        schedule.day_of_week === dayIndex
+          ? { ...schedule, [field]: value }
+          : schedule
+      )
+    );
+  };
+
+  const handleSaveSchedule = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Delete existing schedules
+      await supabase
+        .from("assistant_schedules")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Insert new schedules
+      const schedulesToInsert = schedules.map((schedule) => ({
+        user_id: user.id,
+        day_of_week: schedule.day_of_week,
+        start_time: schedule.start_time,
+        end_time: schedule.end_time,
+        is_available: schedule.is_available,
+      }));
+
+      const { error } = await supabase
+        .from("assistant_schedules")
+        .insert(schedulesToInsert);
+
+      if (error) throw error;
+      toast.success("Schedule saved successfully!");
+      loadSchedules();
+    } catch (error: any) {
+      console.error("Error saving schedule:", error);
+      toast.error(error.message || "Failed to save schedule");
+    }
   };
 
   const stats = [
@@ -344,69 +448,192 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
           <p className="text-sm font-semibold text-muted-foreground mb-4">Active Channels</p>
           
           <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-6 w-6 text-muted-foreground" />
-              <Label htmlFor="sms" className="text-base font-semibold cursor-pointer">
-                SMS
-              </Label>
+          <div className="p-4 rounded-xl bg-muted/30">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                <Label htmlFor="sms" className="text-base font-semibold cursor-pointer">
+                  SMS
+                </Label>
+              </div>
+              <Switch
+                id="sms"
+                checked={channels.sms}
+                onCheckedChange={() => handleChannelToggle("sms")}
+                className="scale-125"
+              />
             </div>
-            <Switch
-              id="sms"
-              checked={channels.sms}
-              onCheckedChange={() => handleChannelToggle("sms")}
-              className="scale-125"
-            />
+            {channels.sms && (
+              <div className="ml-9">
+                <Label className="text-xs text-muted-foreground">Response Delay: {delays.sms}s</Label>
+                <Slider
+                  value={[delays.sms]}
+                  onValueChange={([value]) => handleDelayChange("sms", value)}
+                  min={0}
+                  max={30}
+                  step={1}
+                  className="mt-2"
+                />
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-6 w-6 text-muted-foreground" />
-              <Label htmlFor="whatsapp" className="text-base font-semibold cursor-pointer">
-                WhatsApp
-              </Label>
+          <div className="p-4 rounded-xl bg-muted/30">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                <Label htmlFor="whatsapp" className="text-base font-semibold cursor-pointer">
+                  WhatsApp
+                </Label>
+              </div>
+              <Switch
+                id="whatsapp"
+                checked={channels.whatsapp}
+                onCheckedChange={() => handleChannelToggle("whatsapp")}
+                className="scale-125"
+              />
             </div>
-            <Switch
-              id="whatsapp"
-              checked={channels.whatsapp}
-              onCheckedChange={() => handleChannelToggle("whatsapp")}
-              className="scale-125"
-            />
+            {channels.whatsapp && (
+              <div className="ml-9">
+                <Label className="text-xs text-muted-foreground">Response Delay: {delays.whatsapp}s</Label>
+                <Slider
+                  value={[delays.whatsapp]}
+                  onValueChange={([value]) => handleDelayChange("whatsapp", value)}
+                  min={0}
+                  max={30}
+                  step={1}
+                  className="mt-2"
+                />
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
-            <div className="flex items-center gap-3">
-              <Instagram className="h-6 w-6 text-muted-foreground" />
-              <Label htmlFor="instagram" className="text-base font-semibold cursor-pointer">
-                Instagram DM
-              </Label>
+          <div className="p-4 rounded-xl bg-muted/30">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <Instagram className="h-6 w-6 text-muted-foreground" />
+                <Label htmlFor="instagram" className="text-base font-semibold cursor-pointer">
+                  Instagram DM
+                </Label>
+              </div>
+              <Switch
+                id="instagram"
+                checked={channels.instagram}
+                onCheckedChange={() => handleChannelToggle("instagram")}
+                className="scale-125"
+              />
             </div>
-            <Switch
-              id="instagram"
-              checked={channels.instagram}
-              onCheckedChange={() => handleChannelToggle("instagram")}
-              className="scale-125"
-            />
+            {channels.instagram && (
+              <div className="ml-9">
+                <Label className="text-xs text-muted-foreground">Response Delay: {delays.instagram}s</Label>
+                <Slider
+                  value={[delays.instagram]}
+                  onValueChange={([value]) => handleDelayChange("instagram", value)}
+                  min={0}
+                  max={30}
+                  step={1}
+                  className="mt-2"
+                />
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
-            <div className="flex items-center gap-3">
-              <Facebook className="h-6 w-6 text-muted-foreground" />
-              <Label htmlFor="messenger" className="text-base font-semibold cursor-pointer">
-                Messenger
-              </Label>
+          <div className="p-4 rounded-xl bg-muted/30">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <Facebook className="h-6 w-6 text-muted-foreground" />
+                <Label htmlFor="messenger" className="text-base font-semibold cursor-pointer">
+                  Messenger
+                </Label>
+              </div>
+              <Switch
+                id="messenger"
+                checked={channels.messenger}
+                onCheckedChange={() => handleChannelToggle("messenger")}
+                className="scale-125"
+              />
             </div>
-            <Switch
-              id="messenger"
-              checked={channels.messenger}
-              onCheckedChange={() => handleChannelToggle("messenger")}
-              className="scale-125"
-            />
+            {channels.messenger && (
+              <div className="ml-9">
+                <Label className="text-xs text-muted-foreground">Response Delay: {delays.messenger}s</Label>
+                <Slider
+                  value={[delays.messenger]}
+                  onValueChange={([value]) => handleDelayChange("messenger", value)}
+                  min={0}
+                  max={30}
+                  step={1}
+                  className="mt-2"
+                />
+              </div>
+            )}
           </div>
           </div>
         </div>
       </Card>
 
+      {/* Assistant Schedule */}
+      <Card className="border-0 p-6 shadow-lg">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-xl bg-primary/10 p-3">
+            <Clock className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-foreground">Assistant Schedule</h3>
+            <p className="text-sm text-muted-foreground">Set when your assistant is available</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {schedules.map((schedule) => (
+            <div
+              key={schedule.day_of_week}
+              className="flex items-center gap-4 p-4 border rounded-lg"
+            >
+              <div className="flex items-center gap-2 w-32">
+                <Switch
+                  checked={schedule.is_available}
+                  onCheckedChange={(checked) =>
+                    updateSchedule(schedule.day_of_week, "is_available", checked)
+                  }
+                />
+                <Label className="font-medium">
+                  {DAYS[schedule.day_of_week]}
+                </Label>
+              </div>
+
+              {schedule.is_available && (
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    type="time"
+                    value={schedule.start_time}
+                    onChange={(e) =>
+                      updateSchedule(schedule.day_of_week, "start_time", e.target.value)
+                    }
+                    className="px-3 py-2 border rounded-md"
+                  />
+                  <span className="text-muted-foreground">to</span>
+                  <input
+                    type="time"
+                    value={schedule.end_time}
+                    onChange={(e) =>
+                      updateSchedule(schedule.day_of_week, "end_time", e.target.value)
+                    }
+                    className="px-3 py-2 border rounded-md"
+                  />
+                </div>
+              )}
+
+              {!schedule.is_available && (
+                <span className="text-muted-foreground">Off</span>
+              )}
+            </div>
+          ))}
+
+          <Button onClick={handleSaveSchedule} className="w-full">
+            Save Schedule
+          </Button>
+        </div>
+      </Card>
 
       {/* Analytics - Bigger, More Visual */}
       <div>
