@@ -108,7 +108,7 @@ const Index = () => {
   const renderView = () => {
     switch (currentView) {
       case "status":
-        return <Status onNavigateToTasks={() => setCurrentView("tasks")} />;
+        return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
       case "contacts":
         return <Contacts selectedContactName={selectedContactName} />;
       case "tasks":
@@ -116,7 +116,7 @@ const Index = () => {
       case "clinic":
         return <ClinicManagement />;
       default:
-        return <Status onNavigateToTasks={() => setCurrentView("tasks")} />;
+        return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
     }
   };
 

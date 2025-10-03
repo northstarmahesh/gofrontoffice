@@ -10,16 +10,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
-import { useNavigate } from "react-router-dom";
-
 interface StatusProps {
   onNavigateToTasks?: () => void;
+  onNavigateToClinic?: () => void;
 }
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-const Status = ({ onNavigateToTasks }: StatusProps) => {
-  const navigate = useNavigate();
+const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
   const { greeting, weather, backgroundGradient, emoji } = useGreetingAndWeather();
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<any[]>([]);
@@ -544,7 +542,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   <Button
                     variant="link"
                     className="p-0 h-auto text-primary"
-                    onClick={() => navigate("/?tab=clinic-management")}
+                    onClick={onNavigateToClinic}
                   >
                     Go to Integrations & Tools →
                   </Button>
@@ -573,7 +571,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     {channelModes.phone === "copilot" ? (
                       <>
                         <span className="font-medium text-foreground">Co-pilot:</span> AI transcribes calls and creates{" "}
-                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to review and respond
+                        <button onClick={onNavigateToTasks} className="text-primary hover:underline">tasks</button> for you to review and respond
                       </>
                     ) : (
                       <>
@@ -613,7 +611,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   <Button
                     variant="link"
                     className="p-0 h-auto text-primary"
-                    onClick={() => navigate("/?tab=clinic-management")}
+                    onClick={onNavigateToClinic}
                   >
                     Go to Integrations & Tools →
                   </Button>
@@ -642,7 +640,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     {channelModes.sms === "copilot" ? (
                       <>
                         <span className="font-medium text-foreground">Co-pilot:</span> AI drafts SMS replies as{" "}
-                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to approve before sending
+                        <button onClick={onNavigateToTasks} className="text-primary hover:underline">tasks</button> for you to approve before sending
                       </>
                     ) : (
                       <>
@@ -682,7 +680,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   <Button
                     variant="link"
                     className="p-0 h-auto text-primary"
-                    onClick={() => navigate("/?tab=clinic-management")}
+                    onClick={onNavigateToClinic}
                   >
                     Go to Integrations & Tools →
                   </Button>
@@ -711,7 +709,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     {channelModes.whatsapp === "copilot" ? (
                       <>
                         <span className="font-medium text-foreground">Co-pilot:</span> AI drafts WhatsApp replies as{" "}
-                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to approve before sending
+                        <button onClick={onNavigateToTasks} className="text-primary hover:underline">tasks</button> for you to approve before sending
                       </>
                     ) : (
                       <>
@@ -751,7 +749,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   <Button
                     variant="link"
                     className="p-0 h-auto text-primary"
-                    onClick={() => navigate("/?tab=clinic-management")}
+                    onClick={onNavigateToClinic}
                   >
                     Go to Integrations & Tools →
                   </Button>
@@ -780,7 +778,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     {channelModes.instagram === "copilot" ? (
                       <>
                         <span className="font-medium text-foreground">Co-pilot:</span> AI drafts Instagram replies as{" "}
-                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to approve before sending
+                        <button onClick={onNavigateToTasks} className="text-primary hover:underline">tasks</button> for you to approve before sending
                       </>
                     ) : (
                       <>
@@ -820,7 +818,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                   <Button
                     variant="link"
                     className="p-0 h-auto text-primary"
-                    onClick={() => navigate("/?tab=clinic-management")}
+                    onClick={onNavigateToClinic}
                   >
                     Go to Integrations & Tools →
                   </Button>
@@ -849,7 +847,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     {channelModes.messenger === "copilot" ? (
                       <>
                         <span className="font-medium text-foreground">Co-pilot:</span> AI drafts Messenger replies as{" "}
-                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to approve before sending
+                        <button onClick={onNavigateToTasks} className="text-primary hover:underline">tasks</button> for you to approve before sending
                       </>
                     ) : (
                       <>
