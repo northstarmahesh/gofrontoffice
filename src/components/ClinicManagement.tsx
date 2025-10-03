@@ -15,6 +15,7 @@ export const ClinicManagement = () => {
   const [locationId, setLocationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState(false);
+  const [defaultTab, setDefaultTab] = useState<string>("info");
 
   useEffect(() => {
     loadUserClinic();
@@ -48,13 +49,18 @@ export const ClinicManagement = () => {
         // Load first location for this clinic
         const { data: locationData } = await supabase
           .from("clinic_locations")
-          .select("id")
+          .select("id, instagram_connected, facebook_connected")
           .eq("clinic_id", clinicUser.clinic_id)
           .limit(1)
           .maybeSingle();
         
         if (locationData) {
           setLocationId(locationData.id);
+          
+          // If social accounts aren't connected, default to tools tab
+          if (!locationData.instagram_connected && !locationData.facebook_connected) {
+            setDefaultTab("tools");
+          }
         }
       }
     } catch (error) {
@@ -92,7 +98,7 @@ export const ClinicManagement = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="info" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="info">Info</TabsTrigger>
           <TabsTrigger value="intelligence">Assistant Intelligence</TabsTrigger>
