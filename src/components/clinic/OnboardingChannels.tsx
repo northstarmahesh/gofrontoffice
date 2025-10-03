@@ -9,6 +9,7 @@ import { Phone, MessageSquare, Mail, Instagram, MessageCircle, CheckCircle2, Che
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PhoneVerificationDialog } from "./PhoneVerificationDialog";
 
 interface OnboardingChannelsProps {
   clinicId: string;
@@ -23,6 +24,8 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
   const [instagramHandle, setInstagramHandle] = useState("");
   const [facebookPageId, setFacebookPageId] = useState("");
   const [adding, setAdding] = useState(false);
+  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [pendingPhoneVerification, setPendingPhoneVerification] = useState<{id: string, number: string} | null>(null);
   
   const [connectionStatus, setConnectionStatus] = useState({
     phone: false,
@@ -131,7 +134,7 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
 
     setAdding(true);
     try {
-      const { error } = await supabase
+      const { data: phoneData, error } = await supabase
         .from("clinic_phone_numbers")
         .insert({
           clinic_id: clinicId,
@@ -139,13 +142,22 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
           phone_number: phoneNumber,
           channels: phoneChannels,
           is_verified: false,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      toast.success("Phone number added! You'll need to verify it later.");
+      toast.success("Phone number added! Please verify it now.");
       setPhoneNumber("");
       await checkConnections();
+      
+      // Trigger verification
+      setPendingPhoneVerification({
+        id: phoneData.id,
+        number: phoneData.phone_number
+      });
+      setVerificationDialogOpen(true);
     } catch (error: any) {
       toast.error(error.message || "Failed to add phone number");
     } finally {
@@ -434,6 +446,19 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
       <p className="text-center text-sm text-muted-foreground">
         You can always add more channels later in Clinic Settings
       </p>
+
+      {pendingPhoneVerification && (
+        <PhoneVerificationDialog
+          open={verificationDialogOpen}
+          onOpenChange={setVerificationDialogOpen}
+          phoneNumberId={pendingPhoneVerification.id}
+          phoneNumber={pendingPhoneVerification.number}
+          onVerified={() => {
+            checkConnections();
+            setPendingPhoneVerification(null);
+          }}
+        />
+      )}
     </div>
   );
 };

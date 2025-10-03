@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { MapPin, Plus, Trash2, Edit, Search, Phone, MessageSquare, Instagram, MessageCircle } from "lucide-react";
 import { CreateUserDialog } from "./CreateUserDialog";
+import { PhoneVerificationDialog } from "./PhoneVerificationDialog";
 import { Badge } from "@/components/ui/badge";
 
 interface Location {
@@ -68,6 +69,8 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
   // User creation dialog state
   const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
+  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [pendingPhoneVerification, setPendingPhoneVerification] = useState<{id: string, number: string} | null>(null);
 
   useEffect(() => {
     loadLocations();
@@ -196,7 +199,7 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
           }
         }
 
-        const { error: phoneError } = await supabase
+        const { data: phoneData, error: phoneError } = await supabase
           .from("clinic_phone_numbers")
           .insert({
             clinic_id: clinicId,
@@ -204,13 +207,25 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
             phone_number: phoneNumberSetup.number,
             channels: phoneNumberSetup.channels,
             is_active: true,
-          });
+          })
+          .select()
+          .single();
 
         if (phoneError) {
           console.error("Error adding phone number:", phoneError);
           toast.error("Location saved but failed to add phone number");
         } else {
-          toast.success("Phone number added!");
+          toast.success("Phone number added! Please verify it now.");
+          setDialogOpen(false);
+          resetForm();
+          loadLocations();
+          // Trigger verification
+          setPendingPhoneVerification({
+            id: phoneData.id,
+            number: phoneNumberSetup.number
+          });
+          setVerificationDialogOpen(true);
+          return; // Don't run the normal cleanup yet
         }
       }
 
@@ -714,6 +729,19 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
         email={pendingEmail}
         onUserCreated={handleUserCreated}
       />
+
+      {pendingPhoneVerification && (
+        <PhoneVerificationDialog
+          open={verificationDialogOpen}
+          onOpenChange={setVerificationDialogOpen}
+          phoneNumberId={pendingPhoneVerification.id}
+          phoneNumber={pendingPhoneVerification.number}
+          onVerified={() => {
+            loadLocations();
+            setPendingPhoneVerification(null);
+          }}
+        />
+      )}
     </>
   );
 };
