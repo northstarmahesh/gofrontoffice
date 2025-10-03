@@ -160,10 +160,10 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold">{integration.name}</h3>
                       <Badge
-                        variant={
+                        className={
                           integration.status === "connected"
-                            ? "default"
-                            : "secondary"
+                            ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
+                            : "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20"
                         }
                       >
                         {integration.status === "connected"
