@@ -69,7 +69,7 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
         if (error) throw error;
         toast.success("Clinic profile updated!");
       } else {
-        // Create new clinic
+        // Create new clinic (trigger automatically adds user as owner)
         const { data: clinic, error: clinicError } = await supabase
           .from("clinics")
           .insert(formData)
@@ -77,21 +77,6 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
           .single();
 
         if (clinicError) throw clinicError;
-
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("No user found");
-
-        // Add user as clinic owner
-        const { error: userError } = await supabase
-          .from("clinic_users")
-          .insert({
-            clinic_id: clinic.id,
-            user_id: user.id,
-            role: "owner",
-          });
-
-        if (userError) throw userError;
 
         toast.success("Clinic created successfully!");
         if (onSaved) onSaved(clinic.id);
