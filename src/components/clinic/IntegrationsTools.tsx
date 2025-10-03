@@ -13,6 +13,14 @@ interface IntegrationsToolsProps {
 
 const serviceCategories = [
   {
+    category: "Social Media",
+    icon: Instagram,
+    services: [
+      { id: "instagram", name: "Instagram DM", description: "Direct message integration" },
+      { id: "messenger", name: "Facebook Messenger", description: "Facebook chat integration" },
+    ]
+  },
+  {
     category: "Email",
     icon: Mail,
     services: [
@@ -53,17 +61,8 @@ const serviceCategories = [
     category: "Accounting System",
     icon: DollarSign,
     services: [
-      { id: "quickbooks", name: "QuickBooks", description: "Accounting software" },
-      { id: "xero", name: "Xero", description: "Cloud accounting platform" },
       { id: "fortnox", name: "Fortnox", description: "Swedish accounting system" },
-    ]
-  },
-  {
-    category: "Social Media",
-    icon: Instagram,
-    services: [
-      { id: "instagram", name: "Instagram DM", description: "Direct message integration" },
-      { id: "messenger", name: "Facebook Messenger", description: "Facebook chat integration" },
+      { id: "bjornlunden", name: "Björn Lundén", description: "Swedish accounting & payroll" },
     ]
   },
 ];
