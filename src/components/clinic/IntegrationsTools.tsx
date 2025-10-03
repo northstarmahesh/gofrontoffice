@@ -74,6 +74,34 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
     setConnectingTo(serviceId);
     
     try {
+      // Instagram OAuth flow
+      if (serviceId === 'instagram') {
+        const { data, error } = await supabase.functions.invoke('instagram-oauth-start', {
+          body: { clinicId, locationId: null }
+        });
+
+        if (error) throw error;
+        if (!data?.authUrl) throw new Error('No auth URL returned');
+
+        // Open OAuth window
+        const width = 600;
+        const height = 700;
+        const left = (window.screen.width - width) / 2;
+        const top = (window.screen.height - height) / 2;
+        
+        window.open(
+          data.authUrl,
+          'Instagram OAuth',
+          `width=${width},height=${height},left=${left},top=${top}`
+        );
+
+        toast.success('Opening Instagram login...', {
+          description: 'Please complete the authorization in the popup window.',
+        });
+
+        return;
+      }
+
       // Check if integration already exists
       const { data: existing } = await supabase
         .from("clinic_integrations")

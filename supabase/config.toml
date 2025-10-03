@@ -8,3 +8,15 @@ verify_jwt = false
 
 [functions.verify-email-otp]
 verify_jwt = false
+
+[functions.instagram-oauth-start]
+verify_jwt = true
+
+[functions.instagram-oauth-callback]
+verify_jwt = false
+
+[functions.instagram-webhook]
+verify_jwt = false
+
+[functions.instagram-send-message]
+verify_jwt = true
