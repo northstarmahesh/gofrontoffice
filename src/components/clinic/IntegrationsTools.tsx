@@ -76,12 +76,24 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
     try {
       // Instagram OAuth flow
       if (serviceId === 'instagram') {
+        console.log('Starting Instagram OAuth for clinic:', clinicId);
+        
         const { data, error } = await supabase.functions.invoke('instagram-oauth-start', {
           body: { clinicId, locationId: null }
         });
 
-        if (error) throw error;
-        if (!data?.authUrl) throw new Error('No auth URL returned');
+        console.log('Instagram OAuth response:', { data, error });
+
+        if (error) {
+          console.error('Instagram OAuth error:', error);
+          throw error;
+        }
+        if (!data?.authUrl) {
+          console.error('No auth URL in response:', data);
+          throw new Error('No auth URL returned');
+        }
+
+        console.log('Opening OAuth URL:', data.authUrl);
 
         // Open OAuth window
         const width = 600;
@@ -89,11 +101,15 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
         const left = (window.screen.width - width) / 2;
         const top = (window.screen.height - height) / 2;
         
-        window.open(
+        const popup = window.open(
           data.authUrl,
           'Instagram OAuth',
           `width=${width},height=${height},left=${left},top=${top}`
         );
+
+        if (!popup) {
+          throw new Error('Popup was blocked. Please allow popups for this site.');
+        }
 
         toast.success('Opening Instagram login...', {
           description: 'Please complete the authorization in the popup window.',
