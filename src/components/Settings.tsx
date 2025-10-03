@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Phone, MessageSquare, Instagram, Facebook, CheckCircle2, Building2, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import ClinicManagement from "./ClinicManagement";
 
 const Settings = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
@@ -222,7 +224,17 @@ const Settings = () => {
                   <div>
                     <h3 className="font-semibold text-foreground">Messaging Mode</h3>
                     <p className="text-xs text-muted-foreground">
-                      {autoPilotEnabled ? "AI replies automatically" : "AI drafts replies for your approval"}
+                      {autoPilotEnabled ? "AI replies automatically" : (
+                        <>
+                          AI drafts replies for your approval as{" "}
+                          <button
+                            onClick={() => navigate("/?tab=tasks")}
+                            className="text-primary hover:underline font-medium"
+                          >
+                            your todos
+                          </button>
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>

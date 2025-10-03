@@ -5,7 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Clock } from "lucide-react";
+import { Clock, Copy } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ScheduleManagementProps {
   clinicId: string;
@@ -25,6 +32,7 @@ export const ScheduleManagement = ({ clinicId }: ScheduleManagementProps) => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [copyFromDay, setCopyFromDay] = useState<number | null>(null);
 
   useEffect(() => {
     loadSchedules();
@@ -98,6 +106,29 @@ export const ScheduleManagement = ({ clinicId }: ScheduleManagementProps) => {
     );
   };
 
+  const copyScheduleToDay = (targetDay: number) => {
+    if (copyFromDay === null) return;
+    
+    const sourceSchedule = schedules.find(s => s.day_of_week === copyFromDay);
+    if (!sourceSchedule) return;
+
+    setSchedules((prev) =>
+      prev.map((schedule) =>
+        schedule.day_of_week === targetDay
+          ? {
+              ...schedule,
+              start_time: sourceSchedule.start_time,
+              end_time: sourceSchedule.end_time,
+              is_available: sourceSchedule.is_available,
+            }
+          : schedule
+      )
+    );
+    
+    toast.success(`Copied schedule from ${DAYS[copyFromDay]} to ${DAYS[targetDay]}`);
+    setCopyFromDay(null);
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -113,53 +144,86 @@ export const ScheduleManagement = ({ clinicId }: ScheduleManagementProps) => {
           Set your clinic's availability for each day of the week
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Label className="text-sm">Copy schedule:</Label>
+          <Select value={copyFromDay?.toString() || ""} onValueChange={(val) => setCopyFromDay(parseInt(val))}>
+            <SelectTrigger className="w-[140px] h-8">
+              <SelectValue placeholder="Select day" />
+            </SelectTrigger>
+            <SelectContent>
+              {DAYS.map((day, idx) => (
+                <SelectItem key={idx} value={idx.toString()}>
+                  {day}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {copyFromDay !== null && (
+            <span className="text-xs text-muted-foreground">
+              Click copy button on target day
+            </span>
+          )}
+        </div>
+
         {schedules.map((schedule) => (
           <div
             key={schedule.day_of_week}
-            className="flex items-center gap-4 p-4 border rounded-lg"
+            className="flex items-center gap-2 p-2 border rounded-lg"
           >
-            <div className="flex items-center gap-2 w-32">
+            <div className="flex items-center gap-2 w-24">
               <Switch
                 checked={schedule.is_available}
                 onCheckedChange={(checked) =>
                   updateSchedule(schedule.day_of_week, "is_available", checked)
                 }
               />
-              <Label className="font-medium">
-                {DAYS[schedule.day_of_week]}
+              <Label className="text-sm font-medium">
+                {DAYS[schedule.day_of_week].slice(0, 3)}
               </Label>
             </div>
 
             {schedule.is_available && (
-              <div className="flex items-center gap-2 flex-1">
-                <input
-                  type="time"
-                  value={schedule.start_time}
-                  onChange={(e) =>
-                    updateSchedule(schedule.day_of_week, "start_time", e.target.value)
-                  }
-                  className="px-3 py-2 border rounded-md"
-                />
-                <span className="text-muted-foreground">to</span>
-                <input
-                  type="time"
-                  value={schedule.end_time}
-                  onChange={(e) =>
-                    updateSchedule(schedule.day_of_week, "end_time", e.target.value)
-                  }
-                  className="px-3 py-2 border rounded-md"
-                />
-              </div>
+              <>
+                <div className="flex items-center gap-1 flex-1">
+                  <input
+                    type="time"
+                    value={schedule.start_time}
+                    onChange={(e) =>
+                      updateSchedule(schedule.day_of_week, "start_time", e.target.value)
+                    }
+                    className="px-2 py-1 border rounded-md text-sm w-24"
+                  />
+                  <span className="text-muted-foreground text-xs">to</span>
+                  <input
+                    type="time"
+                    value={schedule.end_time}
+                    onChange={(e) =>
+                      updateSchedule(schedule.day_of_week, "end_time", e.target.value)
+                    }
+                    className="px-2 py-1 border rounded-md text-sm w-24"
+                  />
+                </div>
+                {copyFromDay !== null && copyFromDay !== schedule.day_of_week && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyScheduleToDay(schedule.day_of_week)}
+                    className="h-7 px-2"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                )}
+              </>
             )}
 
             {!schedule.is_available && (
-              <span className="text-muted-foreground">Closed</span>
+              <span className="text-muted-foreground text-sm flex-1">Closed</span>
             )}
           </div>
         ))}
 
-        <Button onClick={handleSave} disabled={saving} className="w-full">
+        <Button onClick={handleSave} disabled={saving} className="w-full mt-2">
           {saving ? "Saving..." : "Save Schedule"}
         </Button>
       </CardContent>
