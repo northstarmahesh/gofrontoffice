@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Search, CheckCircle2 } from "lucide-react";
+import { Search, CheckCircle2, Lock } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 interface OnboardingBasicInfoProps {
@@ -25,10 +25,42 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
   const [verificationCode, setVerificationCode] = useState("");
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [showCodeInput, setShowCodeInput] = useState(false);
+  
+  // Address autocomplete state
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [addressLocked, setAddressLocked] = useState(false);
 
   useEffect(() => {
     loadCurrentUser();
   }, []);
+
+  // Debounced address search
+  useEffect(() => {
+    if (!addressQuery || addressLocked) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            addressQuery
+          )}&limit=5`
+        );
+        const data = await response.json();
+        setAddressSuggestions(data);
+        setShowSuggestions(data.length > 0);
+      } catch (error) {
+        console.error("Address search error:", error);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [addressQuery, addressLocked]);
 
   const loadCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -152,6 +184,14 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
     setFormData({ ...formData, slug });
   };
 
+  const handleAddressSelect = (suggestion: any) => {
+    const fullAddress = suggestion.display_name;
+    setFormData({ ...formData, address: fullAddress });
+    setAddressQuery(fullAddress);
+    setAddressLocked(true);
+    setShowSuggestions(false);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
@@ -170,15 +210,59 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
         <div className="space-y-2">
           <Label htmlFor="address">Address</Label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="address"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="Start typing an address..."
-              className="pl-10"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="address"
+                value={addressLocked ? formData.address : addressQuery}
+                onChange={(e) => {
+                  setAddressQuery(e.target.value);
+                  if (!addressLocked) {
+                    setFormData({ ...formData, address: e.target.value });
+                  }
+                }}
+                onFocus={() => {
+                  if (!addressLocked && addressQuery) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                placeholder="Start typing an address..."
+                disabled={addressLocked}
+                className={`pl-10 ${addressLocked ? "opacity-75" : ""}`}
+              />
+              {addressLocked && (
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+            {showSuggestions && addressSuggestions.length > 0 && !addressLocked && (
+              <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
+                {addressSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleAddressSelect(suggestion)}
+                    className="w-full px-4 py-2 text-left hover:bg-accent transition-colors text-sm border-b last:border-b-0"
+                  >
+                    {suggestion.display_name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+          {addressLocked && (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => {
+                setAddressLocked(false);
+                setAddressQuery(formData.address);
+              }}
+              className="h-auto py-0 px-0 text-xs"
+            >
+              Unlock to edit
+            </Button>
+          )}
           <p className="text-xs text-muted-foreground">
             Full address helps patients find your clinic
           </p>
