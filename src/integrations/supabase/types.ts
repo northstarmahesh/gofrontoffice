@@ -21,6 +21,8 @@ export type Database = {
           contact_info: string | null
           contact_name: string | null
           created_at: string | null
+          direction: string | null
+          duration: string | null
           id: string
           status: string | null
           summary: string | null
@@ -34,6 +36,8 @@ export type Database = {
           contact_info?: string | null
           contact_name?: string | null
           created_at?: string | null
+          direction?: string | null
+          duration?: string | null
           id?: string
           status?: string | null
           summary?: string | null
@@ -47,6 +51,8 @@ export type Database = {
           contact_info?: string | null
           contact_name?: string | null
           created_at?: string | null
+          direction?: string | null
+          duration?: string | null
           id?: string
           status?: string | null
           summary?: string | null
