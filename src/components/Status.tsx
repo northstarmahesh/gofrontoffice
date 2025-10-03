@@ -412,26 +412,6 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
             </div>
           </div>
 
-          {/* Explanation Box */}
-          <div className="rounded-lg bg-muted/50 p-4 mb-4">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <div className="space-y-2 text-sm">
-                <p className="font-semibold text-foreground">Response Modes</p>
-                <p className="text-muted-foreground">
-                  <span className="font-medium text-foreground">Autopilot:</span> AI responds automatically without review. 
-                  <span className="ml-2 font-medium text-foreground">Co-pilot:</span> AI drafts responses as{" "}
-                  <button
-                    onClick={() => navigate("/?tab=tasks")}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    tasks
-                  </button>
-                  {" "}for your approval.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="border-t pt-4">
@@ -452,11 +432,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.phone && (
-                <div className="pl-8 space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    When <span className="font-medium">ON</span>: AI handles phone calls.
-                    When <span className="font-medium">OFF</span>: Calls go to your normal phone system.
-                  </p>
+                <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -474,6 +450,18 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     >
                       Autopilot
                     </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                    {channelModes.phone === "copilot" ? (
+                      <>
+                        <span className="font-medium text-foreground">Co-pilot:</span> AI transcribes calls and creates{" "}
+                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to review and respond
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-medium text-foreground">Autopilot:</span> AI answers calls and responds immediately without your review
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -493,11 +481,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.sms && (
-                <div className="pl-8 space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    When <span className="font-medium">ON</span>: AI handles text messages.
-                    When <span className="font-medium">OFF</span>: SMS goes to your normal system.
-                  </p>
+                <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -515,6 +499,18 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     >
                       Autopilot
                     </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                    {channelModes.sms === "copilot" ? (
+                      <>
+                        <span className="font-medium text-foreground">Co-pilot:</span> AI drafts SMS replies as{" "}
+                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to approve before sending
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-medium text-foreground">Autopilot:</span> AI sends SMS replies automatically without your review
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -534,11 +530,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.whatsapp && (
-                <div className="pl-8 space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    When <span className="font-medium">ON</span>: AI handles WhatsApp messages.
-                    When <span className="font-medium">OFF</span>: WhatsApp goes to your normal system.
-                  </p>
+                <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -556,6 +548,18 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     >
                       Autopilot
                     </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                    {channelModes.whatsapp === "copilot" ? (
+                      <>
+                        <span className="font-medium text-foreground">Co-pilot:</span> AI drafts WhatsApp replies as{" "}
+                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to approve before sending
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-medium text-foreground">Autopilot:</span> AI sends WhatsApp replies automatically without your review
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -575,11 +579,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.instagram && (
-                <div className="pl-8 space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    When <span className="font-medium">ON</span>: AI handles Instagram DMs.
-                    When <span className="font-medium">OFF</span>: Instagram DMs go to your normal system.
-                  </p>
+                <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -597,6 +597,18 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     >
                       Autopilot
                     </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                    {channelModes.instagram === "copilot" ? (
+                      <>
+                        <span className="font-medium text-foreground">Co-pilot:</span> AI drafts Instagram replies as{" "}
+                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to approve before sending
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-medium text-foreground">Autopilot:</span> AI sends Instagram replies automatically without your review
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -616,11 +628,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.messenger && (
-                <div className="pl-8 space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    When <span className="font-medium">ON</span>: AI handles Facebook messages.
-                    When <span className="font-medium">OFF</span>: Messenger goes to your normal system.
-                  </p>
+                <div className="pl-8 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -638,6 +646,18 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                     >
                       Autopilot
                     </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                    {channelModes.messenger === "copilot" ? (
+                      <>
+                        <span className="font-medium text-foreground">Co-pilot:</span> AI drafts Messenger replies as{" "}
+                        <button onClick={() => navigate("/?tab=tasks")} className="text-primary hover:underline">tasks</button> for you to approve before sending
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-medium text-foreground">Autopilot:</span> AI sends Messenger replies automatically without your review
+                      </>
+                    )}
                   </div>
                 </div>
               )}
