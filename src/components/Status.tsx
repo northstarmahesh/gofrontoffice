@@ -2,23 +2,14 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 
 interface StatusProps {
   onNavigateToTasks?: () => void;
-}
-
-interface Schedule {
-  id?: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_available: boolean;
 }
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -39,13 +30,13 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     instagram: 3,
     messenger: 3,
   });
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [schedules, setSchedules] = useState<any[]>([]);
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
 
   useEffect(() => {
     loadSettings();
-    loadPendingTasks();
     loadSchedules();
+    loadPendingTasks();
   }, []);
 
   const loadSettings = async () => {
@@ -84,6 +75,36 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     }
   };
 
+  const loadSchedules = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("assistant_schedules")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("day_of_week");
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setSchedules(data);
+      } else {
+        // Initialize default 24/7 schedule
+        const defaultSchedules = DAYS.map((_, index) => ({
+          day_of_week: index,
+          start_time: "00:00",
+          end_time: "23:59",
+          is_available: true,
+        }));
+        setSchedules(defaultSchedules);
+      }
+    } catch (error) {
+      console.error("Error loading schedules:", error);
+    }
+  };
+
   const loadPendingTasks = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -101,36 +122,6 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
       setPendingTasks(data || []);
     } catch (error) {
       console.error("Error loading pending tasks:", error);
-    }
-  };
-
-  const loadSchedules = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("assistant_schedules")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("day_of_week");
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setSchedules(data);
-      } else {
-        // Initialize default schedules (24/7)
-        const defaultSchedules = DAYS.map((_, index) => ({
-          day_of_week: index,
-          start_time: "00:00",
-          end_time: "23:59",
-          is_available: true,
-        }));
-        setSchedules(defaultSchedules);
-      }
-    } catch (error) {
-      console.error("Error loading schedules:", error);
     }
   };
 
@@ -184,17 +175,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     await updateSettings({ [updateKey]: value });
   };
 
-  const updateSchedule = (dayIndex: number, field: keyof Schedule, value: any) => {
-    setSchedules((prev) =>
-      prev.map((schedule) =>
-        schedule.day_of_week === dayIndex
-          ? { ...schedule, [field]: value }
-          : schedule
-      )
-    );
-  };
-
-  const handleSaveSchedule = async () => {
+  const handleScheduleSave = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -223,8 +204,18 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
       loadSchedules();
     } catch (error: any) {
       console.error("Error saving schedule:", error);
-      toast.error(error.message || "Failed to save schedule");
+      toast.error("Failed to save schedule");
     }
+  };
+
+  const updateSchedule = (dayIndex: number, field: string, value: any) => {
+    setSchedules((prev) =>
+      prev.map((schedule) =>
+        schedule.day_of_week === dayIndex
+          ? { ...schedule, [field]: value }
+          : schedule
+      )
+    );
   };
 
   const stats = [
@@ -448,125 +439,133 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
           <p className="text-sm font-semibold text-muted-foreground mb-4">Active Channels</p>
           
           <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-muted/30">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="h-6 w-6 text-muted-foreground" />
-                <Label htmlFor="sms" className="text-base font-semibold cursor-pointer">
-                  SMS
-                </Label>
-              </div>
-              <Switch
-                id="sms"
-                checked={channels.sms}
-                onCheckedChange={() => handleChannelToggle("sms")}
-                className="scale-125"
-              />
-            </div>
-            {channels.sms && (
-              <div className="ml-9">
-                <Label className="text-xs text-muted-foreground">Response Delay: {delays.sms}s</Label>
-                <Slider
-                  value={[delays.sms]}
-                  onValueChange={([value]) => handleDelayChange("sms", value)}
-                  min={0}
-                  max={30}
-                  step={1}
-                  className="mt-2"
+            {/* SMS */}
+            <div className="p-4 rounded-xl bg-muted/30">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                  <Label htmlFor="sms" className="text-base font-semibold cursor-pointer">
+                    SMS
+                  </Label>
+                </div>
+                <Switch
+                  id="sms"
+                  checked={channels.sms}
+                  onCheckedChange={() => handleChannelToggle("sms")}
+                  className="scale-125"
                 />
               </div>
-            )}
-          </div>
+              {channels.sms && (
+                <div className="flex items-center gap-2 ml-9">
+                  <Label className="text-sm text-muted-foreground">Delay:</Label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="60"
+                    value={delays.sms}
+                    onChange={(e) => handleDelayChange("sms", parseInt(e.target.value))}
+                    className="w-16 px-2 py-1 border rounded-md text-sm"
+                  />
+                  <span className="text-sm text-muted-foreground">seconds</span>
+                </div>
+              )}
+            </div>
 
-          <div className="p-4 rounded-xl bg-muted/30">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="h-6 w-6 text-muted-foreground" />
-                <Label htmlFor="whatsapp" className="text-base font-semibold cursor-pointer">
-                  WhatsApp
-                </Label>
-              </div>
-              <Switch
-                id="whatsapp"
-                checked={channels.whatsapp}
-                onCheckedChange={() => handleChannelToggle("whatsapp")}
-                className="scale-125"
-              />
-            </div>
-            {channels.whatsapp && (
-              <div className="ml-9">
-                <Label className="text-xs text-muted-foreground">Response Delay: {delays.whatsapp}s</Label>
-                <Slider
-                  value={[delays.whatsapp]}
-                  onValueChange={([value]) => handleDelayChange("whatsapp", value)}
-                  min={0}
-                  max={30}
-                  step={1}
-                  className="mt-2"
+            {/* WhatsApp */}
+            <div className="p-4 rounded-xl bg-muted/30">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                  <Label htmlFor="whatsapp" className="text-base font-semibold cursor-pointer">
+                    WhatsApp
+                  </Label>
+                </div>
+                <Switch
+                  id="whatsapp"
+                  checked={channels.whatsapp}
+                  onCheckedChange={() => handleChannelToggle("whatsapp")}
+                  className="scale-125"
                 />
               </div>
-            )}
-          </div>
+              {channels.whatsapp && (
+                <div className="flex items-center gap-2 ml-9">
+                  <Label className="text-sm text-muted-foreground">Delay:</Label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="60"
+                    value={delays.whatsapp}
+                    onChange={(e) => handleDelayChange("whatsapp", parseInt(e.target.value))}
+                    className="w-16 px-2 py-1 border rounded-md text-sm"
+                  />
+                  <span className="text-sm text-muted-foreground">seconds</span>
+                </div>
+              )}
+            </div>
 
-          <div className="p-4 rounded-xl bg-muted/30">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <Instagram className="h-6 w-6 text-muted-foreground" />
-                <Label htmlFor="instagram" className="text-base font-semibold cursor-pointer">
-                  Instagram DM
-                </Label>
-              </div>
-              <Switch
-                id="instagram"
-                checked={channels.instagram}
-                onCheckedChange={() => handleChannelToggle("instagram")}
-                className="scale-125"
-              />
-            </div>
-            {channels.instagram && (
-              <div className="ml-9">
-                <Label className="text-xs text-muted-foreground">Response Delay: {delays.instagram}s</Label>
-                <Slider
-                  value={[delays.instagram]}
-                  onValueChange={([value]) => handleDelayChange("instagram", value)}
-                  min={0}
-                  max={30}
-                  step={1}
-                  className="mt-2"
+            {/* Instagram */}
+            <div className="p-4 rounded-xl bg-muted/30">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <Instagram className="h-6 w-6 text-muted-foreground" />
+                  <Label htmlFor="instagram" className="text-base font-semibold cursor-pointer">
+                    Instagram DM
+                  </Label>
+                </div>
+                <Switch
+                  id="instagram"
+                  checked={channels.instagram}
+                  onCheckedChange={() => handleChannelToggle("instagram")}
+                  className="scale-125"
                 />
               </div>
-            )}
-          </div>
+              {channels.instagram && (
+                <div className="flex items-center gap-2 ml-9">
+                  <Label className="text-sm text-muted-foreground">Delay:</Label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="60"
+                    value={delays.instagram}
+                    onChange={(e) => handleDelayChange("instagram", parseInt(e.target.value))}
+                    className="w-16 px-2 py-1 border rounded-md text-sm"
+                  />
+                  <span className="text-sm text-muted-foreground">seconds</span>
+                </div>
+              )}
+            </div>
 
-          <div className="p-4 rounded-xl bg-muted/30">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <Facebook className="h-6 w-6 text-muted-foreground" />
-                <Label htmlFor="messenger" className="text-base font-semibold cursor-pointer">
-                  Messenger
-                </Label>
-              </div>
-              <Switch
-                id="messenger"
-                checked={channels.messenger}
-                onCheckedChange={() => handleChannelToggle("messenger")}
-                className="scale-125"
-              />
-            </div>
-            {channels.messenger && (
-              <div className="ml-9">
-                <Label className="text-xs text-muted-foreground">Response Delay: {delays.messenger}s</Label>
-                <Slider
-                  value={[delays.messenger]}
-                  onValueChange={([value]) => handleDelayChange("messenger", value)}
-                  min={0}
-                  max={30}
-                  step={1}
-                  className="mt-2"
+            {/* Messenger */}
+            <div className="p-4 rounded-xl bg-muted/30">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <Facebook className="h-6 w-6 text-muted-foreground" />
+                  <Label htmlFor="messenger" className="text-base font-semibold cursor-pointer">
+                    Messenger
+                  </Label>
+                </div>
+                <Switch
+                  id="messenger"
+                  checked={channels.messenger}
+                  onCheckedChange={() => handleChannelToggle("messenger")}
+                  className="scale-125"
                 />
               </div>
-            )}
-          </div>
+              {channels.messenger && (
+                <div className="flex items-center gap-2 ml-9">
+                  <Label className="text-sm text-muted-foreground">Delay:</Label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="60"
+                    value={delays.messenger}
+                    onChange={(e) => handleDelayChange("messenger", parseInt(e.target.value))}
+                    className="w-16 px-2 py-1 border rounded-md text-sm"
+                  />
+                  <span className="text-sm text-muted-foreground">seconds</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </Card>
@@ -575,11 +574,11 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
       <Card className="border-0 p-6 shadow-lg">
         <div className="mb-6 flex items-center gap-3">
           <div className="rounded-xl bg-primary/10 p-3">
-            <Clock className="h-6 w-6 text-primary" />
+            <Calendar className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h3 className="text-xl font-bold text-foreground">Assistant Schedule</h3>
-            <p className="text-sm text-muted-foreground">Set when your assistant is available</p>
+            <p className="text-sm text-muted-foreground">Set when your AI assistant should work</p>
           </div>
         </div>
 
@@ -629,7 +628,7 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
             </div>
           ))}
 
-          <Button onClick={handleSaveSchedule} className="w-full">
+          <Button onClick={handleScheduleSave} className="w-full">
             Save Schedule
           </Button>
         </div>
