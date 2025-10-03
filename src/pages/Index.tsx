@@ -153,8 +153,8 @@ const Index = () => {
         {renderView()}
       </main>
 
-      {/* Bottom Navigation */}
-      <Navigation currentView={currentView} onViewChange={setCurrentView} />
+      {/* Bottom Navigation - Hidden during onboarding */}
+      {hasClinic && <Navigation currentView={currentView} onViewChange={setCurrentView} />}
     </div>
   );
 };
