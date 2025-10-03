@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, Send, CheckCircle, Eye, User, Phone, Clock, MessageSquare } from "lucide-react";
+import { AlertCircle, Send, CheckCircle, Eye, User, Phone, Clock, MessageSquare, Mail, Instagram, Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -241,6 +241,28 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
     }
   };
 
+  const getChannelIcon = (type: string) => {
+    const typeUpper = type.toUpperCase();
+    if (typeUpper.includes('SMS') || typeUpper.includes('TEXT')) {
+      return <MessageSquare className="h-4 w-4" />;
+    } else if (typeUpper.includes('WHATSAPP')) {
+      return <Phone className="h-4 w-4" />;
+    } else if (typeUpper.includes('EMAIL') || typeUpper.includes('MAIL')) {
+      return <Mail className="h-4 w-4" />;
+    } else if (typeUpper.includes('INSTAGRAM') || typeUpper.includes('DM')) {
+      return <Instagram className="h-4 w-4" />;
+    } else if (typeUpper.includes('MESSENGER') || typeUpper.includes('FACEBOOK')) {
+      return <Facebook className="h-4 w-4" />;
+    }
+    return <MessageSquare className="h-4 w-4" />;
+  };
+
+  const isFromAI = (title: string, type: string) => {
+    return title.toLowerCase().includes('draft') || 
+           title.toLowerCase().includes('ai') || 
+           type.toLowerCase().includes('draft');
+  };
+
   if (!task) return null;
 
   return (
@@ -286,13 +308,13 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
               </Card>
             )}
 
-            {/* Message History */}
+            {/* Message History - Chat Style */}
             {activityHistory.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
-                    Recent Activity
+                    Conversation History
                   </h3>
                   {activityHistory.length > 3 && !showAllHistory && (
                     <Button 
@@ -306,26 +328,57 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                   )}
                 </div>
                 
-                <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                  {(showAllHistory ? activityHistory : activityHistory.slice(0, 3)).map((log) => (
-                    <Card key={log.id} className="border-0 bg-muted/20 p-3">
-                      <div className="space-y-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium flex-1">{log.title}</p>
-                          <Badge variant="outline" className="text-xs shrink-0">
-                            {log.type}
-                          </Badge>
-                        </div>
-                        {log.summary && (
-                          <p className="text-xs text-muted-foreground">{log.summary}</p>
+                {/* Chat-style messages */}
+                <div className="space-y-3 bg-muted/30 rounded-lg p-4 max-h-[250px] overflow-y-auto">
+                  {(showAllHistory ? activityHistory : activityHistory.slice(0, 3)).map((log) => {
+                    const fromAI = isFromAI(log.title, log.type);
+                    return (
+                      <div key={log.id} className={`flex gap-2 ${fromAI ? 'justify-end' : 'justify-start'}`}>
+                        {/* Channel icon on left for received messages */}
+                        {!fromAI && (
+                          <div className="shrink-0 mt-1">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                              {getChannelIcon(log.type)}
+                            </div>
+                          </div>
                         )}
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {formatDateTime(log.created_at)}
+                        
+                        {/* Message bubble */}
+                        <div className={`flex flex-col max-w-[75%] ${fromAI ? 'items-end' : 'items-start'}`}>
+                          <div className={`rounded-2xl px-4 py-2 ${
+                            fromAI 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'bg-background border border-border'
+                          }`}>
+                            {log.summary && (
+                              <p className="text-sm">{log.summary}</p>
+                            )}
+                          </div>
+                          
+                          {/* Timestamp and type */}
+                          <div className="flex items-center gap-2 mt-1 px-1">
+                            <span className="text-xs text-muted-foreground">
+                              {formatDateTime(log.created_at)}
+                            </span>
+                            {fromAI && (
+                              <Badge variant="outline" className="text-xs px-1.5 py-0">
+                                AI Draft
+                              </Badge>
+                            )}
+                          </div>
                         </div>
+
+                        {/* AI icon on right for sent messages */}
+                        {fromAI && (
+                          <div className="shrink-0 mt-1">
+                            <div className="h-8 w-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+                              <MessageSquare className="h-4 w-4" />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </Card>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {showAllHistory && activityHistory.length > 3 && (
