@@ -110,7 +110,7 @@ export const ClinicManagement = () => {
         </TabsContent>
 
         <TabsContent value="integrations" className="mt-6">
-          <ConnectedServices />
+          <ConnectedServices clinicId={clinicId!} />
         </TabsContent>
       </Tabs>
     </div>

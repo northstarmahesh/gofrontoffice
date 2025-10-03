@@ -118,6 +118,50 @@ export type Database = {
           },
         ]
       }
+      clinic_integrations: {
+        Row: {
+          access_token: string | null
+          clinic_id: string
+          created_at: string | null
+          id: string
+          integration_type: string
+          is_connected: boolean | null
+          refresh_token: string | null
+          token_expiry: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          clinic_id: string
+          created_at?: string | null
+          id?: string
+          integration_type: string
+          is_connected?: boolean | null
+          refresh_token?: string | null
+          token_expiry?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          clinic_id?: string
+          created_at?: string | null
+          id?: string
+          integration_type?: string
+          is_connected?: boolean | null
+          refresh_token?: string | null
+          token_expiry?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_integrations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_knowledge_base: {
         Row: {
           answer: string

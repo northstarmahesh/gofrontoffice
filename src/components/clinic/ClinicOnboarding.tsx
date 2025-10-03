@@ -71,13 +71,16 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-foreground mb-2">Build Your Team</h2>
               <p className="text-muted-foreground">Add team members to help manage your clinic</p>
+              <p className="text-sm text-muted-foreground/80 mt-2">
+                Don't worry - you can always add or invite team members later from the Team tab
+              </p>
             </div>
             {clinicId ? (
               <>
                 <TeamManagement clinicId={clinicId} />
                 <div className="flex gap-3 pt-4">
                   <Button onClick={handleSkip} variant="outline" className="flex-1">
-                    Skip for now
+                    I'll add team later
                   </Button>
                   <Button onClick={handleNext} className="flex-1">
                     Continue
@@ -96,11 +99,14 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-foreground mb-2">Connect Your Tools</h2>
               <p className="text-muted-foreground">These integrations help your assistant work smarter</p>
+              <p className="text-sm text-muted-foreground/80 mt-2">
+                Optional - you can set these up anytime from the Integrations tab
+              </p>
             </div>
-            <ConnectedServices />
+            {clinicId && <ConnectedServices clinicId={clinicId} />}
             <div className="flex gap-3 pt-4">
               <Button onClick={handleSkip} variant="outline" className="flex-1">
-                Skip for now
+                Set up later
               </Button>
               <Button onClick={handleNext} className="flex-1">
                 Continue
