@@ -3,8 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ActivityLogs from "./ActivityLogs";
 import { toast } from "sonner";
+import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
 
 const Dashboard = () => {
+  const { greeting, weather, backgroundGradient, emoji } = useGreetingAndWeather();
+
   const stats = [
     {
       label: "Calls Today",
@@ -59,11 +62,16 @@ const Dashboard = () => {
   return (
     <div className="space-y-4">
       {/* Welcome Section */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-light p-4 text-primary-foreground shadow-lg">
-        <h2 className="mb-1 text-xl font-bold">Good Morning! 👋</h2>
+      <div className={`rounded-2xl ${backgroundGradient} p-4 text-white shadow-lg transition-all duration-1000`}>
+        <h2 className="mb-1 text-xl font-bold">{greeting}! {emoji}</h2>
         <p className="text-xs opacity-90">
           Your assistant is active and handling all incoming communications
         </p>
+        {weather && (
+          <p className="mt-1 text-xs opacity-75">
+            Currently {Math.round(weather.temp)}°F
+          </p>
+        )}
       </div>
 
       {/* ROI Metrics */}
