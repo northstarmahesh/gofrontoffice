@@ -2,12 +2,17 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock } from "lucide-react";
+import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
-const Status = () => {
+interface StatusProps {
+  onNavigateToTasks?: () => void;
+}
+
+const Status = ({ onNavigateToTasks }: StatusProps) => {
   const [loading, setLoading] = useState(true);
   const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
   const [autoPilotEnabled, setAutoPilotEnabled] = useState(true);
@@ -17,10 +22,11 @@ const Status = () => {
     instagram: false,
     messenger: false,
   });
-  const [pendingTasksCount, setPendingTasksCount] = useState(8);
+  const [pendingTasks, setPendingTasks] = useState<any[]>([]);
 
   useEffect(() => {
     loadSettings();
+    loadPendingTasks();
   }, []);
 
   const loadSettings = async () => {
@@ -50,6 +56,26 @@ const Status = () => {
       console.error("Error loading settings:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPendingTasks = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setPendingTasks(data || []);
+    } catch (error) {
+      console.error("Error loading pending tasks:", error);
     }
   };
 
@@ -140,8 +166,63 @@ const Status = () => {
     );
   }
 
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return <Badge className="border-destructive/30 bg-destructive/10 text-destructive"><AlertCircle className="mr-1 h-3 w-3" />High</Badge>;
+      case "medium":
+        return <Badge className="border-warning/30 bg-warning/10 text-warning">Medium</Badge>;
+      default:
+        return <Badge className="border-muted-foreground/30 bg-muted text-muted-foreground">Low</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Needs Attention Section - TOP */}
+      {pendingTasks.length > 0 && (
+        <Card className="border-0 p-6 shadow-lg bg-gradient-to-br from-warning/10 to-warning/5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-bold text-foreground">Needs Your Attention</h3>
+              <p className="text-sm text-muted-foreground">Tasks requiring immediate action</p>
+            </div>
+            <Badge variant="outline" className="text-2xl font-bold px-4 py-2 bg-warning/20 border-warning text-warning">
+              {pendingTasks.length}
+            </Badge>
+          </div>
+          <div className="space-y-2">
+            {pendingTasks.map((task) => (
+              <Card
+                key={task.id}
+                className="cursor-pointer border-0 p-4 shadow-sm transition-all hover:shadow-md bg-background"
+                onClick={onNavigateToTasks}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="text-sm font-semibold text-foreground">{task.title}</h4>
+                      {getPriorityBadge(task.priority)}
+                    </div>
+                    {task.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-1">{task.description}</p>
+                    )}
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </Card>
+            ))}
+            <Button 
+              variant="outline" 
+              className="w-full mt-2"
+              onClick={onNavigateToTasks}
+            >
+              View All Tasks
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Welcome Banner */}
       <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-light p-6 text-primary-foreground shadow-lg">
         <div className="flex items-center gap-3 mb-2">
@@ -326,18 +407,6 @@ const Status = () => {
         </div>
       </Card>
 
-      {/* Pending Tasks Count */}
-      <Card className="border-0 p-6 shadow-lg bg-gradient-to-br from-warning/10 to-warning/5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-foreground">Pending Tasks</h3>
-            <p className="text-sm text-muted-foreground">Items requiring your attention</p>
-          </div>
-          <Badge variant="outline" className="text-3xl font-bold px-6 py-3 bg-warning/20 border-warning text-warning">
-            {pendingTasksCount}
-          </Badge>
-        </div>
-      </Card>
 
       {/* Analytics - Bigger, More Visual */}
       <div>

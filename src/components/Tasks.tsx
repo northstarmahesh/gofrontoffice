@@ -1,10 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Clock, AlertCircle, Bot, User } from "lucide-react";
-import { toast } from "sonner";
 import ActivityLogs from "./ActivityLogs";
+import TaskDetailDialog from "./TaskDetailDialog";
+import { useState } from "react";
 
 const Tasks = () => {
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const assistantTasks = [
     {
       id: 1,
@@ -64,8 +68,9 @@ const Tasks = () => {
   // Filter to show only today's tasks
   const todayHumanTasks = humanTasks.filter(task => task.date === "Today");
 
-  const handleTaskClick = (taskId: number) => {
-    toast.info("Task details would open here");
+  const handleTaskClick = (task: any) => {
+    setSelectedTask(task);
+    setDialogOpen(true);
   };
 
   const getStatusIcon = (status: string) => {
@@ -112,7 +117,7 @@ const Tasks = () => {
     <Card
       key={task.id}
       className="cursor-pointer border-0 p-3 shadow-sm transition-all hover:shadow-md"
-      onClick={() => handleTaskClick(task.id)}
+      onClick={() => handleTaskClick(task)}
     >
       <div className="flex gap-3">
         <div className="pt-0.5">{getStatusIcon(task.status)}</div>
@@ -217,6 +222,13 @@ const Tasks = () => {
       <div className="mt-8">
         <ActivityLogs />
       </div>
+
+      {/* Task Detail Dialog */}
+      <TaskDetailDialog
+        task={selectedTask}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 };
