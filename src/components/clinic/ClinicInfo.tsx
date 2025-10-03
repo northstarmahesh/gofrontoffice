@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Building2, BookOpen, Plus, Trash2, Globe, FileText, MapPin, Lock } from "lucide-react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { Building2, BookOpen, Plus, Trash2, Globe, FileText, MapPin, Lock, Search } from "lucide-react";
 
 interface ClinicInfoProps {
   clinicId?: string;
@@ -45,9 +43,9 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
   const [urls, setUrls] = useState(["", "", ""]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [addressLocked, setAddressLocked] = useState(false);
-  const mapRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     if (clinicId) {
@@ -57,88 +55,37 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
   }, [clinicId]);
 
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    if (clinicId) {
+      loadClinicData();
+      loadEntries();
+    }
+  }, [clinicId]);
 
-    // Initialize map
-    const map = L.map(mapContainerRef.current).setView([37.7749, -122.4194], 13);
-    mapRef.current = map;
+  // Debounced address search
+  useEffect(() => {
+    if (!addressQuery || addressLocked) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
 
-    // Add OpenStreetMap tile layer
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(map);
-
-    // Fix icon paths for Leaflet
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-    });
-
-    // Add click handler for map
-    map.on("click", async (e: L.LeafletMouseEvent) => {
-      const { lat, lng } = e.latlng;
-
-      // Add or move marker
-      if (markerRef.current) {
-        markerRef.current.setLatLng([lat, lng]);
-      } else {
-        markerRef.current = L.marker([lat, lng]).addTo(map);
-      }
-
-      // Reverse geocode to get address
+    const timer = setTimeout(async () => {
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            addressQuery
+          )}&limit=5`
         );
         const data = await response.json();
-        
-        if (data.display_name) {
-          setFormData({ ...formData, address: data.display_name });
-          setAddressLocked(true);
-          toast.success("Address set from map location");
-        }
+        setAddressSuggestions(data);
+        setShowSuggestions(data.length > 0);
       } catch (error) {
-        console.error("Geocoding error:", error);
-        toast.error("Failed to get address from location");
+        console.error("Address search error:", error);
       }
-    });
+    }, 500);
 
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
-  }, []);
-
-  // Update map marker when address is manually changed and unlocked
-  useEffect(() => {
-    if (!addressLocked && formData.address && mapRef.current) {
-      // Geocode the address to get coordinates
-      fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          formData.address
-        )}`
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data[0]) {
-            const { lat, lon } = data[0];
-            const latLng: L.LatLngExpression = [parseFloat(lat), parseFloat(lon)];
-            
-            if (markerRef.current) {
-              markerRef.current.setLatLng(latLng);
-            } else if (mapRef.current) {
-              markerRef.current = L.marker(latLng).addTo(mapRef.current);
-            }
-            
-            mapRef.current?.setView(latLng, 15);
-          }
-        })
-        .catch((error) => console.error("Geocoding error:", error));
-    }
-  }, [formData.address, addressLocked]);
+    return () => clearTimeout(timer);
+  }, [addressQuery, addressLocked]);
 
   const loadClinicData = async () => {
     const { data, error } = await supabase
@@ -160,6 +107,10 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
         phone: data.phone || "",
         address: data.address || "",
       });
+      setAddressQuery(data.address || "");
+      if (data.address) {
+        setAddressLocked(true);
+      }
     }
   };
 
@@ -215,6 +166,20 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddressSelect = (suggestion: any) => {
+    const fullAddress = suggestion.display_name;
+    setFormData({ ...formData, address: fullAddress });
+    setAddressQuery(fullAddress);
+    setAddressLocked(true);
+    setShowSuggestions(false);
+    toast.success("Address selected");
+  };
+
+  const handleAddressUnlock = () => {
+    setAddressLocked(false);
+    setAddressQuery(formData.address);
   };
 
   const generateSlug = () => {
@@ -404,7 +369,7 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => setAddressLocked(false)}
+                    onClick={handleAddressUnlock}
                     className="h-auto py-1 px-2 text-xs"
                   >
                     <Lock className="h-3 w-3 mr-1" />
@@ -412,28 +377,58 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
                   </Button>
                 )}
               </Label>
-              <Textarea
-                id="address"
-                value={formData.address}
-                onChange={(e) => {
-                  setFormData({ ...formData, address: e.target.value });
-                  setAddressLocked(false);
-                }}
-                placeholder="Click on the map below to set address, or type manually"
-                rows={3}
-                disabled={addressLocked}
-                className={addressLocked ? "opacity-75" : ""}
-              />
+              <div className="relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="address"
+                    value={addressLocked ? formData.address : addressQuery}
+                    onChange={(e) => {
+                      setAddressQuery(e.target.value);
+                      if (!addressLocked) {
+                        setFormData({ ...formData, address: e.target.value });
+                      }
+                    }}
+                    onFocus={() => {
+                      if (!addressLocked && addressQuery) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    placeholder="Start typing an address..."
+                    disabled={addressLocked}
+                    className={`pl-9 ${addressLocked ? "opacity-75" : ""}`}
+                  />
+                </div>
+                {showSuggestions && addressSuggestions.length > 0 && !addressLocked && (
+                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+                    {addressSuggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleAddressSelect(suggestion)}
+                        className="w-full px-4 py-3 text-left hover:bg-accent transition-colors border-b last:border-b-0"
+                      >
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {suggestion.display_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {suggestion.type}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {addressLocked 
-                  ? "Address set from map. Click 'Unlock to edit' to change manually." 
-                  : "Click anywhere on the map to set the address automatically"}
+                  ? "Address selected. Click 'Unlock to edit' to change." 
+                  : "Start typing to see address suggestions"}
               </p>
-              <div 
-                ref={mapContainerRef}
-                className="mt-4 rounded-lg overflow-hidden border h-[400px] w-full"
-                style={{ zIndex: 0 }}
-              />
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
