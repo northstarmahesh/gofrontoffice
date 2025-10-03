@@ -119,9 +119,6 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Phone Numbers Section */}
-      <PhoneNumbers clinicId={clinicId} />
-
       {/* Service Categories */}
       <div className="space-y-6">
         {serviceCategories.map((category) => {
@@ -175,6 +172,9 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
           );
         })}
       </div>
+
+      {/* Phone Numbers Section - Coming Soon */}
+      <PhoneNumbers clinicId={clinicId} />
     </div>
   );
 };
