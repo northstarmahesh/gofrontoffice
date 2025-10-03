@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, AlertCircle, Bot, User } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send } from "lucide-react";
 import ActivityLogs from "./ActivityLogs";
 import TaskDetailDialog from "./TaskDetailDialog";
 import ContactDetailDialog from "./ContactDetailDialog";
@@ -88,12 +88,11 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     {
       id: "dummy1",
       title: "Review and approve draft message",
-      description: "AI prepared response about appointment rescheduling for Emma Rodriguez",
-      priority: "high",
+      description: "AI prepared response about appointment rescheduling",
       status: "pending",
       date: "Today",
       time: "11:30 AM",
-      source: "WhatsApp",
+      source: "whatsapp",
       isInternal: false,
       contact_name: "Emma Rodriguez",
       contact_info: "+46 76 345 6789",
@@ -102,12 +101,11 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     {
       id: "dummy2",
       title: "Follow up on prescription inquiry",
-      description: "Draft message ready: Information about prescription refill process for Mike Johnson",
-      priority: "medium",
+      description: "Draft message ready: Information about prescription refill process",
       status: "pending",
       date: "Today",
       time: "2:15 PM",
-      source: "SMS",
+      source: "sms",
       isInternal: false,
       contact_name: "Mike Johnson",
       contact_info: "+46 70 123 4567",
@@ -116,12 +114,11 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     {
       id: "dummy3",
       title: "Respond to pricing question",
-      description: "AI drafted detailed pricing breakdown for Sarah Williams",
-      priority: "medium",
+      description: "AI drafted detailed pricing breakdown",
       status: "pending",
       date: "Today",
       time: "3:45 PM",
-      source: "Instagram",
+      source: "instagram",
       isInternal: false,
       contact_name: "Sarah Williams",
       contact_info: "@sarah_williams",
@@ -138,22 +135,20 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       id: 1,
       title: "Sent appointment reminders",
       description: "3 appointments scheduled for tomorrow",
-      priority: "low",
       status: "completed",
       date: "Today",
       time: "9:00 AM",
-      source: "Auto",
+      source: "auto",
       isInternal: true,
     },
     {
       id: 2,
       title: "Auto-replied to appointment confirmation",
       description: "Sarah Smith - SMS confirmation sent",
-      priority: "medium",
       status: "completed",
       date: "Today",
       time: "9:45 AM",
-      source: "SMS",
+      source: "sms",
       isInternal: false,
       contact_name: "Sarah Smith",
     },
@@ -161,11 +156,10 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       id: 3,
       title: "Processing insurance verification",
       description: "John Doe - Awaiting provider response",
-      priority: "medium",
       status: "in-progress",
       date: "Today",
       time: "10:15 AM",
-      source: "Phone",
+      source: "phone",
       isInternal: true,
     },
   ];
@@ -203,27 +197,63 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     }
   };
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return (
-          <Badge className="border-destructive/30 bg-destructive/10 text-destructive">
-            <AlertCircle className="mr-1 h-3 w-3" />
-            High
-          </Badge>
-        );
-      case "medium":
-        return (
-          <Badge className="border-warning/30 bg-warning/10 text-warning">
-            Medium
-          </Badge>
-        );
+  const getChannelIcon = (source: string) => {
+    const lowerSource = source?.toLowerCase() || "";
+    switch (lowerSource) {
+      case "sms":
+        return MessageSquare;
+      case "whatsapp":
+        return MessageSquare;
+      case "instagram":
+        return Instagram;
+      case "messenger":
+        return Send;
+      case "email":
+        return Mail;
+      case "phone":
+        return Phone;
       default:
-        return (
-          <Badge className="border-muted-foreground/30 bg-muted text-muted-foreground">
-            Low
-          </Badge>
-        );
+        return MessageSquare;
+    }
+  };
+
+  const getChannelColor = (source: string) => {
+    const lowerSource = source?.toLowerCase() || "";
+    switch (lowerSource) {
+      case "sms":
+        return "bg-blue-500/10 text-blue-600 border-blue-500/30";
+      case "whatsapp":
+        return "bg-green-500/10 text-green-600 border-green-500/30";
+      case "instagram":
+        return "bg-pink-500/10 text-pink-600 border-pink-500/30";
+      case "messenger":
+        return "bg-indigo-500/10 text-indigo-600 border-indigo-500/30";
+      case "email":
+        return "bg-purple-500/10 text-purple-600 border-purple-500/30";
+      case "phone":
+        return "bg-orange-500/10 text-orange-600 border-orange-500/30";
+      default:
+        return "bg-muted text-muted-foreground border-muted";
+    }
+  };
+
+  const getChannelDisplay = (source: string) => {
+    const lowerSource = source?.toLowerCase() || "";
+    switch (lowerSource) {
+      case "sms":
+        return "SMS";
+      case "whatsapp":
+        return "WhatsApp";
+      case "instagram":
+        return "Instagram";
+      case "messenger":
+        return "Messenger";
+      case "email":
+        return "Email";
+      case "phone":
+        return "Phone";
+      default:
+        return source;
     }
   };
 
@@ -234,11 +264,12 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
   const renderTaskCard = (task: any, isAssistant: boolean) => {
     const isContactTask = task.contact_name || !task.isInternal;
+    const ChannelIcon = getChannelIcon(task.source);
     
     return (
       <Card
         key={task.id}
-        className={`cursor-pointer border-0 p-3 shadow-sm transition-all hover:shadow-md ${
+        className={`cursor-pointer border-0 p-4 shadow-sm transition-all hover:shadow-md ${
           isContactTask ? 'bg-card' : 'bg-muted/30'
         }`}
         onClick={() => handleTaskClick(task)}
@@ -246,32 +277,48 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         <div className="flex gap-3">
           <div className="pt-0.5">{getStatusIcon(task.status)}</div>
           
-          <div className="flex-1 space-y-1.5">
+          <div className="flex-1 space-y-2">
+            {/* Top row: Customer name (if contact task) + Channel badge */}
             <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <h4 className={`text-sm font-semibold ${
-                  task.status === "completed"
-                    ? "text-muted-foreground line-through"
-                    : "text-foreground"
-                }`}>
-                  {task.title}
-                </h4>
-                {!isContactTask && (
-                  <Badge variant="outline" className="text-xs bg-muted">
-                    Internal
-                  </Badge>
+              <div className="flex-1">
+                {isContactTask && task.contact_name ? (
+                  <h3 className={`text-base font-bold ${
+                    task.status === "completed"
+                      ? "text-muted-foreground line-through"
+                      : "text-foreground"
+                  }`}>
+                    {task.contact_name}
+                  </h3>
+                ) : (
+                  <h4 className={`text-sm font-semibold ${
+                    task.status === "completed"
+                      ? "text-muted-foreground line-through"
+                      : "text-foreground"
+                  }`}>
+                    {task.title}
+                  </h4>
                 )}
               </div>
-              {getPriorityBadge(task.priority)}
+              
+              <Badge className={`flex items-center gap-1.5 border ${getChannelColor(task.source)}`}>
+                <ChannelIcon className="h-3.5 w-3.5" />
+                {getChannelDisplay(task.source)}
+              </Badge>
             </div>
 
-            <p className="text-xs text-muted-foreground">{task.description}</p>
+            {/* Description/Title row */}
+            {isContactTask && task.contact_name && (
+              <p className="text-sm text-muted-foreground">{task.description}</p>
+            )}
 
+            {/* Bottom row: Time */}
             <div className="flex items-center justify-between">
-              <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {task.source}
-              </span>
               <span className="text-xs text-muted-foreground">{task.time}</span>
+              {!isContactTask && (
+                <Badge variant="outline" className="text-xs bg-muted">
+                  Internal
+                </Badge>
+              )}
             </div>
           </div>
         </div>
