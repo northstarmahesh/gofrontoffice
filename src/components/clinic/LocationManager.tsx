@@ -5,15 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { MapPin, Plus, Trash2, Edit, Search } from "lucide-react";
+import { MapPin, Plus, Trash2, Edit, Search, Phone, MessageSquare } from "lucide-react";
 import { CreateUserDialog } from "./CreateUserDialog";
 
 interface Location {
   id: string;
   name: string;
   address: string;
-  phone: string;
   admin_email: string;
 }
 
@@ -29,8 +30,13 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
   const [formData, setFormData] = useState({
     name: "",
     address: "",
-    phone: "",
     admin_email: "",
+  });
+
+  const [phoneNumberSetup, setPhoneNumberSetup] = useState({
+    enabled: false,
+    number: "",
+    channels: ["sms"] as string[],
   });
   
   // Address autocomplete state
@@ -131,6 +137,8 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
 
   const saveLocation = async () => {
     try {
+      let locationId = editingLocation?.id;
+
       if (editingLocation) {
         const { error } = await supabase
           .from("clinic_locations")
@@ -140,12 +148,50 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
         if (error) throw error;
         toast.success("Location updated!");
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("clinic_locations")
-          .insert([{ ...formData, clinic_id: clinicId }]);
+          .insert([{ ...formData, clinic_id: clinicId }])
+          .select()
+          .single();
 
         if (error) throw error;
+        locationId = data.id;
         toast.success("Location added!");
+      }
+
+      // Add phone number if enabled
+      if (phoneNumberSetup.enabled && phoneNumberSetup.number && locationId) {
+        // Check if WhatsApp is selected and already exists for this location
+        if (phoneNumberSetup.channels.includes("whatsapp")) {
+          const { data: existing } = await supabase
+            .from("clinic_phone_numbers")
+            .select("id")
+            .eq("location_id", locationId)
+            .contains("channels", ["whatsapp"])
+            .maybeSingle();
+
+          if (existing) {
+            toast.error("This location already has a WhatsApp number.");
+            return;
+          }
+        }
+
+        const { error: phoneError } = await supabase
+          .from("clinic_phone_numbers")
+          .insert({
+            clinic_id: clinicId,
+            location_id: locationId,
+            phone_number: phoneNumberSetup.number,
+            channels: phoneNumberSetup.channels,
+            is_active: true,
+          });
+
+        if (phoneError) {
+          console.error("Error adding phone number:", phoneError);
+          toast.error("Location saved but failed to add phone number");
+        } else {
+          toast.success("Phone number added!");
+        }
       }
 
       setDialogOpen(false);
@@ -157,12 +203,20 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
     }
   };
 
+  const toggleChannel = (channel: string) => {
+    setPhoneNumberSetup(prev => ({
+      ...prev,
+      channels: prev.channels.includes(channel)
+        ? prev.channels.filter(c => c !== channel)
+        : [...prev.channels, channel]
+    }));
+  };
+
   const handleEdit = (location: Location) => {
     setEditingLocation(location);
     setFormData({
       name: location.name,
       address: location.address,
-      phone: location.phone,
       admin_email: location.admin_email,
     });
     setAddressQuery(location.address);
@@ -189,7 +243,8 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", phone: "", admin_email: "" });
+    setFormData({ name: "", address: "", admin_email: "" });
+    setPhoneNumberSetup({ enabled: false, number: "", channels: ["sms"] });
     setAddressQuery("");
     setAddressLocked(false);
     setEditingLocation(null);
@@ -299,19 +354,6 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
-                      }
-                      placeholder="+1 (555) 123-4567"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="admin_email">Location Admin Email</Label>
                     <Input
                       id="admin_email"
@@ -325,6 +367,88 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
                     <p className="text-xs text-muted-foreground">
                       If email doesn't exist, you'll be prompted to create a new user
                     </p>
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="enable-phone"
+                        checked={phoneNumberSetup.enabled}
+                        onCheckedChange={(checked) =>
+                          setPhoneNumberSetup({ ...phoneNumberSetup, enabled: !!checked })
+                        }
+                      />
+                      <label
+                        htmlFor="enable-phone"
+                        className="text-sm font-medium leading-none cursor-pointer"
+                      >
+                        Add phone number for communication channels
+                      </label>
+                    </div>
+
+                    {phoneNumberSetup.enabled && (
+                      <div className="space-y-4 pl-6 border-l-2 border-muted">
+                        <div className="space-y-2">
+                          <Label htmlFor="phone-number">Phone Number *</Label>
+                          <Input
+                            id="phone-number"
+                            value={phoneNumberSetup.number}
+                            onChange={(e) =>
+                              setPhoneNumberSetup({ ...phoneNumberSetup, number: e.target.value })
+                            }
+                            placeholder="+14243298358"
+                            required={phoneNumberSetup.enabled}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Include country code (e.g., +1 for US)
+                          </p>
+                        </div>
+
+                        <div className="space-y-3">
+                          <Label>Channels *</Label>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="channel-sms"
+                                checked={phoneNumberSetup.channels.includes("sms")}
+                                onCheckedChange={() => toggleChannel("sms")}
+                              />
+                              <label htmlFor="channel-sms" className="text-sm cursor-pointer flex items-center gap-1">
+                                <Phone className="h-4 w-4" />
+                                SMS
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="channel-voice"
+                                checked={phoneNumberSetup.channels.includes("voice")}
+                                onCheckedChange={() => toggleChannel("voice")}
+                              />
+                              <label htmlFor="channel-voice" className="text-sm cursor-pointer flex items-center gap-1">
+                                <Phone className="h-4 w-4" />
+                                Voice
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="channel-whatsapp"
+                                checked={phoneNumberSetup.channels.includes("whatsapp")}
+                                onCheckedChange={() => toggleChannel("whatsapp")}
+                              />
+                              <label htmlFor="channel-whatsapp" className="text-sm cursor-pointer flex items-center gap-1">
+                                <MessageSquare className="h-4 w-4" />
+                                WhatsApp
+                              </label>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Note: Only one WhatsApp number per location
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <Button type="submit" className="w-full">
@@ -357,11 +481,6 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
                     {location.address && (
                       <p className="text-sm text-muted-foreground mt-1">
                         {location.address}
-                      </p>
-                    )}
-                    {location.phone && (
-                      <p className="text-sm text-muted-foreground">
-                        📞 {location.phone}
                       </p>
                     )}
                     {location.admin_email && (

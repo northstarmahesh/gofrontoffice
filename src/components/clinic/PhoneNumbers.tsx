@@ -263,7 +263,7 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
           </Dialog>
         </div>
         <CardDescription>
-          Configure phone numbers for your clinic's communication channels
+          Manage phone numbers for your clinic locations. Add new numbers or edit existing ones configured during location setup.
         </CardDescription>
       </CardHeader>
       <CardContent>
