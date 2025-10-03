@@ -24,13 +24,15 @@ serve(async (req) => {
       const token = url.searchParams.get('hub.verify_token');
       const challenge = url.searchParams.get('hub.challenge');
 
-      // Use a verify token (you should set this in Meta App webhook settings)
-      const VERIFY_TOKEN = 'instagram_webhook_verify_token_2024';
+      const VERIFY_TOKEN = Deno.env.get('INSTAGRAM_VERIFY_TOKEN');
+
+      console.log('Webhook verification attempt:', { mode, tokenProvided: !!token, challengeProvided: !!challenge });
 
       if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-        console.log('Webhook verified');
+        console.log('Webhook verified successfully');
         return new Response(challenge, { status: 200 });
       } else {
+        console.log('Webhook verification failed - token mismatch');
         return new Response('Forbidden', { status: 403 });
       }
     }
