@@ -19,7 +19,7 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
     slug: "",
     email: "",
     address: "",
-    timezone: "America/New_York",
+    timezone: "Europe/Stockholm",
   });
   const [sendingCode, setSendingCode] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -347,10 +347,20 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
             value={formData.timezone}
             onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
           >
-            <option value="America/New_York">Eastern Time</option>
-            <option value="America/Chicago">Central Time</option>
-            <option value="America/Denver">Mountain Time</option>
-            <option value="America/Los_Angeles">Pacific Time</option>
+            <option value="Europe/Stockholm">Stockholm (Europe/Stockholm)</option>
+            <option value="Europe/London">London (Europe/London)</option>
+            <option value="Europe/Paris">Paris (Europe/Paris)</option>
+            <option value="Europe/Berlin">Berlin (Europe/Berlin)</option>
+            <option value="Europe/Rome">Rome (Europe/Rome)</option>
+            <option value="Europe/Madrid">Madrid (Europe/Madrid)</option>
+            <option value="Europe/Amsterdam">Amsterdam (Europe/Amsterdam)</option>
+            <option value="America/New_York">New York (Eastern Time)</option>
+            <option value="America/Chicago">Chicago (Central Time)</option>
+            <option value="America/Denver">Denver (Mountain Time)</option>
+            <option value="America/Los_Angeles">Los Angeles (Pacific Time)</option>
+            <option value="Asia/Tokyo">Tokyo (Asia/Tokyo)</option>
+            <option value="Asia/Dubai">Dubai (Asia/Dubai)</option>
+            <option value="Australia/Sydney">Sydney (Australia/Sydney)</option>
           </select>
         </div>
 
