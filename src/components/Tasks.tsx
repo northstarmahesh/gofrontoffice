@@ -12,6 +12,11 @@ interface TasksProps {
 const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleTaskComplete = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const assistantTasks = [
     {
@@ -56,6 +61,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       date: "Today",
       time: "8:30 AM",
       source: "WhatsApp",
+      draft_message: "Hi Mike, I've reviewed your prescription refill request. Your doctor has approved the refill for 30 days. Please pick up your prescription at the pharmacy within 48 hours. Let me know if you have any questions!",
     },
     {
       id: 5,
@@ -66,6 +72,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       date: "Today",
       time: "2:30 PM",
       source: "Instagram",
+      draft_message: "Thank you for your interest in our services! We offer comprehensive dental care including cleanings ($150), fillings ($200-$400), and cosmetic procedures. Would you like to schedule a consultation? We have availability next week.",
     },
   ];
 
@@ -233,6 +240,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onViewContact={onNavigateToContact}
+        onTaskComplete={handleTaskComplete}
       />
     </div>
   );
