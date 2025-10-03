@@ -339,9 +339,9 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                   )}
                 </div>
                 
-                {/* Chat-style messages - reversed to show oldest first */}
+                {/* Chat-style messages - chronological order (oldest to newest) */}
                 <div className="space-y-3 bg-muted/30 rounded-lg p-4 max-h-[250px] overflow-y-auto">
-                  {(showAllHistory ? [...activityHistory].reverse() : [...activityHistory].slice(0, 3).reverse()).map((log) => {
+                  {(showAllHistory ? activityHistory : activityHistory.slice(0, 3)).map((log) => {
                     const fromAI = isFromAI(log.title, log.type);
                     const phoneCall = isPhoneCall(log.type);
                     
