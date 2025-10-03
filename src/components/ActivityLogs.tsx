@@ -1,106 +1,187 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Phone, MessageSquare, Clock, Search, Instagram, Mail } from "lucide-react";
+import { Phone, MessageSquare, Clock, Search, Instagram, Mail, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import ContactDetailDialog from "./ContactDetailDialog";
+import { toast } from "sonner";
+
+interface ActivityLog {
+  id: string;
+  type: string;
+  title: string;
+  summary: string | null;
+  contact_name: string | null;
+  contact_info: string | null;
+  status: string;
+  created_at: string;
+  actions: string[] | null;
+  direction?: string;
+}
 
 const ActivityLogs = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [channelFilter, setChannelFilter] = useState("all");
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedContact, setSelectedContact] = useState<{
+    name: string;
+    info: string;
+    id?: string;
+  } | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
-  const logs = [
-    {
-      id: 1,
-      type: "call",
-      channel: "call",
-      timestamp: "Today, 10:24 AM",
-      title: "Incoming call from John Doe",
-      summary: "Patient inquired about appointment availability for next week. Provided available slots and confirmed booking for Tuesday 3PM.",
-      status: "completed",
-      actions: ["Created appointment", "Sent confirmation SMS"],
-      date: "Today",
-    },
-    {
-      id: 2,
-      type: "sms",
-      channel: "sms",
-      timestamp: "Today, 9:45 AM",
-      title: "SMS from Sarah Smith",
-      summary: "Appointment confirmation request. Auto-replied with confirmation and clinic address.",
-      status: "auto-replied",
-      actions: ["Sent auto-reply"],
-      date: "Today",
-    },
-    {
-      id: 3,
-      type: "whatsapp",
-      channel: "whatsapp",
-      timestamp: "Today, 8:30 AM",
-      title: "WhatsApp from Mike Johnson",
-      summary: "Question about prescription refill. Requires doctor approval.",
-      status: "pending",
-      actions: ["Created task for review"],
-      date: "Today",
-    },
-    {
-      id: 4,
-      type: "call",
-      channel: "call",
-      timestamp: "Yesterday, 4:15 PM",
-      title: "Call from Emily Davis",
-      summary: "Rescheduling request for appointment. Updated to Friday 2PM as requested.",
-      status: "completed",
-      actions: ["Rescheduled appointment", "Sent update"],
-      date: "Yesterday",
-    },
-    {
-      id: 5,
-      type: "instagram",
-      channel: "instagram",
-      timestamp: "Yesterday, 2:30 PM",
-      title: "Instagram DM inquiry",
-      summary: "New patient asking about services and pricing. Draft reply prepared for approval.",
-      status: "co-pilot",
-      actions: ["Draft ready for review"],
-      date: "Yesterday",
-    },
-  ];
+  useEffect(() => {
+    loadActivityLogs();
+  }, []);
 
-  const getChannelIcon = (channel: string) => {
-    switch (channel) {
-      case "call":
-        return <Phone className="h-4 w-4 text-primary" />;
-      case "sms":
-      case "whatsapp":
-        return <MessageSquare className="h-4 w-4 text-secondary" />;
-      case "instagram":
-        return <Instagram className="h-4 w-4 text-secondary" />;
-      case "email":
-        return <Mail className="h-4 w-4 text-secondary" />;
-      default:
-        return <MessageSquare className="h-4 w-4 text-secondary" />;
+  const loadActivityLogs = async () => {
+    setLoading(true);
+    try {
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .single();
+
+      if (!clinicData?.clinic_id) {
+        toast.error("No clinic found");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("activity_logs")
+        .select("*")
+        .eq("clinic_id", clinicData.clinic_id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setLogs(data || []);
+    } catch (error) {
+      console.error("Error loading activity logs:", error);
+      toast.error("Failed to load activity logs");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredLogs = logs
-    .filter((log) => {
-      const matchesSearch = log.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.summary.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesChannel = channelFilter === "all" || log.channel === channelFilter;
-      return matchesSearch && matchesChannel;
+  const handleLogClick = async (log: ActivityLog) => {
+    if (log.contact_name) {
+      // It's a contact activity - open contact detail dialog
+      let contactId = undefined;
+      
+      // Try to find the contact ID from contacts table
+      if (log.contact_info) {
+        const { data: clinicData } = await supabase
+          .from("clinic_users")
+          .select("clinic_id")
+          .single();
+
+        if (clinicData?.clinic_id) {
+          const { data: contactData } = await supabase
+            .from("contacts")
+            .select("id")
+            .eq("clinic_id", clinicData.clinic_id)
+            .eq("phone", log.contact_info)
+            .maybeSingle();
+
+          contactId = contactData?.id;
+        }
+      }
+
+      setSelectedContact({
+        name: log.contact_name,
+        info: log.contact_info || "",
+        id: contactId
+      });
+      setDetailDialogOpen(true);
+    }
+    // For non-contact (internal) activities, we don't open a dialog (yet)
+  };
+
+  const isContactActivity = (log: ActivityLog) => {
+    return !!log.contact_name;
+  };
+
+  const getChannelIcon = (channel: string) => {
+    const channelLower = channel.toLowerCase();
+    if (channelLower.includes("call") || channelLower.includes("phone")) {
+      return <Phone className="h-4 w-4" />;
+    } else if (channelLower.includes("sms") || channelLower.includes("text")) {
+      return <MessageSquare className="h-4 w-4" />;
+    } else if (channelLower.includes("whatsapp")) {
+      return <Phone className="h-4 w-4" />;
+    } else if (channelLower.includes("instagram")) {
+      return <Instagram className="h-4 w-4" />;
+    } else if (channelLower.includes("email") || channelLower.includes("mail")) {
+      return <Mail className="h-4 w-4" />;
+    }
+    return <MessageSquare className="h-4 w-4" />;
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+    
+    const timeStr = date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
     });
+    
+    if (isToday) {
+      return { date: "Today", time: `Today, ${timeStr}` };
+    } else if (isYesterday) {
+      return { date: "Yesterday", time: `Yesterday, ${timeStr}` };
+    } else {
+      const dateStr = date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric'
+      });
+      return { date: dateStr, time: `${dateStr}, ${timeStr}` };
+    }
+  };
+
+  const filteredLogs = logs.filter((log) => {
+    const matchesSearch = 
+      log.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.summary || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.contact_name || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesChannel = 
+      channelFilter === "all" || 
+      log.type.toLowerCase().includes(channelFilter.toLowerCase());
+    return matchesSearch && matchesChannel;
+  });
 
   const groupedLogs = filteredLogs.reduce((acc, log) => {
-    if (!acc[log.date]) {
-      acc[log.date] = [];
+    const { date } = formatDateTime(log.created_at);
+    if (!acc[date]) {
+      acc[date] = [];
     }
-    acc[log.date].push(log);
+    acc[date].push(log);
     return acc;
-  }, {} as Record<string, typeof logs>);
+  }, {} as Record<string, ActivityLog[]>);
 
   return (
     <div className="space-y-4">
+      {/* Contact Detail Dialog */}
+      {selectedContact && (
+        <ContactDetailDialog
+          contactId={selectedContact.id}
+          contactName={selectedContact.name}
+          contactInfo={selectedContact.info}
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+          onContactUpdated={loadActivityLogs}
+        />
+      )}
+
       <div>
         <h2 className="mb-2 text-xl font-bold text-foreground">Activity Logs</h2>
         <p className="text-xs text-muted-foreground">
@@ -132,66 +213,107 @@ const ActivityLogs = () => {
       </div>
 
       {/* Grouped Logs */}
-      <div className="space-y-4">
-        {Object.entries(groupedLogs).map(([date, dateLogs]) => (
-          <div key={date} className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">{date}</h3>
-            <div className="space-y-2">
-              {dateLogs.map((log) => (
-                <Card key={log.id} className="border-0 p-3 shadow-sm transition-all hover:shadow-md">
-                  <div className="flex gap-3">
-                    {/* Icon */}
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      {getChannelIcon(log.channel)}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 space-y-1.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-sm font-semibold text-foreground">{log.title}</h4>
-                        <Badge
-                          variant="outline"
-                          className={`shrink-0 text-xs ${
-                            log.status === "completed"
-                              ? "border-success/30 bg-success/10 text-success"
-                              : log.status === "auto-replied"
-                              ? "border-info/30 bg-info/10 text-info"
-                              : log.status === "co-pilot"
-                              ? "border-secondary/30 bg-secondary/10 text-secondary"
-                              : "border-warning/30 bg-warning/10 text-warning"
-                          }`}
-                        >
-                          {log.status}
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>{log.timestamp}</span>
-                      </div>
-
-                      <p className="text-xs text-foreground">{log.summary}</p>
-
-                      {log.actions.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {log.actions.map((action, index) => (
-                            <span
-                              key={index}
-                              className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                            >
-                              ✓ {action}
-                            </span>
-                          ))}
+      {loading ? (
+        <div className="text-center py-8">
+          <p className="text-sm text-muted-foreground">Loading activity logs...</p>
+        </div>
+      ) : filteredLogs.length === 0 ? (
+        <div className="text-center py-8">
+          <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+          <p className="text-muted-foreground">No activity logs found</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {Object.entries(groupedLogs).map(([date, dateLogs]) => (
+            <div key={date} className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">{date}</h3>
+              <div className="space-y-2">
+                {dateLogs.map((log) => {
+                  const isContact = isContactActivity(log);
+                  const { time } = formatDateTime(log.created_at);
+                  
+                  return (
+                    <Card 
+                      key={log.id} 
+                      className={`border-0 p-3 shadow-sm transition-all ${
+                        isContact 
+                          ? 'hover:shadow-md cursor-pointer hover:border-primary/20' 
+                          : 'bg-muted/30 hover:bg-muted/50 cursor-default'
+                      }`}
+                      onClick={() => isContact && handleLogClick(log)}
+                    >
+                      <div className="flex gap-3">
+                        {/* Icon */}
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                          isContact ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {isContact ? getChannelIcon(log.type) : <User className="h-4 w-4" />}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))}
+
+                        {/* Content */}
+                        <div className="flex-1 space-y-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="text-sm font-semibold text-foreground">
+                              {log.title}
+                              {!isContact && (
+                                <Badge variant="outline" className="ml-2 text-xs bg-muted">
+                                  Internal
+                                </Badge>
+                              )}
+                            </h4>
+                            <Badge
+                              variant="outline"
+                              className={`shrink-0 text-xs ${
+                                log.status === "completed"
+                                  ? "border-green-500/30 bg-green-500/10 text-green-600"
+                                  : log.status === "auto-replied"
+                                  ? "border-blue-500/30 bg-blue-500/10 text-blue-600"
+                                  : log.status === "pending"
+                                  ? "border-orange-500/30 bg-orange-500/10 text-orange-600"
+                                  : "border-purple-500/30 bg-purple-500/10 text-purple-600"
+                              }`}
+                            >
+                              {log.status}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{time}</span>
+                            {isContact && log.contact_name && (
+                              <>
+                                <span>•</span>
+                                <span className="font-medium">{log.contact_name}</span>
+                              </>
+                            )}
+                          </div>
+
+                          {log.summary && (
+                            <p className="text-xs text-foreground line-clamp-2">{log.summary}</p>
+                          )}
+
+                          {log.actions && log.actions.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {log.actions.map((action, index) => (
+                                <span
+                                  key={index}
+                                  className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                                >
+                                  ✓ {action}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
