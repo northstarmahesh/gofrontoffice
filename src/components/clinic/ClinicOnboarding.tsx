@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Building2, Users, Plug, Rocket } from "lucide-react";
 import { ClinicProfile } from "./ClinicProfile";
 import { TeamManagement } from "./TeamManagement";
-import { ChannelConnections } from "./ChannelConnections";
+import { OnboardingChannels } from "./OnboardingChannels";
 import { toast } from "sonner";
 
 interface ClinicOnboardingProps {
@@ -85,7 +85,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
             </div>
             {clinicId ? (
               <>
-                <ChannelConnections 
+                <OnboardingChannels 
                   clinicId={clinicId} 
                   onChannelsConnected={setHasChannelConnection}
                 />
