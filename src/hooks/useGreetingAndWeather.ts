@@ -14,6 +14,7 @@ export const useGreetingAndWeather = () => {
   useEffect(() => {
     const updateGreeting = () => {
       const hour = new Date().getHours();
+      console.log('Current hour:', hour);
       
       if (hour >= 5 && hour < 12) {
         setGreeting('Good Morning');
@@ -49,17 +50,23 @@ export const useGreetingAndWeather = () => {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords;
+            console.log('Location:', latitude, longitude);
             
             // Using Open-Meteo API (free, no API key required)
             const response = await fetch(
               `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&temperature_unit=fahrenheit`
             );
             
-            if (!response.ok) throw new Error('Weather fetch failed');
+            if (!response.ok) {
+              console.error('Weather fetch failed');
+              throw new Error('Weather fetch failed');
+            }
             
             const data = await response.json();
             const weatherCode = data.current.weather_code;
             const temp = data.current.temperature_2m;
+            
+            console.log('Weather data:', { weatherCode, temp });
             
             // Map weather codes to conditions
             let condition: WeatherData['condition'] = 'clear';
@@ -72,6 +79,7 @@ export const useGreetingAndWeather = () => {
             else if (weatherCode >= 95) condition = 'stormy';
             else if (weatherCode >= 45 && weatherCode <= 48) condition = 'foggy';
             
+            console.log('Weather condition:', condition);
             setWeather({ condition, temp });
             setLoading(false);
           },
