@@ -8,14 +8,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { MapPin, Plus, Trash2, Edit, Search, Phone, MessageSquare } from "lucide-react";
+import { MapPin, Plus, Trash2, Edit, Search, Phone, MessageSquare, Instagram, MessageCircle } from "lucide-react";
 import { CreateUserDialog } from "./CreateUserDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface Location {
   id: string;
   name: string;
   address: string;
   admin_email: string;
+  instagram_handle?: string;
+  instagram_connected?: boolean;
+  facebook_page_id?: string;
+  facebook_connected?: boolean;
+}
+
+interface PhoneNumber {
+  id: string;
+  phone_number: string;
+  channels: string[];
+  is_active: boolean;
+  is_verified: boolean;
 }
 
 interface LocationManagerProps {
@@ -28,12 +41,15 @@ export const LocationManager = ({ clinicId, onUpdate }: LocationManagerProps) =>
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+  const [locationPhoneNumbers, setLocationPhoneNumbers] = useState<PhoneNumber[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     address: "",
     admin_email: "",
     instagram_handle: "",
     facebook_page_id: "",
+    instagram_connected: false,
+    facebook_connected: false,
   });
 
   const [phoneNumberSetup, setPhoneNumberSetup] = useState({
@@ -221,12 +237,49 @@ export const LocationManager = ({ clinicId, onUpdate }: LocationManagerProps) =>
       name: location.name,
       address: location.address,
       admin_email: location.admin_email,
-      instagram_handle: (location as any).instagram_handle || "",
-      facebook_page_id: (location as any).facebook_page_id || "",
+      instagram_handle: location.instagram_handle || "",
+      facebook_page_id: location.facebook_page_id || "",
+      instagram_connected: location.instagram_connected || false,
+      facebook_connected: location.facebook_connected || false,
     });
     setAddressQuery(location.address);
     setAddressLocked(true);
+    loadLocationPhoneNumbers(location.id);
     setDialogOpen(true);
+  };
+
+  const loadLocationPhoneNumbers = async (locationId: string) => {
+    const { data, error } = await supabase
+      .from("clinic_phone_numbers")
+      .select("*")
+      .eq("location_id", locationId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error loading phone numbers:", error);
+    } else {
+      setLocationPhoneNumbers(data || []);
+    }
+  };
+
+  const handleDeletePhoneNumber = async (phoneId: string) => {
+    if (!confirm("Are you sure you want to remove this phone number?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("clinic_phone_numbers")
+        .delete()
+        .eq("id", phoneId);
+
+      if (error) throw error;
+      toast.success("Phone number removed!");
+      if (editingLocation) {
+        loadLocationPhoneNumbers(editingLocation.id);
+      }
+    } catch (error: any) {
+      console.error("Error deleting phone number:", error);
+      toast.error("Failed to remove phone number");
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -248,11 +301,20 @@ export const LocationManager = ({ clinicId, onUpdate }: LocationManagerProps) =>
   };
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", admin_email: "", instagram_handle: "", facebook_page_id: "" });
+    setFormData({ 
+      name: "", 
+      address: "", 
+      admin_email: "", 
+      instagram_handle: "", 
+      facebook_page_id: "",
+      instagram_connected: false,
+      facebook_connected: false,
+    });
     setPhoneNumberSetup({ enabled: false, number: "", channels: ["sms"] });
     setAddressQuery("");
     setAddressLocked(false);
     setEditingLocation(null);
+    setLocationPhoneNumbers([]);
   };
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -376,22 +438,74 @@ export const LocationManager = ({ clinicId, onUpdate }: LocationManagerProps) =>
 
                   <Separator className="my-4" />
 
+                  {/* Existing Phone Numbers for this location (only when editing) */}
+                  {editingLocation && locationPhoneNumbers.length > 0 && (
+                    <>
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-medium flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          Connected Phone Numbers
+                        </h3>
+                        <div className="space-y-2">
+                          {locationPhoneNumbers.map((phone) => (
+                            <div
+                              key={phone.id}
+                              className="flex items-center justify-between p-3 border rounded-lg bg-muted/30"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="text-sm font-medium">{phone.phone_number}</p>
+                                  {phone.is_verified && (
+                                    <Badge className="bg-success/10 text-success text-xs">
+                                      Verified
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex gap-1.5">
+                                  {phone.channels?.map((channel) => (
+                                    <Badge key={channel} variant="outline" className="text-xs">
+                                      {channel === "sms" && <MessageSquare className="h-3 w-3 mr-1" />}
+                                      {channel === "voice" && <Phone className="h-3 w-3 mr-1" />}
+                                      {channel === "whatsapp" && <MessageSquare className="h-3 w-3 mr-1" />}
+                                      <span className="capitalize">{channel}</span>
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeletePhoneNumber(phone.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <Separator className="my-4" />
+                    </>
+                  )}
+
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium">Social Media (Optional)</h3>
+                    <h3 className="text-sm font-medium">Social Media Connections</h3>
                     
                     <div className="space-y-2">
                       <Label htmlFor="instagram_handle">Instagram Handle</Label>
                       <Input
                         id="instagram_handle"
                         value={formData.instagram_handle}
-                        onChange={(e) =>
-                          setFormData({ ...formData, instagram_handle: e.target.value })
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData({ 
+                            ...formData, 
+                            instagram_handle: value,
+                            instagram_connected: !!value
+                          });
+                        }}
                         placeholder="@yourhandle"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Connect this later in Integrations & Tools
-                      </p>
                     </div>
 
                     <div className="space-y-2">
@@ -399,34 +513,38 @@ export const LocationManager = ({ clinicId, onUpdate }: LocationManagerProps) =>
                       <Input
                         id="facebook_page_id"
                         value={formData.facebook_page_id}
-                        onChange={(e) =>
-                          setFormData({ ...formData, facebook_page_id: e.target.value })
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData({ 
+                            ...formData, 
+                            facebook_page_id: value,
+                            facebook_connected: !!value
+                          });
+                        }}
                         placeholder="123456789"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Connect this later in Integrations & Tools
-                      </p>
                     </div>
                   </div>
 
                   <Separator className="my-4" />
 
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="enable-phone"
-                        checked={phoneNumberSetup.enabled}
-                        onCheckedChange={(checked) =>
-                          setPhoneNumberSetup({ ...phoneNumberSetup, enabled: !!checked })
-                        }
-                      />
-                      <label
-                        htmlFor="enable-phone"
-                        className="text-sm font-medium leading-none cursor-pointer"
-                      >
-                        Add phone number for communication channels
-                      </label>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="enable-phone"
+                          checked={phoneNumberSetup.enabled}
+                          onCheckedChange={(checked) =>
+                            setPhoneNumberSetup({ ...phoneNumberSetup, enabled: !!checked })
+                          }
+                        />
+                        <label
+                          htmlFor="enable-phone"
+                          className="text-sm font-medium leading-none cursor-pointer"
+                        >
+                          Add another phone number
+                        </label>
+                      </div>
                     </div>
 
                     {phoneNumberSetup.enabled && (
@@ -529,6 +647,20 @@ export const LocationManager = ({ clinicId, onUpdate }: LocationManagerProps) =>
                         ✉️ {location.admin_email}
                       </p>
                     )}
+                    <div className="flex gap-2 mt-2">
+                      {location.instagram_connected && (
+                        <Badge variant="outline" className="text-xs">
+                          <Instagram className="h-3 w-3 mr-1" />
+                          Instagram
+                        </Badge>
+                      )}
+                      {location.facebook_connected && (
+                        <Badge variant="outline" className="text-xs">
+                          <MessageCircle className="h-3 w-3 mr-1" />
+                          Messenger
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button
