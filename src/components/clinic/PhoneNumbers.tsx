@@ -8,8 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Phone, Plus, Trash2, MessageSquare } from "lucide-react";
+import { Phone, Plus, Trash2, MessageSquare, ShieldCheck, ShieldX } from "lucide-react";
+import { PhoneVerificationDialog } from "./PhoneVerificationDialog";
 
 interface PhoneNumbersProps {
   clinicId: string;
@@ -20,6 +22,7 @@ interface PhoneNumber {
   phone_number: string;
   channels: string[];
   is_active: boolean;
+  is_verified: boolean;
   location_id: string;
 }
 
@@ -33,6 +36,8 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [selectedPhoneForVerification, setSelectedPhoneForVerification] = useState<PhoneNumber | null>(null);
   const [formData, setFormData] = useState({
     phone_number: "",
     location_id: "",
@@ -133,6 +138,15 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
     }));
   };
 
+  const handleVerify = (phone: PhoneNumber) => {
+    setSelectedPhoneForVerification(phone);
+    setVerificationDialogOpen(true);
+  };
+
+  const handleVerified = () => {
+    loadPhoneNumbers();
+  };
+
   const handleToggle = async (id: string, isActive: boolean) => {
     const { error } = await supabase
       .from("clinic_phone_numbers")
@@ -164,7 +178,8 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
   };
 
   return (
-    <Card>
+    <>
+      <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -284,7 +299,20 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
                     onCheckedChange={(checked) => handleToggle(phone.id, checked)}
                   />
                   <div className="flex-1">
-                    <p className="font-medium">{phone.phone_number}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium">{phone.phone_number}</p>
+                      {phone.is_verified ? (
+                        <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                          <ShieldCheck className="h-3 w-3 mr-1" />
+                          Verified
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20">
+                          <ShieldX className="h-3 w-3 mr-1" />
+                          Not Verified
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {(phone as any).clinic_locations?.name || 'Unknown Location'}
                     </p>
@@ -302,18 +330,40 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
                     </div>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(phone.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  {!phone.is_verified && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleVerify(phone)}
+                    >
+                      Verify
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(phone.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </CardContent>
     </Card>
+
+    {selectedPhoneForVerification && (
+      <PhoneVerificationDialog
+        open={verificationDialogOpen}
+        onOpenChange={setVerificationDialogOpen}
+        phoneNumberId={selectedPhoneForVerification.id}
+        phoneNumber={selectedPhoneForVerification.phone_number}
+        onVerified={handleVerified}
+      />
+    )}
+    </>
   );
 };

@@ -198,6 +198,7 @@ export type Database = {
           id: string
           integration_type: string
           is_connected: boolean | null
+          location_id: string | null
           refresh_token: string | null
           token_expiry: string | null
           updated_at: string | null
@@ -209,6 +210,7 @@ export type Database = {
           id?: string
           integration_type: string
           is_connected?: boolean | null
+          location_id?: string | null
           refresh_token?: string | null
           token_expiry?: string | null
           updated_at?: string | null
@@ -220,6 +222,7 @@ export type Database = {
           id?: string
           integration_type?: string
           is_connected?: boolean | null
+          location_id?: string | null
           refresh_token?: string | null
           token_expiry?: string | null
           updated_at?: string | null
@@ -230,6 +233,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_integrations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_locations"
             referencedColumns: ["id"]
           },
         ]
@@ -284,7 +294,11 @@ export type Database = {
           admin_email: string | null
           clinic_id: string
           created_at: string | null
+          facebook_connected: boolean | null
+          facebook_page_id: string | null
           id: string
+          instagram_connected: boolean | null
+          instagram_handle: string | null
           name: string
           phone: string | null
           updated_at: string | null
@@ -294,7 +308,11 @@ export type Database = {
           admin_email?: string | null
           clinic_id: string
           created_at?: string | null
+          facebook_connected?: boolean | null
+          facebook_page_id?: string | null
           id?: string
+          instagram_connected?: boolean | null
+          instagram_handle?: string | null
           name: string
           phone?: string | null
           updated_at?: string | null
@@ -304,7 +322,11 @@ export type Database = {
           admin_email?: string | null
           clinic_id?: string
           created_at?: string | null
+          facebook_connected?: boolean | null
+          facebook_page_id?: string | null
           id?: string
+          instagram_connected?: boolean | null
+          instagram_handle?: string | null
           name?: string
           phone?: string | null
           updated_at?: string | null
@@ -327,9 +349,12 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
+          is_verified: boolean | null
           location_id: string | null
           phone_number: string
           updated_at: string | null
+          verification_code: string | null
+          verification_expires_at: string | null
         }
         Insert: {
           channel?: string
@@ -338,9 +363,12 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_verified?: boolean | null
           location_id?: string | null
           phone_number: string
           updated_at?: string | null
+          verification_code?: string | null
+          verification_expires_at?: string | null
         }
         Update: {
           channel?: string
@@ -349,9 +377,12 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_verified?: boolean | null
           location_id?: string | null
           phone_number?: string
           updated_at?: string | null
+          verification_code?: string | null
+          verification_expires_at?: string | null
         }
         Relationships: [
           {

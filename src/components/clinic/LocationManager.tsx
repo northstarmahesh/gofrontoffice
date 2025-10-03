@@ -31,6 +31,8 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
     name: "",
     address: "",
     admin_email: "",
+    instagram_handle: "",
+    facebook_page_id: "",
   });
 
   const [phoneNumberSetup, setPhoneNumberSetup] = useState({
@@ -218,6 +220,8 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
       name: location.name,
       address: location.address,
       admin_email: location.admin_email,
+      instagram_handle: (location as any).instagram_handle || "",
+      facebook_page_id: (location as any).facebook_page_id || "",
     });
     setAddressQuery(location.address);
     setAddressLocked(true);
@@ -243,7 +247,7 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", admin_email: "" });
+    setFormData({ name: "", address: "", admin_email: "", instagram_handle: "", facebook_page_id: "" });
     setPhoneNumberSetup({ enabled: false, number: "", channels: ["sms"] });
     setAddressQuery("");
     setAddressLocked(false);
@@ -367,6 +371,42 @@ export const LocationManager = ({ clinicId }: LocationManagerProps) => {
                     <p className="text-xs text-muted-foreground">
                       If email doesn't exist, you'll be prompted to create a new user
                     </p>
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">Social Media (Optional)</h3>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="instagram_handle">Instagram Handle</Label>
+                      <Input
+                        id="instagram_handle"
+                        value={formData.instagram_handle}
+                        onChange={(e) =>
+                          setFormData({ ...formData, instagram_handle: e.target.value })
+                        }
+                        placeholder="@yourhandle"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Connect this later in Integrations & Tools
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="facebook_page_id">Facebook Page ID</Label>
+                      <Input
+                        id="facebook_page_id"
+                        value={formData.facebook_page_id}
+                        onChange={(e) =>
+                          setFormData({ ...formData, facebook_page_id: e.target.value })
+                        }
+                        placeholder="123456789"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Connect this later in Integrations & Tools
+                      </p>
+                    </div>
                   </div>
 
                   <Separator className="my-4" />
