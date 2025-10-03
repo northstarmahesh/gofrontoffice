@@ -4,7 +4,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight, Calendar, MapPin } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight, Calendar, MapPin, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -23,13 +24,20 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
-  const [messagingMode, setMessagingMode] = useState<"autopilot" | "copilot">("autopilot");
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [channels, setChannels] = useState({
     phone: true,
     sms: true,
     whatsapp: true,
     instagram: false,
     messenger: false,
+  });
+  const [channelModes, setChannelModes] = useState({
+    phone: "autopilot" as "autopilot" | "copilot",
+    sms: "autopilot" as "autopilot" | "copilot",
+    whatsapp: "autopilot" as "autopilot" | "copilot",
+    instagram: "autopilot" as "autopilot" | "copilot",
+    messenger: "autopilot" as "autopilot" | "copilot",
   });
   const [schedules, setSchedules] = useState<any[]>([]);
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
@@ -82,13 +90,21 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
       if (error) throw error;
 
       if (data) {
-        setMessagingMode(data.auto_pilot_enabled ? "autopilot" : "copilot");
+        const globalMode = data.auto_pilot_enabled ? "autopilot" : "copilot";
         setChannels({
           phone: data.phone_mode !== "off",
           sms: data.sms_enabled,
           whatsapp: data.whatsapp_enabled,
           instagram: data.instagram_enabled,
           messenger: data.messenger_enabled,
+        });
+        // For now, use the same mode for all channels (can be customized per channel later)
+        setChannelModes({
+          phone: globalMode,
+          sms: globalMode,
+          whatsapp: globalMode,
+          instagram: globalMode,
+          messenger: globalMode,
         });
       }
     } catch (error) {
@@ -183,11 +199,19 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     );
   };
 
-  const handleMessagingModeToggle = async () => {
-    const newMode = messagingMode === "autopilot" ? "copilot" : "autopilot";
-    setMessagingMode(newMode);
-    await updateSettings({ auto_pilot_enabled: newMode === "autopilot" });
-    toast.success(`Messaging mode: ${newMode === "autopilot" ? "Autopilot" : "Co-pilot"}`);
+  const handleChannelModeToggle = async (channel: keyof typeof channelModes) => {
+    const newMode = channelModes[channel] === "autopilot" ? "copilot" : "autopilot";
+    setChannelModes((prev) => ({ ...prev, [channel]: newMode }));
+    
+    // Update the global setting based on if any channel is in autopilot
+    const anyAutopilot = Object.entries({ ...channelModes, [channel]: newMode }).some(
+      ([key, mode]) => channels[key as keyof typeof channels] && mode === "autopilot"
+    );
+    await updateSettings({ auto_pilot_enabled: anyAutopilot });
+    
+    toast.success(
+      `${channel.charAt(0).toUpperCase() + channel.slice(1)}: ${newMode === "autopilot" ? "Autopilot" : "Co-pilot"}`
+    );
   };
 
 
@@ -378,24 +402,13 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
       {/* AI Response System */}
       <Card className="border-0 p-6 shadow-lg">
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-secondary/10 p-3">
-                <Bot className="h-6 w-6 text-secondary" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-foreground">AI Response System</h3>
-              </div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="rounded-xl bg-secondary/10 p-3">
+              <Bot className="h-6 w-6 text-secondary" />
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-base font-semibold text-foreground">
-                {messagingMode === "autopilot" ? "Autopilot" : "Co-pilot"}
-              </span>
-              <Switch
-                checked={messagingMode === "autopilot"}
-                onCheckedChange={handleMessagingModeToggle}
-                className="scale-125"
-              />
+            <div>
+              <h3 className="text-xl font-bold text-foreground">AI Response System</h3>
+              <p className="text-sm text-muted-foreground">Configure how AI handles each channel</p>
             </div>
           </div>
 
@@ -404,44 +417,33 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
             <div className="flex items-start gap-2">
               <AlertCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="space-y-2 text-sm">
-                {messagingMode === "autopilot" ? (
-                  <>
-                    <p className="font-semibold text-foreground">Autopilot Mode Active</p>
-                    <p className="text-muted-foreground">
-                      Your AI assistant will automatically respond to all incoming communications across enabled channels. 
-                      Responses are sent immediately without your review. Perfect for high-volume scenarios where speed matters.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-semibold text-foreground">Co-pilot Mode Active</p>
-                    <p className="text-muted-foreground">
-                      Your AI assistant will draft responses and create tasks for your review. You'll see these as{" "}
-                      <button
-                        onClick={() => navigate("/?tab=tasks")}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        pending tasks
-                      </button>
-                      {" "}where you can approve, edit, or reject before sending. Ideal when you want oversight.
-                    </p>
-                  </>
-                )}
+                <p className="font-semibold text-foreground">Response Modes</p>
+                <p className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Autopilot:</span> AI responds automatically without review. 
+                  <span className="ml-2 font-medium text-foreground">Co-pilot:</span> AI drafts responses as{" "}
+                  <button
+                    onClick={() => navigate("/?tab=tasks")}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    tasks
+                  </button>
+                  {" "}for your approval.
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="border-t pt-4">
-          <p className="text-sm font-semibold text-muted-foreground mb-4">Active Channels</p>
+          <p className="text-sm font-semibold text-muted-foreground mb-4">Channel Settings</p>
           
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid gap-3">
             {/* Phone Calls */}
-            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+            <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Phone className="h-5 w-5 text-muted-foreground" />
-                  <Label htmlFor="phone" className="text-sm font-medium cursor-pointer">Phone Calls</Label>
+                  <Label htmlFor="phone" className="text-sm font-semibold cursor-pointer">Phone Calls</Label>
                 </div>
                 <Switch
                   id="phone"
@@ -450,18 +452,39 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.phone && (
-                <p className="text-xs text-muted-foreground pl-7">
-                  AI {messagingMode === "autopilot" ? "answers and responds to" : "transcribes and drafts responses for"} phone calls
-                </p>
+                <div className="pl-8 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    When <span className="font-medium">ON</span>: AI handles phone calls.
+                    When <span className="font-medium">OFF</span>: Calls go to your normal phone system.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={channelModes.phone === "copilot" ? "default" : "outline"}
+                      onClick={() => channelModes.phone === "autopilot" && handleChannelModeToggle("phone")}
+                      className="flex-1"
+                    >
+                      Co-pilot
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={channelModes.phone === "autopilot" ? "default" : "outline"}
+                      onClick={() => channelModes.phone === "copilot" && handleChannelModeToggle("phone")}
+                      className="flex-1"
+                    >
+                      Autopilot
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
 
             {/* SMS */}
-            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+            <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                  <Label htmlFor="sms" className="text-sm font-medium cursor-pointer">SMS</Label>
+                  <Label htmlFor="sms" className="text-sm font-semibold cursor-pointer">SMS</Label>
                 </div>
                 <Switch
                   id="sms"
@@ -470,18 +493,39 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.sms && (
-                <p className="text-xs text-muted-foreground pl-7">
-                  AI {messagingMode === "autopilot" ? "automatically replies to" : "drafts responses for"} text messages
-                </p>
+                <div className="pl-8 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    When <span className="font-medium">ON</span>: AI handles text messages.
+                    When <span className="font-medium">OFF</span>: SMS goes to your normal system.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={channelModes.sms === "copilot" ? "default" : "outline"}
+                      onClick={() => channelModes.sms === "autopilot" && handleChannelModeToggle("sms")}
+                      className="flex-1"
+                    >
+                      Co-pilot
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={channelModes.sms === "autopilot" ? "default" : "outline"}
+                      onClick={() => channelModes.sms === "copilot" && handleChannelModeToggle("sms")}
+                      className="flex-1"
+                    >
+                      Autopilot
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
 
             {/* WhatsApp */}
-            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+            <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                  <Label htmlFor="whatsapp" className="text-sm font-medium cursor-pointer">WhatsApp</Label>
+                  <Label htmlFor="whatsapp" className="text-sm font-semibold cursor-pointer">WhatsApp</Label>
                 </div>
                 <Switch
                   id="whatsapp"
@@ -490,18 +534,39 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.whatsapp && (
-                <p className="text-xs text-muted-foreground pl-7">
-                  AI {messagingMode === "autopilot" ? "automatically replies to" : "drafts responses for"} WhatsApp messages
-                </p>
+                <div className="pl-8 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    When <span className="font-medium">ON</span>: AI handles WhatsApp messages.
+                    When <span className="font-medium">OFF</span>: WhatsApp goes to your normal system.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={channelModes.whatsapp === "copilot" ? "default" : "outline"}
+                      onClick={() => channelModes.whatsapp === "autopilot" && handleChannelModeToggle("whatsapp")}
+                      className="flex-1"
+                    >
+                      Co-pilot
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={channelModes.whatsapp === "autopilot" ? "default" : "outline"}
+                      onClick={() => channelModes.whatsapp === "copilot" && handleChannelModeToggle("whatsapp")}
+                      className="flex-1"
+                    >
+                      Autopilot
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
 
             {/* Instagram */}
-            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+            <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Instagram className="h-5 w-5 text-muted-foreground" />
-                  <Label htmlFor="instagram" className="text-sm font-medium cursor-pointer">Instagram</Label>
+                  <Label htmlFor="instagram" className="text-sm font-semibold cursor-pointer">Instagram</Label>
                 </div>
                 <Switch
                   id="instagram"
@@ -510,18 +575,39 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.instagram && (
-                <p className="text-xs text-muted-foreground pl-7">
-                  AI {messagingMode === "autopilot" ? "automatically replies to" : "drafts responses for"} Instagram DMs
-                </p>
+                <div className="pl-8 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    When <span className="font-medium">ON</span>: AI handles Instagram DMs.
+                    When <span className="font-medium">OFF</span>: Instagram DMs go to your normal system.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={channelModes.instagram === "copilot" ? "default" : "outline"}
+                      onClick={() => channelModes.instagram === "autopilot" && handleChannelModeToggle("instagram")}
+                      className="flex-1"
+                    >
+                      Co-pilot
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={channelModes.instagram === "autopilot" ? "default" : "outline"}
+                      onClick={() => channelModes.instagram === "copilot" && handleChannelModeToggle("instagram")}
+                      className="flex-1"
+                    >
+                      Autopilot
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
 
             {/* Messenger */}
-            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+            <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Facebook className="h-5 w-5 text-muted-foreground" />
-                  <Label htmlFor="messenger" className="text-sm font-medium cursor-pointer">Messenger</Label>
+                  <Label htmlFor="messenger" className="text-sm font-semibold cursor-pointer">Messenger</Label>
                 </div>
                 <Switch
                   id="messenger"
@@ -530,77 +616,109 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
                 />
               </div>
               {channels.messenger && (
-                <p className="text-xs text-muted-foreground pl-7">
-                  AI {messagingMode === "autopilot" ? "automatically replies to" : "drafts responses for"} Facebook messages
-                </p>
+                <div className="pl-8 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    When <span className="font-medium">ON</span>: AI handles Facebook messages.
+                    When <span className="font-medium">OFF</span>: Messenger goes to your normal system.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={channelModes.messenger === "copilot" ? "default" : "outline"}
+                      onClick={() => channelModes.messenger === "autopilot" && handleChannelModeToggle("messenger")}
+                      className="flex-1"
+                    >
+                      Co-pilot
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={channelModes.messenger === "autopilot" ? "default" : "outline"}
+                      onClick={() => channelModes.messenger === "copilot" && handleChannelModeToggle("messenger")}
+                      className="flex-1"
+                    >
+                      Autopilot
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Assistant Schedule */}
+      {/* Assistant Schedule - Collapsible */}
       <Card className="border-0 p-6 shadow-lg">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-xl bg-primary/10 p-3">
-            <Calendar className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-foreground">Assistant Schedule</h3>
-            <p className="text-sm text-muted-foreground">Set when your AI assistant should work</p>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          {schedules.map((schedule) => (
-            <div
-              key={schedule.day_of_week}
-              className="flex items-center gap-2 p-3 border rounded-lg"
-            >
-              <div className="flex items-center gap-2 w-28">
-                <Switch
-                  checked={schedule.is_available}
-                  onCheckedChange={(checked) =>
-                    updateSchedule(schedule.day_of_week, "is_available", checked)
-                  }
-                />
-                <Label className="text-sm font-medium">
-                  {DAYS[schedule.day_of_week]}
-                </Label>
-              </div>
-
-              {schedule.is_available && (
-                <div className="flex items-center gap-2 flex-1">
-                  <input
-                    type="time"
-                    value={schedule.start_time}
-                    onChange={(e) =>
-                      updateSchedule(schedule.day_of_week, "start_time", e.target.value)
-                    }
-                    className="px-2 py-1 border rounded-md text-sm w-28"
-                  />
-                  <span className="text-muted-foreground text-sm">to</span>
-                  <input
-                    type="time"
-                    value={schedule.end_time}
-                    onChange={(e) =>
-                      updateSchedule(schedule.day_of_week, "end_time", e.target.value)
-                    }
-                    className="px-2 py-1 border rounded-md text-sm w-28"
-                  />
+        <Collapsible open={scheduleOpen} onOpenChange={setScheduleOpen}>
+          <CollapsibleTrigger className="w-full">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-primary/10 p-3">
+                  <Calendar className="h-6 w-6 text-primary" />
                 </div>
-              )}
-
-              {!schedule.is_available && (
-                <span className="text-muted-foreground text-sm flex-1">Closed</span>
-              )}
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-foreground">Assistant Schedule</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {scheduleOpen ? "Set when your AI assistant should work" : "Click to expand schedule settings"}
+                  </p>
+                </div>
+              </div>
+              <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${scheduleOpen ? "rotate-180" : ""}`} />
             </div>
-          ))}
-        </div>
+          </CollapsibleTrigger>
 
-        <Button onClick={handleScheduleSave} className="w-full mt-4">
-          Save Schedule
-        </Button>
+          <CollapsibleContent className="mt-6">
+            <div className="space-y-2">
+              {schedules.map((schedule) => (
+                <div
+                  key={schedule.day_of_week}
+                  className="flex items-center gap-2 p-3 border rounded-lg"
+                >
+                  <div className="flex items-center gap-2 w-28">
+                    <Switch
+                      checked={schedule.is_available}
+                      onCheckedChange={(checked) =>
+                        updateSchedule(schedule.day_of_week, "is_available", checked)
+                      }
+                    />
+                    <Label className="text-sm font-medium">
+                      {DAYS[schedule.day_of_week]}
+                    </Label>
+                  </div>
+
+                  {schedule.is_available && (
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="time"
+                        value={schedule.start_time}
+                        onChange={(e) =>
+                          updateSchedule(schedule.day_of_week, "start_time", e.target.value)
+                        }
+                        className="px-2 py-1 border rounded-md text-sm w-28"
+                      />
+                      <span className="text-muted-foreground text-sm">to</span>
+                      <input
+                        type="time"
+                        value={schedule.end_time}
+                        onChange={(e) =>
+                          updateSchedule(schedule.day_of_week, "end_time", e.target.value)
+                        }
+                        className="px-2 py-1 border rounded-md text-sm w-28"
+                      />
+                    </div>
+                  )}
+
+                  {!schedule.is_available && (
+                    <span className="text-muted-foreground text-sm flex-1">Closed</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <Button onClick={handleScheduleSave} className="w-full mt-4">
+              Save Schedule
+            </Button>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       {/* Analytics - Bigger, More Visual */}
