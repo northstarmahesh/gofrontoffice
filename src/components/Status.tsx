@@ -519,7 +519,9 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
           <h2 className="text-2xl font-bold">{greeting}! {emoji}</h2>
         </div>
         <p className="text-base opacity-90">
-          Your assistant is active and handling all incoming communications
+          {Object.values(connectionStatus).some(status => status)
+            ? "Your assistant is active and handling all incoming communications"
+            : "Connect channels below to activate your AI assistant"}
         </p>
         {weather && (
           <p className="mt-2 text-sm opacity-75">
