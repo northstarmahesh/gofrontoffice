@@ -20,9 +20,10 @@ interface Location {
 
 interface LocationManagerProps {
   clinicId: string;
+  onUpdate?: () => void;
 }
 
-export const LocationManager = ({ clinicId }: LocationManagerProps) => {
+export const LocationManager = ({ clinicId, onUpdate }: LocationManagerProps) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

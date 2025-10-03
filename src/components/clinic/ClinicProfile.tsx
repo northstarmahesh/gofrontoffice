@@ -20,6 +20,7 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
     slug: "",
     email: "",
     phone: "",
+    website: "",
     address: "",
     timezone: "America/New_York",
   });
@@ -48,6 +49,7 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
         slug: data.slug || "",
         email: data.email || "",
         phone: data.phone || "",
+        website: data.website || "",
         address: data.address || "",
         timezone: data.timezone || "America/New_York",
       });
@@ -136,28 +138,15 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="contact@clinic.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+1 (555) 123-4567"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              type="url"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              placeholder="https://www.yourclinic.com"
+            />
           </div>
 
           <div className="space-y-2">

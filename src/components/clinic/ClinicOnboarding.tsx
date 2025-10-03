@@ -5,23 +5,24 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Building2, Users, Plug, Rocket } from "lucide-react";
 import { ClinicProfile } from "./ClinicProfile";
 import { TeamManagement } from "./TeamManagement";
-import { ConnectedServices } from "./ConnectedServices";
+import { ChannelConnections } from "./ChannelConnections";
 import { toast } from "sonner";
 
 interface ClinicOnboardingProps {
   onComplete: (clinicId: string) => void;
 }
 
-type OnboardingStep = "info" | "team" | "tools" | "complete";
+type OnboardingStep = "info" | "channels" | "team" | "complete";
 
 export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("info");
   const [clinicId, setClinicId] = useState<string | null>(null);
+  const [hasChannelConnection, setHasChannelConnection] = useState(false);
 
   const steps = [
-    { id: "info" as OnboardingStep, label: "Clinic Info", icon: Building2, description: "Tell us about your clinic" },
+    { id: "info" as OnboardingStep, label: "Basic Info", icon: Building2, description: "Tell us about your clinic" },
+    { id: "channels" as OnboardingStep, label: "Connect Channels", icon: Plug, description: "Set up communication" },
     { id: "team" as OnboardingStep, label: "Team", icon: Users, description: "Invite your team members" },
-    { id: "tools" as OnboardingStep, label: "Connect Tools", icon: Plug, description: "Set up integrations" },
     { id: "complete" as OnboardingStep, label: "Get Started", icon: Rocket, description: "You're all set!" },
   ];
 
@@ -30,8 +31,8 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
 
   const handleClinicCreated = (newClinicId: string) => {
     setClinicId(newClinicId);
-    toast.success("Clinic profile created! Let's add your team.");
-    setCurrentStep("team");
+    toast.success("Clinic profile created! Now let's connect your channels.");
+    setCurrentStep("channels");
   };
 
   const handleNext = () => {
@@ -43,6 +44,13 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
 
   const handleSkip = () => {
     handleNext();
+  };
+
+  const handleSkipOnboarding = () => {
+    if (clinicId) {
+      onComplete(clinicId);
+      toast.info("You can complete setup anytime from Clinic Management");
+    }
   };
 
   const handleComplete = () => {
@@ -65,25 +73,32 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
           </div>
         );
 
-      case "team":
+      case "channels":
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Build Your Team</h2>
-              <p className="text-muted-foreground">Add team members to help manage your clinic</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Connect Your Channels</h2>
+              <p className="text-muted-foreground">Connect at least one communication channel to get started</p>
               <p className="text-sm text-muted-foreground/80 mt-2">
-                Don't worry - you can always add or invite team members later from the Team tab
+                You can add phone numbers, enable SMS, and connect social media
               </p>
             </div>
             {clinicId ? (
               <>
-                <TeamManagement clinicId={clinicId} />
+                <ChannelConnections 
+                  clinicId={clinicId} 
+                  onChannelsConnected={setHasChannelConnection}
+                />
                 <div className="flex gap-3 pt-4">
-                  <Button onClick={handleSkip} variant="outline" className="flex-1">
-                    I'll add team later
+                  <Button onClick={handleSkipOnboarding} variant="outline" className="flex-1">
+                    Complete Later
                   </Button>
-                  <Button onClick={handleNext} className="flex-1">
-                    Continue
+                  <Button 
+                    onClick={handleNext} 
+                    className="flex-1"
+                    disabled={!hasChannelConnection}
+                  >
+                    {hasChannelConnection ? "Continue" : "Connect at least 1 channel"}
                   </Button>
                 </div>
               </>
@@ -93,25 +108,31 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
           </div>
         );
 
-      case "tools":
+      case "team":
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Connect Your Tools</h2>
-              <p className="text-muted-foreground">These integrations help your assistant work smarter</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Build Your Team</h2>
+              <p className="text-muted-foreground">Invite team members to help manage your clinic</p>
               <p className="text-sm text-muted-foreground/80 mt-2">
-                Optional - you can set these up anytime from the Integrations tab
+                Optional - you can always add team members later
               </p>
             </div>
-            {clinicId && <ConnectedServices clinicId={clinicId} />}
-            <div className="flex gap-3 pt-4">
-              <Button onClick={handleSkip} variant="outline" className="flex-1">
-                Set up later
-              </Button>
-              <Button onClick={handleNext} className="flex-1">
-                Continue
-              </Button>
-            </div>
+            {clinicId ? (
+              <>
+                <TeamManagement clinicId={clinicId} />
+                <div className="flex gap-3 pt-4">
+                  <Button onClick={handleSkip} variant="outline" className="flex-1">
+                    Skip for now
+                  </Button>
+                  <Button onClick={handleNext} className="flex-1">
+                    Continue
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground">Please complete clinic info first</p>
+            )}
           </div>
         );
 
