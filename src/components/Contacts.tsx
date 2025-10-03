@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Users, Plus, Edit, Mail, Phone, MessageSquare } from "lucide-react";
+import { Users, Plus, Edit, Mail, Phone, MessageSquare, Eye } from "lucide-react";
+import ContactDetailDialog from "./ContactDetailDialog";
 
 interface Contact {
   id: string;
@@ -31,6 +32,8 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -124,8 +127,20 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
     contact.phone.includes(searchQuery)
   );
 
+  const openContactDetail = (contact: Contact) => {
+    setSelectedContact(contact);
+    setDetailDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Contact Detail Dialog */}
+      <ContactDetailDialog
+        contactName={selectedContact?.name || null}
+        contactInfo={selectedContact?.phone}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Contacts</h2>
@@ -243,11 +258,12 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
                 <div
                   key={contact.id}
                   id={`contact-${contact.name}`}
-                  className={`flex items-start justify-between p-4 border rounded-lg transition-colors ${
+                  className={`flex items-start justify-between p-4 border rounded-lg transition-colors cursor-pointer ${
                     selectedContactName === contact.name
                       ? "bg-primary/10 border-primary"
                       : "hover:bg-muted/50"
                   }`}
+                  onClick={() => openContactDetail(contact)}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -278,7 +294,7 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
                       {contact.notes && (
                         <div className="flex items-start gap-2 mt-2">
                           <MessageSquare className="h-3 w-3 mt-0.5" />
-                          <span className="text-xs">{contact.notes}</span>
+                          <span className="text-xs line-clamp-1">{contact.notes}</span>
                         </div>
                       )}
                       {contact.last_contacted && (
@@ -288,13 +304,28 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditDialog(contact)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openContactDetail(contact);
+                      }}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditDialog(contact);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
