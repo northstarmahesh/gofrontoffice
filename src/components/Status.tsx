@@ -3,10 +3,19 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight, Calendar } from "lucide-react";
+import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight, Calendar, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
+import { useNavigate } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface StatusProps {
   onNavigateToTasks?: () => void;
@@ -15,9 +24,12 @@ interface StatusProps {
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const Status = ({ onNavigateToTasks }: StatusProps) => {
+  const navigate = useNavigate();
+  const { greeting, weather, backgroundGradient, emoji } = useGreetingAndWeather();
   const [loading, setLoading] = useState(true);
   const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
   const [autoPilotEnabled, setAutoPilotEnabled] = useState(true);
+  const [copyFromDay, setCopyFromDay] = useState<number | null>(null);
   const [channels, setChannels] = useState({
     sms: true,
     whatsapp: true,
@@ -218,6 +230,29 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     );
   };
 
+  const copyScheduleToDay = (targetDay: number) => {
+    if (copyFromDay === null) return;
+    
+    const sourceSchedule = schedules.find(s => s.day_of_week === copyFromDay);
+    if (!sourceSchedule) return;
+
+    setSchedules((prev) =>
+      prev.map((schedule) =>
+        schedule.day_of_week === targetDay
+          ? {
+              ...schedule,
+              start_time: sourceSchedule.start_time,
+              end_time: sourceSchedule.end_time,
+              is_available: sourceSchedule.is_available,
+            }
+          : schedule
+      )
+    );
+    
+    toast.success(`Copied schedule from ${DAYS[copyFromDay]} to ${DAYS[targetDay]}`);
+    setCopyFromDay(null);
+  };
+
   const stats = [
     {
       label: "Calls Today",
@@ -319,14 +354,19 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
       )}
 
       {/* Welcome Banner */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-light p-6 text-primary-foreground shadow-lg">
+      <div className={`rounded-2xl ${backgroundGradient} p-6 text-white shadow-lg transition-all duration-1000`}>
         <div className="flex items-center gap-3 mb-2">
           <Bot className="h-8 w-8" />
-          <h2 className="text-2xl font-bold">Good Morning! 👋</h2>
+          <h2 className="text-2xl font-bold">{greeting}! {emoji}</h2>
         </div>
         <p className="text-base opacity-90">
           Your assistant is active and handling all incoming communications
         </p>
+        {weather && (
+          <p className="mt-2 text-sm opacity-75">
+            Currently {Math.round(weather.temp)}°F
+          </p>
+        )}
       </div>
 
       {/* Main Controls - Phone Handling */}
@@ -418,7 +458,17 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
               <div>
                 <h3 className="text-xl font-bold text-foreground">Messaging Mode</h3>
                 <p className="text-sm text-muted-foreground">
-                  {autoPilotEnabled ? "AI replies automatically" : "AI drafts replies for your approval"}
+                  {autoPilotEnabled ? "AI replies automatically" : (
+                    <>
+                      AI drafts replies for your approval as{" "}
+                      <button
+                        onClick={() => navigate("/?tab=tasks")}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        your todos
+                      </button>
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -582,56 +632,91 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2">
+            <Label className="text-sm">Copy schedule:</Label>
+            <Select value={copyFromDay?.toString() || ""} onValueChange={(val) => setCopyFromDay(parseInt(val))}>
+              <SelectTrigger className="w-[140px] h-8">
+                <SelectValue placeholder="Select day" />
+              </SelectTrigger>
+              <SelectContent>
+                {DAYS.map((day, idx) => (
+                  <SelectItem key={idx} value={idx.toString()}>
+                    {day}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {copyFromDay !== null && (
+              <span className="text-xs text-muted-foreground">
+                Click copy button on target day
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
           {schedules.map((schedule) => (
             <div
               key={schedule.day_of_week}
-              className="flex items-center gap-4 p-4 border rounded-lg"
+              className="flex items-center gap-2 p-2 border rounded-lg"
             >
-              <div className="flex items-center gap-2 w-32">
+              <div className="flex items-center gap-2 w-24">
                 <Switch
                   checked={schedule.is_available}
                   onCheckedChange={(checked) =>
                     updateSchedule(schedule.day_of_week, "is_available", checked)
                   }
                 />
-                <Label className="font-medium">
-                  {DAYS[schedule.day_of_week]}
+                <Label className="text-sm font-medium">
+                  {DAYS[schedule.day_of_week].slice(0, 3)}
                 </Label>
               </div>
 
               {schedule.is_available && (
-                <div className="flex items-center gap-2 flex-1">
-                  <input
-                    type="time"
-                    value={schedule.start_time}
-                    onChange={(e) =>
-                      updateSchedule(schedule.day_of_week, "start_time", e.target.value)
-                    }
-                    className="px-3 py-2 border rounded-md"
-                  />
-                  <span className="text-muted-foreground">to</span>
-                  <input
-                    type="time"
-                    value={schedule.end_time}
-                    onChange={(e) =>
-                      updateSchedule(schedule.day_of_week, "end_time", e.target.value)
-                    }
-                    className="px-3 py-2 border rounded-md"
-                  />
-                </div>
+                <>
+                  <div className="flex items-center gap-1 flex-1">
+                    <input
+                      type="time"
+                      value={schedule.start_time}
+                      onChange={(e) =>
+                        updateSchedule(schedule.day_of_week, "start_time", e.target.value)
+                      }
+                      className="px-2 py-1 border rounded-md text-sm w-24"
+                    />
+                    <span className="text-muted-foreground text-xs">to</span>
+                    <input
+                      type="time"
+                      value={schedule.end_time}
+                      onChange={(e) =>
+                        updateSchedule(schedule.day_of_week, "end_time", e.target.value)
+                      }
+                      className="px-2 py-1 border rounded-md text-sm w-24"
+                    />
+                  </div>
+                  {copyFromDay !== null && copyFromDay !== schedule.day_of_week && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyScheduleToDay(schedule.day_of_week)}
+                      className="h-7 px-2"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  )}
+                </>
               )}
 
               {!schedule.is_available && (
-                <span className="text-muted-foreground">Off</span>
+                <span className="text-muted-foreground text-sm flex-1">Closed</span>
               )}
             </div>
           ))}
-
-          <Button onClick={handleScheduleSave} className="w-full">
-            Save Schedule
-          </Button>
         </div>
+
+        <Button onClick={handleScheduleSave} className="w-full mt-3">
+          Save Schedule
+        </Button>
       </Card>
 
       {/* Analytics - Bigger, More Visual */}
