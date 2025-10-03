@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClinicInfo } from "./clinic/ClinicInfo";
-import { PhoneNumbers } from "./clinic/PhoneNumbers";
+import { ResourcesManager } from "./clinic/ResourcesManager";
 import { TeamManagement } from "./clinic/TeamManagement";
 import { ConnectedServices } from "./clinic/ConnectedServices";
 import { ClinicOnboarding } from "./clinic/ClinicOnboarding";
@@ -78,27 +78,22 @@ export const ClinicManagement = () => {
       </div>
 
       <Tabs defaultValue="info" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="resources">Resources</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="phones">Phones</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-6">
           <ClinicInfo clinicId={clinicId!} />
         </TabsContent>
 
+        <TabsContent value="resources" className="mt-6">
+          <ResourcesManager clinicId={clinicId!} />
+        </TabsContent>
+
         <TabsContent value="team" className="mt-6">
           <TeamManagement clinicId={clinicId!} />
-        </TabsContent>
-
-        <TabsContent value="phones" className="mt-6">
-          <PhoneNumbers clinicId={clinicId!} />
-        </TabsContent>
-
-        <TabsContent value="integrations" className="mt-6">
-          <ConnectedServices clinicId={clinicId!} />
         </TabsContent>
       </Tabs>
     </div>
