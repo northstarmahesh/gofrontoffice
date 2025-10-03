@@ -170,33 +170,36 @@ export type Database = {
       }
       clinic_knowledge_base: {
         Row: {
-          answer: string
-          category: string
           clinic_id: string
+          content: string | null
           created_at: string | null
+          file_path: string | null
           id: string
-          priority: number | null
-          question: string | null
+          source_type: string
+          source_url: string | null
+          title: string | null
           updated_at: string | null
         }
         Insert: {
-          answer: string
-          category: string
           clinic_id: string
+          content?: string | null
           created_at?: string | null
+          file_path?: string | null
           id?: string
-          priority?: number | null
-          question?: string | null
+          source_type?: string
+          source_url?: string | null
+          title?: string | null
           updated_at?: string | null
         }
         Update: {
-          answer?: string
-          category?: string
           clinic_id?: string
+          content?: string | null
           created_at?: string | null
+          file_path?: string | null
           id?: string
-          priority?: number | null
-          question?: string | null
+          source_type?: string
+          source_url?: string | null
+          title?: string | null
           updated_at?: string | null
         }
         Relationships: [
