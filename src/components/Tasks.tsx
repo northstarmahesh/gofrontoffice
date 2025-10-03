@@ -66,6 +66,13 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       contact_info: "+1 (555) 123-4567",
       message_history: [
         {
+          id: "h3",
+          title: "Previous interaction",
+          type: "SMS",
+          summary: "Appointment confirmation for next Tuesday at 3 PM",
+          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+        },
+        {
           id: "h1",
           title: "Patient requested prescription refill",
           type: "WhatsApp",
@@ -76,15 +83,8 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           id: "h2",
           title: "AI draft created",
           type: "Draft",
-          summary: "System generated draft response for approval",
+          summary: "Hi Mike, I've reviewed your prescription refill request. Your doctor has approved the refill for 30 days. Please pick up your prescription at the pharmacy within 48 hours. Let me know if you have any questions!",
           created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-        },
-        {
-          id: "h3",
-          title: "Previous interaction",
-          type: "SMS",
-          summary: "Appointment confirmation for next Tuesday at 3 PM",
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
         },
       ],
     },
@@ -112,7 +112,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           id: "h5",
           title: "AI draft created",
           type: "Draft",
-          summary: "System generated pricing response",
+          summary: "Thank you for your interest in our services! We offer comprehensive dental care including cleanings ($150), fillings ($200-$400), and cosmetic procedures. Would you like to schedule a consultation? We have availability next week.",
           created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
         },
       ],
