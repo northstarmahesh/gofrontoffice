@@ -2,3 +2,9 @@ project_id = "bzaqtvjereyqrymupapp"
 
 [functions.twilio-sms-webhook]
 verify_jwt = false
+
+[functions.send-email-verification]
+verify_jwt = false
+
+[functions.verify-email-otp]
+verify_jwt = false
