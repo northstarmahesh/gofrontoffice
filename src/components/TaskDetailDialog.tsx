@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, Send, CheckCircle, Eye, User, Phone } from "lucide-react";
+import { AlertCircle, Send, CheckCircle, Eye, User, Phone, Clock, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,13 +44,16 @@ interface TaskDetailDialogProps {
 
 const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskComplete }: TaskDetailDialogProps) => {
   const [relatedLog, setRelatedLog] = useState<ActivityLog | null>(null);
+  const [activityHistory, setActivityHistory] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
   useEffect(() => {
     if (task && open) {
       setMessage(task.draft_message || task.description || "");
+      setShowAllHistory(false);
       if (task.related_log_id) {
         loadTaskDetails();
       }
@@ -70,10 +73,56 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
 
       if (logError) throw logError;
       setRelatedLog(logData);
+
+      // Load activity history for the same contact
+      if (logData?.contact_name) {
+        const { data: historyData, error: historyError } = await supabase
+          .from("activity_logs")
+          .select("*")
+          .eq("contact_name", logData.contact_name)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (historyError) throw historyError;
+        setActivityHistory(historyData || []);
+      }
     } catch (error) {
       console.error("Error loading task details:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Invalid date";
+      
+      const now = new Date();
+      const isToday = date.toDateString() === now.toDateString();
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const isYesterday = date.toDateString() === yesterday.toDateString();
+      
+      const timeStr = date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      });
+      
+      if (isToday) {
+        return `Today at ${timeStr}`;
+      } else if (isYesterday) {
+        return `Yesterday at ${timeStr}`;
+      } else {
+        return date.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric',
+          year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+        }) + ` at ${timeStr}`;
+      }
+    } catch {
+      return "Invalid date";
     }
   };
 
@@ -214,6 +263,63 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
               </Card>
             )}
 
+            {/* Message History */}
+            {activityHistory.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Recent Activity
+                  </h3>
+                  {activityHistory.length > 3 && !showAllHistory && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowAllHistory(true)}
+                      className="text-xs"
+                    >
+                      Show All ({activityHistory.length})
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                  {(showAllHistory ? activityHistory : activityHistory.slice(0, 3)).map((log) => (
+                    <Card key={log.id} className="border-0 bg-muted/20 p-3">
+                      <div className="space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium flex-1">{log.title}</p>
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {log.type}
+                          </Badge>
+                        </div>
+                        {log.summary && (
+                          <p className="text-xs text-muted-foreground">{log.summary}</p>
+                        )}
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {formatDateTime(log.created_at)}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {showAllHistory && activityHistory.length > 3 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowAllHistory(false)}
+                    className="w-full text-xs"
+                  >
+                    Show Less
+                  </Button>
+                )}
+              </div>
+            )}
+
+            <Separator />
+
             {/* Message Editor */}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">
@@ -257,7 +363,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                     }}
                   >
                     <Eye className="mr-2 h-4 w-4" />
-                    View More
+                    View Full Profile
                   </Button>
                 )}
               </div>
