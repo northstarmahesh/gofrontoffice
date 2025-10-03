@@ -59,17 +59,10 @@ const Tasks = () => {
       time: "2:30 PM",
       source: "Instagram",
     },
-    {
-      id: 6,
-      title: "Follow up on insurance verification",
-      description: "Patient needs confirmation call",
-      priority: "medium",
-      status: "pending",
-      date: "Tomorrow",
-      time: "9:00 AM",
-      source: "Phone",
-    },
   ];
+
+  // Filter to show only today's tasks
+  const todayHumanTasks = humanTasks.filter(task => task.date === "Today");
 
   const handleTaskClick = (taskId: number) => {
     toast.info("Task details would open here");
@@ -111,7 +104,7 @@ const Tasks = () => {
   };
 
   const allTasks = [...assistantTasks, ...humanTasks];
-  const pendingTasks = humanTasks.filter((t) => t.status === "pending").length;
+  const pendingTasks = todayHumanTasks.filter((t) => t.status === "pending").length;
   const inProgressTasks = allTasks.filter((t) => t.status === "in-progress").length;
   const completedTasks = allTasks.filter((t) => t.status === "completed").length;
 
@@ -160,15 +153,15 @@ const Tasks = () => {
     return grouped;
   };
 
-  const humanTasksByDate = groupTasksByDate(humanTasks);
+  const humanTasksByDate = groupTasksByDate(todayHumanTasks);
   const assistantTasksByDate = groupTasksByDate(assistantTasks);
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-2xl font-bold text-foreground">Tasks</h2>
+        <h2 className="mb-2 text-2xl font-bold text-foreground">Tasks for Today</h2>
         <p className="text-sm text-muted-foreground">
-          Track what your assistant is doing and what needs your attention
+          Actions you need to take based on AI drafts and your own tasks
         </p>
       </div>
 
