@@ -4,18 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import frontOfficeLogo from "@/assets/front-office-logo.png";
-import Dashboard from "@/components/Dashboard";
-import Settings from "@/components/Settings";
+import Status from "@/components/Status";
+import ClinicManagement from "@/components/ClinicManagement";
 import Contacts from "@/components/Contacts";
 import Tasks from "@/components/Tasks";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 
-type View = "dashboard" | "contacts" | "tasks" | "settings";
+type View = "status" | "contacts" | "tasks" | "clinic";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [currentView, setCurrentView] = useState<View>("dashboard");
+  const [currentView, setCurrentView] = useState<View>("status");
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
@@ -60,7 +60,7 @@ const Index = () => {
         setHasClinic(true);
       } else {
         setHasClinic(false);
-        setCurrentView("settings"); // Show clinic setup
+        setCurrentView("clinic"); // Show clinic setup
       }
     } catch (error) {
       console.error("Error checking clinic:", error);
@@ -74,9 +74,9 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // If user doesn't have a clinic, redirect to settings for onboarding
-    if (hasClinic === false && currentView !== "settings") {
-      setCurrentView("settings");
+    // If user doesn't have a clinic, redirect to clinic for onboarding
+    if (hasClinic === false && currentView !== "clinic") {
+      setCurrentView("clinic");
       toast.info("Welcome! Let's set up your clinic first.");
     }
   }, [hasClinic]);
@@ -94,16 +94,16 @@ const Index = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case "dashboard":
-        return <Dashboard />;
+      case "status":
+        return <Status />;
       case "contacts":
         return <Contacts />;
       case "tasks":
         return <Tasks />;
-      case "settings":
-        return <Settings />;
+      case "clinic":
+        return <ClinicManagement />;
       default:
-        return <Dashboard />;
+        return <Status />;
     }
   };
 

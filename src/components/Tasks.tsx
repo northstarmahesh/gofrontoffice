@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Clock, AlertCircle, Bot, User } from "lucide-react";
 import { toast } from "sonner";
+import ActivityLogs from "./ActivityLogs";
 
 const Tasks = () => {
   const assistantTasks = [
@@ -217,6 +218,11 @@ const Tasks = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Activity Logs Section */}
+      <div className="mt-8">
+        <ActivityLogs />
       </div>
     </div>
   );
