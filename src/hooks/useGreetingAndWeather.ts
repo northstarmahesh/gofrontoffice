@@ -11,6 +11,8 @@ export const useGreetingAndWeather = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  console.log('useGreetingAndWeather hook initialized');
+
   useEffect(() => {
     const updateGreeting = () => {
       const hour = new Date().getHours();

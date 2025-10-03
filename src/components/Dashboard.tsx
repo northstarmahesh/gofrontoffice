@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
 
 const Dashboard = () => {
+  console.log('Dashboard component rendering');
   const { greeting, weather, backgroundGradient, emoji } = useGreetingAndWeather();
+  console.log('Dashboard hook values:', { greeting, weather, backgroundGradient, emoji });
 
   const stats = [
     {
