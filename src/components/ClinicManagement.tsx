@@ -6,6 +6,7 @@ import { KnowledgeBase } from "./clinic/KnowledgeBase";
 import { ScheduleManagement } from "./clinic/ScheduleManagement";
 import { PhoneNumbers } from "./clinic/PhoneNumbers";
 import { TeamManagement } from "./clinic/TeamManagement";
+import { ConnectedServices } from "./clinic/ConnectedServices";
 import { toast } from "sonner";
 
 export const ClinicManagement = () => {
@@ -52,7 +53,9 @@ export const ClinicManagement = () => {
   const handleClinicCreated = (newClinicId: string) => {
     setClinicId(newClinicId);
     setHasClinic(true);
-    toast.success("You can now configure your clinic!");
+    toast.success("Clinic created! Complete your setup in the tabs below.");
+    // Reload to update parent state
+    window.location.reload();
   };
 
   if (loading) {
@@ -87,12 +90,13 @@ export const ClinicManagement = () => {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="phones">Phones</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
@@ -113,6 +117,10 @@ export const ClinicManagement = () => {
 
         <TabsContent value="phones" className="mt-6">
           <PhoneNumbers clinicId={clinicId!} />
+        </TabsContent>
+
+        <TabsContent value="integrations" className="mt-6">
+          <ConnectedServices />
         </TabsContent>
       </Tabs>
     </div>

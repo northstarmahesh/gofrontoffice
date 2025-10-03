@@ -18,35 +18,68 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<View>("dashboard");
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [hasClinic, setHasClinic] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Check authentication
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-        setLoading(false);
-      }
-    });
+    checkAuthAndClinic();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate("/auth");
       } else {
         setUser(session.user);
-        setLoading(false);
+        checkClinicStatus(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const checkAuthAndClinic = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      navigate("/auth");
+      return;
+    }
+
+    setUser(session.user);
+    await checkClinicStatus(session.user.id);
+    setLoading(false);
+  };
+
+  const checkClinicStatus = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (data) {
+        setHasClinic(true);
+      } else {
+        setHasClinic(false);
+        setCurrentView("settings"); // Show clinic setup
+      }
+    } catch (error) {
+      console.error("Error checking clinic:", error);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Logged out successfully");
     navigate("/auth");
   };
+
+  useEffect(() => {
+    // If user doesn't have a clinic, redirect to settings for onboarding
+    if (hasClinic === false && currentView !== "settings") {
+      setCurrentView("settings");
+      toast.info("Welcome! Let's set up your clinic first.");
+    }
+  }, [hasClinic]);
 
   if (loading) {
     return (

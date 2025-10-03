@@ -91,14 +91,6 @@ const Settings = () => {
     );
   };
 
-  const integrations = [
-    { name: "Calendar", status: "connected", icon: CheckCircle2 },
-    { name: "Email", status: "connected", icon: CheckCircle2 },
-    { name: "Booking System", status: "pending", icon: CheckCircle2 },
-    { name: "CRM", status: "pending", icon: CheckCircle2 },
-    { name: "Knowledge Base", status: "connected", icon: CheckCircle2 },
-  ];
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -229,28 +221,6 @@ const Settings = () => {
                   onCheckedChange={() => handleChannelToggle("messenger")}
                 />
               </div>
-            </div>
-          </Card>
-
-          {/* Integrations */}
-          <Card className="border-0 p-6 shadow-sm">
-            <h3 className="mb-4 font-semibold text-foreground">Connected Services</h3>
-            <div className="space-y-3">
-              {integrations.map((integration) => (
-                <div key={integration.name} className="flex items-center justify-between">
-                  <span className="text-sm text-foreground">{integration.name}</span>
-                  <span
-                    className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
-                      integration.status === "connected"
-                        ? "bg-success/10 text-success"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    <CheckCircle2 className="h-3 w-3" />
-                    {integration.status}
-                  </span>
-                </div>
-              ))}
             </div>
           </Card>
         </div>
