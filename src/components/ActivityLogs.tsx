@@ -21,7 +21,11 @@ interface ActivityLog {
   direction?: string;
 }
 
-const ActivityLogs = () => {
+interface ActivityLogsProps {
+  onNavigateToContact?: (contactName: string) => void;
+}
+
+const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [channelFilter, setChannelFilter] = useState("all");
   const [logs, setLogs] = useState<ActivityLog[]>([]);
@@ -179,6 +183,11 @@ const ActivityLogs = () => {
           open={detailDialogOpen}
           onOpenChange={setDetailDialogOpen}
           onContactUpdated={loadActivityLogs}
+          onViewFullProfile={() => {
+            if (onNavigateToContact && selectedContact.name) {
+              onNavigateToContact(selectedContact.name);
+            }
+          }}
         />
       )}
 

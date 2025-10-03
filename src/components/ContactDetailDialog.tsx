@@ -32,6 +32,7 @@ interface ContactDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onContactUpdated?: () => void;
+  onViewFullProfile?: () => void;
 }
 
 interface Contact {
@@ -42,7 +43,7 @@ interface Contact {
   notes?: string;
 }
 
-const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpenChange, onContactUpdated }: ContactDetailDialogProps) => {
+const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpenChange, onContactUpdated, onViewFullProfile }: ContactDetailDialogProps) => {
   const [activityHistory, setActivityHistory] = useState<ActivityLog[]>([]);
   const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(false);
@@ -320,10 +321,20 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
               )}
             </div>
             {!isEditing ? (
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
+              <div className="flex gap-2">
+                {onViewFullProfile && (
+                  <Button variant="outline" size="sm" onClick={() => {
+                    onViewFullProfile();
+                    onOpenChange(false);
+                  }}>
+                    View Full Profile
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              </div>
             ) : (
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>

@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Clock, AlertCircle, Bot, User } from "lucide-react";
 import ActivityLogs from "./ActivityLogs";
 import TaskDetailDialog from "./TaskDetailDialog";
+import ContactDetailDialog from "./ContactDetailDialog";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,6 +17,12 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [humanTasks, setHumanTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedContactForHistory, setSelectedContactForHistory] = useState<{
+    name: string;
+    info: string;
+    id?: string;
+  } | null>(null);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
   useEffect(() => {
     loadTasks();
@@ -75,6 +82,49 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     }
   };
 
+  // Add some dummy tasks for contacts with draft messages
+  const dummyHumanTasks = [
+    {
+      id: "dummy1",
+      title: "Review and approve draft message",
+      description: "AI prepared response about appointment rescheduling for Emma Rodriguez",
+      priority: "high",
+      status: "pending",
+      date: "Today",
+      time: "11:30 AM",
+      source: "WhatsApp",
+      isInternal: false,
+      contact_name: "Emma Rodriguez",
+      contact_info: "+46 76 345 6789",
+    },
+    {
+      id: "dummy2",
+      title: "Follow up on prescription inquiry",
+      description: "Draft message ready: Information about prescription refill process for Mike Johnson",
+      priority: "medium",
+      status: "pending",
+      date: "Today",
+      time: "2:15 PM",
+      source: "SMS",
+      isInternal: false,
+      contact_name: "Mike Johnson",
+      contact_info: "+46 70 123 4567",
+    },
+    {
+      id: "dummy3",
+      title: "Respond to pricing question",
+      description: "AI drafted detailed pricing breakdown for Sarah Williams",
+      priority: "medium",
+      status: "pending",
+      date: "Today",
+      time: "3:45 PM",
+      source: "Instagram",
+      isInternal: false,
+      contact_name: "Sarah Williams",
+      contact_info: "@sarah_williams",
+    },
+  ];
+
   const handleTaskComplete = () => {
     setRefreshKey(prev => prev + 1);
   };
@@ -117,11 +167,24 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   ];
 
   // Filter to show only today's tasks
-  const todayHumanTasks = humanTasks.filter(task => task.date === "Today");
+  const todayHumanTasks = [...humanTasks, ...dummyHumanTasks].filter(task => task.date === "Today");
 
   const handleTaskClick = (task: any) => {
-    setSelectedTask(task);
-    setDialogOpen(true);
+    const isContactTask = task.contact_name || !task.isInternal;
+    
+    if (isContactTask && task.contact_name) {
+      // Open contact history dialog for contact tasks
+      setSelectedContactForHistory({
+        name: task.contact_name,
+        info: task.contact_info || "",
+        id: undefined // Will be looked up in ContactDetailDialog
+      });
+      setContactDialogOpen(true);
+    } else {
+      // Open task detail dialog for internal tasks
+      setSelectedTask(task);
+      setDialogOpen(true);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -284,10 +347,27 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
       {/* Activity Logs Section */}
       <div className="mt-8">
-        <ActivityLogs />
+        <ActivityLogs onNavigateToContact={onNavigateToContact} />
       </div>
 
-      {/* Task Detail Dialog */}
+      {/* Contact Detail Dialog for contact tasks */}
+      {selectedContactForHistory && (
+        <ContactDetailDialog
+          contactId={selectedContactForHistory.id}
+          contactName={selectedContactForHistory.name}
+          contactInfo={selectedContactForHistory.info}
+          open={contactDialogOpen}
+          onOpenChange={setContactDialogOpen}
+          onContactUpdated={loadTasks}
+          onViewFullProfile={() => {
+            if (onNavigateToContact && selectedContactForHistory.name) {
+              onNavigateToContact(selectedContactForHistory.name);
+            }
+          }}
+        />
+      )}
+
+      {/* Task Detail Dialog for internal tasks */}
       <TaskDetailDialog
         task={selectedTask}
         open={dialogOpen}
