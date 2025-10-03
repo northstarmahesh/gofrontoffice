@@ -89,6 +89,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       date: "Today",
       time: "9:00 AM",
       source: "Auto",
+      isInternal: true,
     },
     {
       id: 2,
@@ -99,6 +100,8 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       date: "Today",
       time: "9:45 AM",
       source: "SMS",
+      isInternal: false,
+      contact_name: "Sarah Smith",
     },
     {
       id: 3,
@@ -109,6 +112,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       date: "Today",
       time: "10:15 AM",
       source: "Phone",
+      isInternal: true,
     },
   ];
 
@@ -160,39 +164,52 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const inProgressTasks = allTasks.filter((t) => t.status === "in-progress").length;
   const completedTasks = allTasks.filter((t) => t.status === "completed").length;
 
-  const renderTaskCard = (task: any, isAssistant: boolean) => (
-    <Card
-      key={task.id}
-      className="cursor-pointer border-0 p-3 shadow-sm transition-all hover:shadow-md"
-      onClick={() => handleTaskClick(task)}
-    >
-      <div className="flex gap-3">
-        <div className="pt-0.5">{getStatusIcon(task.status)}</div>
-        
-        <div className="flex-1 space-y-1.5">
-          <div className="flex items-start justify-between gap-2">
-            <h4 className={`text-sm font-semibold ${
-              task.status === "completed"
-                ? "text-muted-foreground line-through"
-                : "text-foreground"
-            }`}>
-              {task.title}
-            </h4>
-            {getPriorityBadge(task.priority)}
-          </div>
+  const renderTaskCard = (task: any, isAssistant: boolean) => {
+    const isContactTask = task.contact_name || !task.isInternal;
+    
+    return (
+      <Card
+        key={task.id}
+        className={`cursor-pointer border-0 p-3 shadow-sm transition-all hover:shadow-md ${
+          isContactTask ? 'bg-card' : 'bg-muted/30'
+        }`}
+        onClick={() => handleTaskClick(task)}
+      >
+        <div className="flex gap-3">
+          <div className="pt-0.5">{getStatusIcon(task.status)}</div>
+          
+          <div className="flex-1 space-y-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h4 className={`text-sm font-semibold ${
+                  task.status === "completed"
+                    ? "text-muted-foreground line-through"
+                    : "text-foreground"
+                }`}>
+                  {task.title}
+                </h4>
+                {!isContactTask && (
+                  <Badge variant="outline" className="text-xs bg-muted">
+                    Internal
+                  </Badge>
+                )}
+              </div>
+              {getPriorityBadge(task.priority)}
+            </div>
 
-          <p className="text-xs text-muted-foreground">{task.description}</p>
+            <p className="text-xs text-muted-foreground">{task.description}</p>
 
-          <div className="flex items-center justify-between">
-            <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-              {task.source}
-            </span>
-            <span className="text-xs text-muted-foreground">{task.time}</span>
+            <div className="flex items-center justify-between">
+              <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {task.source}
+              </span>
+              <span className="text-xs text-muted-foreground">{task.time}</span>
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
-  );
+      </Card>
+    );
+  };
 
   const groupTasksByDate = (tasks: any[]) => {
     const grouped: { [key: string]: any[] } = {};
