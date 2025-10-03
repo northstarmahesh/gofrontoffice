@@ -7,6 +7,7 @@ import { ScheduleManagement } from "./clinic/ScheduleManagement";
 import { PhoneNumbers } from "./clinic/PhoneNumbers";
 import { TeamManagement } from "./clinic/TeamManagement";
 import { ConnectedServices } from "./clinic/ConnectedServices";
+import { ClinicOnboarding } from "./clinic/ClinicOnboarding";
 import { toast } from "sonner";
 
 export const ClinicManagement = () => {
@@ -50,11 +51,10 @@ export const ClinicManagement = () => {
     }
   };
 
-  const handleClinicCreated = (newClinicId: string) => {
+  const handleOnboardingComplete = (newClinicId: string) => {
     setClinicId(newClinicId);
     setHasClinic(true);
-    toast.success("Clinic created! Complete your setup in the tabs below.");
-    // Reload to update parent state
+    // Reload to update parent state and show main app
     window.location.reload();
   };
 
@@ -67,17 +67,7 @@ export const ClinicManagement = () => {
   }
 
   if (!hasClinic) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Welcome to Front Office</h2>
-          <p className="text-muted-foreground">
-            Let's start by creating your clinic profile
-          </p>
-        </div>
-        <ClinicProfile onSaved={handleClinicCreated} />
-      </div>
-    );
+    return <ClinicOnboarding onComplete={handleOnboardingComplete} />;
   }
 
   return (
