@@ -593,6 +593,13 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
                               <p className="text-xs text-muted-foreground">
                                 Note: Only one WhatsApp number per location
                               </p>
+                              {phoneNumberSetup.channels.includes("whatsapp") && (
+                                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-md mt-2">
+                                  <p className="text-xs text-muted-foreground">
+                                    <strong className="text-blue-600">WhatsApp Business API:</strong> Requires additional Meta Business Manager setup after phone verification (1-2 business days).
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}

@@ -56,11 +56,12 @@ serve(async (req) => {
       throw new Error('Invalid verification code');
     }
 
-    // Mark as verified and clear verification data
+    // Mark as verified, activate, and clear verification data
     const { error: updateError } = await supabase
       .from('clinic_phone_numbers')
       .update({
         is_verified: true,
+        is_active: true,
         verification_code: null,
         verification_expires_at: null,
       })

@@ -140,6 +140,7 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
           phone_number: phoneNumber,
           channels: phoneChannels,
           is_verified: false,
+          is_active: true,
         })
         .select()
         .single();
@@ -292,6 +293,14 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
                   </div>
                 </div>
               </div>
+
+              {phoneChannels.includes("whatsapp") && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-xs text-muted-foreground">
+                    <strong className="text-blue-600">WhatsApp Business API Note:</strong> After phone verification, WhatsApp requires additional setup through Meta Business Manager including business verification and number registration. This can take 1-2 business days.
+                  </p>
+                </div>
+              )}
 
               <Button onClick={handleAddPhoneNumber} disabled={adding} className="w-full">
                 <Plus className="h-4 w-4 mr-2" />
