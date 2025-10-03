@@ -28,7 +28,8 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
   const [assistantPrompt, setAssistantPrompt] = useState("");
   const [assistantVoice, setAssistantVoice] = useState("alloy");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingPrompt, setSavingPrompt] = useState(false);
+  const [savingVoice, setSavingVoice] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [hasStudioQuality, setHasStudioQuality] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
@@ -61,25 +62,41 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
     }
   };
 
-  const handleSave = async () => {
-    setSaving(true);
+  const handleSavePrompt = async () => {
+    setSavingPrompt(true);
     try {
       const { error } = await supabase
         .from("clinics")
-        .update({
-          assistant_prompt: assistantPrompt,
-          assistant_voice: assistantVoice,
-        })
+        .update({ assistant_prompt: assistantPrompt })
         .eq("id", clinicId);
 
       if (error) throw error;
 
-      toast.success("Assistant settings saved successfully");
+      toast.success("Assistant instructions saved successfully");
     } catch (error) {
-      console.error("Error saving settings:", error);
-      toast.error("Failed to save assistant settings");
+      console.error("Error saving instructions:", error);
+      toast.error("Failed to save assistant instructions");
     } finally {
-      setSaving(false);
+      setSavingPrompt(false);
+    }
+  };
+
+  const handleSaveVoice = async () => {
+    setSavingVoice(true);
+    try {
+      const { error } = await supabase
+        .from("clinics")
+        .update({ assistant_voice: assistantVoice })
+        .eq("id", clinicId);
+
+      if (error) throw error;
+
+      toast.success("Voice selection saved successfully");
+    } catch (error) {
+      console.error("Error saving voice:", error);
+      toast.error("Failed to save voice selection");
+    } finally {
+      setSavingVoice(false);
     }
   };
 
@@ -146,6 +163,12 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
             <p className="text-xs text-muted-foreground">
               These instructions will guide how your assistant interacts with patients
             </p>
+          </div>
+          <div className="flex justify-end pt-4">
+            <Button onClick={handleSavePrompt} disabled={savingPrompt}>
+              {savingPrompt && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Instructions
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -242,16 +265,14 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
               </DialogContent>
             </Dialog>
           </div>
+          <div className="flex justify-end pt-4">
+            <Button onClick={handleSaveVoice} disabled={savingVoice}>
+              {savingVoice && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Voice Selection
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save Assistant Settings
-        </Button>
-      </div>
     </div>
   );
 };
