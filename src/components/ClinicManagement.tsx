@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClinicProfile } from "./clinic/ClinicProfile";
-import { KnowledgeBase } from "./clinic/KnowledgeBase";
+import { ClinicInfo } from "./clinic/ClinicInfo";
 import { PhoneNumbers } from "./clinic/PhoneNumbers";
 import { TeamManagement } from "./clinic/TeamManagement";
 import { ConnectedServices } from "./clinic/ConnectedServices";
@@ -78,25 +77,20 @@ export const ClinicManagement = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
+      <Tabs defaultValue="info" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="info">Info</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
           <TabsTrigger value="phones">Phones</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="mt-6">
-          <ClinicProfile clinicId={clinicId!} />
+        <TabsContent value="info" className="mt-6">
+          <ClinicInfo clinicId={clinicId!} />
         </TabsContent>
 
         <TabsContent value="team" className="mt-6">
           <TeamManagement clinicId={clinicId!} />
-        </TabsContent>
-
-        <TabsContent value="knowledge" className="mt-6">
-          <KnowledgeBase clinicId={clinicId!} />
         </TabsContent>
 
         <TabsContent value="phones" className="mt-6">
