@@ -56,7 +56,7 @@ export const useGreetingAndWeather = () => {
             
             // Using Open-Meteo API (free, no API key required)
             const response = await fetch(
-              `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&temperature_unit=fahrenheit`
+              `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&temperature_unit=celsius`
             );
             
             if (!response.ok) {

@@ -215,100 +215,171 @@ const Settings = () => {
 
           {/* Messaging Channels */}
           <Card className="border-0 p-6 shadow-sm">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-secondary/10 p-2.5">
-                    <MessageSquare className="h-5 w-5 text-secondary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">Messaging Mode</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {autoPilotEnabled ? "AI replies automatically" : (
-                        <>
-                          AI drafts replies for your approval as{" "}
-                          <button
-                            onClick={() => navigate("/?tab=tasks")}
-                            className="text-primary hover:underline font-medium"
-                          >
-                            your todos
-                          </button>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-foreground">
-                    {autoPilotEnabled ? "Autopilot" : "Co-pilot"}
-                  </span>
-                  <Switch
-                    checked={autoPilotEnabled}
-                    onCheckedChange={handleAutoPilotToggle}
-                  />
-                </div>
+            <div className="mb-4 flex items-center gap-3">
+              <div className="rounded-xl bg-secondary/10 p-2.5">
+                <MessageSquare className="h-5 w-5 text-secondary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Messaging Channels</h3>
+                <p className="text-xs text-muted-foreground">Configure mode per channel</p>
               </div>
             </div>
 
-            <div className="border-t pt-4">
-              <p className="text-xs font-medium text-muted-foreground mb-3">Active Channels</p>
-              
-              <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                  <Label htmlFor="sms" className="text-sm font-medium">
-                    SMS
-                  </Label>
+            <div className="space-y-4">
+              {/* SMS */}
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                    <Label htmlFor="sms" className="text-sm font-medium">SMS</Label>
+                  </div>
+                  <Switch
+                    id="sms"
+                    checked={channels.sms}
+                    onCheckedChange={() => handleChannelToggle("sms")}
+                  />
                 </div>
-                <Switch
-                  id="sms"
-                  checked={channels.sms}
-                  onCheckedChange={() => handleChannelToggle("sms")}
-                />
+                {channels.sms && (
+                  <div className="flex gap-2 pl-8">
+                    <button
+                      onClick={handleAutoPilotToggle}
+                      className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                        autoPilotEnabled
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Autopilot
+                    </button>
+                    <button
+                      onClick={handleAutoPilotToggle}
+                      className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                        !autoPilotEnabled
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Co-pilot
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                  <Label htmlFor="whatsapp" className="text-sm font-medium">
-                    WhatsApp
-                  </Label>
+              {/* WhatsApp */}
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                    <Label htmlFor="whatsapp" className="text-sm font-medium">WhatsApp</Label>
+                  </div>
+                  <Switch
+                    id="whatsapp"
+                    checked={channels.whatsapp}
+                    onCheckedChange={() => handleChannelToggle("whatsapp")}
+                  />
                 </div>
-                <Switch
-                  id="whatsapp"
-                  checked={channels.whatsapp}
-                  onCheckedChange={() => handleChannelToggle("whatsapp")}
-                />
+                {channels.whatsapp && (
+                  <div className="flex gap-2 pl-8">
+                    <button
+                      onClick={handleAutoPilotToggle}
+                      className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                        autoPilotEnabled
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Autopilot
+                    </button>
+                    <button
+                      onClick={handleAutoPilotToggle}
+                      className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                        !autoPilotEnabled
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Co-pilot
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Instagram className="h-5 w-5 text-muted-foreground" />
-                  <Label htmlFor="instagram" className="text-sm font-medium">
-                    Instagram DM
-                  </Label>
+              {/* Instagram */}
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Instagram className="h-5 w-5 text-muted-foreground" />
+                    <Label htmlFor="instagram" className="text-sm font-medium">Instagram DM</Label>
+                  </div>
+                  <Switch
+                    id="instagram"
+                    checked={channels.instagram}
+                    onCheckedChange={() => handleChannelToggle("instagram")}
+                  />
                 </div>
-                <Switch
-                  id="instagram"
-                  checked={channels.instagram}
-                  onCheckedChange={() => handleChannelToggle("instagram")}
-                />
+                {channels.instagram && (
+                  <div className="flex gap-2 pl-8">
+                    <button
+                      onClick={handleAutoPilotToggle}
+                      className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                        autoPilotEnabled
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Autopilot
+                    </button>
+                    <button
+                      onClick={handleAutoPilotToggle}
+                      className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                        !autoPilotEnabled
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Co-pilot
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Facebook className="h-5 w-5 text-muted-foreground" />
-                  <Label htmlFor="messenger" className="text-sm font-medium">
-                    Messenger
-                  </Label>
+              {/* Messenger */}
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Facebook className="h-5 w-5 text-muted-foreground" />
+                    <Label htmlFor="messenger" className="text-sm font-medium">Messenger</Label>
+                  </div>
+                  <Switch
+                    id="messenger"
+                    checked={channels.messenger}
+                    onCheckedChange={() => handleChannelToggle("messenger")}
+                  />
                 </div>
-                <Switch
-                  id="messenger"
-                  checked={channels.messenger}
-                  onCheckedChange={() => handleChannelToggle("messenger")}
-                />
-              </div>
+                {channels.messenger && (
+                  <div className="flex gap-2 pl-8">
+                    <button
+                      onClick={handleAutoPilotToggle}
+                      className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                        autoPilotEnabled
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Autopilot
+                    </button>
+                    <button
+                      onClick={handleAutoPilotToggle}
+                      className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                        !autoPilotEnabled
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Co-pilot
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
