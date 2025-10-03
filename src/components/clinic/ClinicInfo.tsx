@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Building2, BookOpen, Plus, Trash2, Globe, FileText, MapPin } from "lucide-react";
+import { Building2, BookOpen, Plus, Trash2, Globe, FileText, MapPin, Lock } from "lucide-react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 interface ClinicInfoProps {
   clinicId?: string;
@@ -42,7 +44,10 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [urls, setUrls] = useState(["", "", ""]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [mapUrl, setMapUrl] = useState("");
+  const [addressLocked, setAddressLocked] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (clinicId) {
@@ -52,12 +57,88 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
   }, [clinicId]);
 
   useEffect(() => {
-    // Generate map URL when address changes
-    if (formData.address) {
-      const encodedAddress = encodeURIComponent(formData.address);
-      setMapUrl(`https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=0,0`);
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    // Initialize map
+    const map = L.map(mapContainerRef.current).setView([37.7749, -122.4194], 13);
+    mapRef.current = map;
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map);
+
+    // Fix icon paths for Leaflet
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    });
+
+    // Add click handler for map
+    map.on("click", async (e: L.LeafletMouseEvent) => {
+      const { lat, lng } = e.latlng;
+
+      // Add or move marker
+      if (markerRef.current) {
+        markerRef.current.setLatLng([lat, lng]);
+      } else {
+        markerRef.current = L.marker([lat, lng]).addTo(map);
+      }
+
+      // Reverse geocode to get address
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        );
+        const data = await response.json();
+        
+        if (data.display_name) {
+          setFormData({ ...formData, address: data.display_name });
+          setAddressLocked(true);
+          toast.success("Address set from map location");
+        }
+      } catch (error) {
+        console.error("Geocoding error:", error);
+        toast.error("Failed to get address from location");
+      }
+    });
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Update map marker when address is manually changed and unlocked
+  useEffect(() => {
+    if (!addressLocked && formData.address && mapRef.current) {
+      // Geocode the address to get coordinates
+      fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          formData.address
+        )}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data[0]) {
+            const { lat, lon } = data[0];
+            const latLng: L.LatLngExpression = [parseFloat(lat), parseFloat(lon)];
+            
+            if (markerRef.current) {
+              markerRef.current.setLatLng(latLng);
+            } else if (mapRef.current) {
+              markerRef.current = L.marker(latLng).addTo(mapRef.current);
+            }
+            
+            mapRef.current?.setView(latLng, 15);
+          }
+        })
+        .catch((error) => console.error("Geocoding error:", error));
     }
-  }, [formData.address]);
+  }, [formData.address, addressLocked]);
 
   const loadClinicData = async () => {
     const { data, error } = await supabase
@@ -313,29 +394,46 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Address
+              <Label htmlFor="address" className="flex items-center gap-2 justify-between">
+                <span className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Address
+                </span>
+                {addressLocked && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAddressLocked(false)}
+                    className="h-auto py-1 px-2 text-xs"
+                  >
+                    <Lock className="h-3 w-3 mr-1" />
+                    Unlock to edit
+                  </Button>
+                )}
               </Label>
               <Textarea
                 id="address"
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="123 Main St, City, State 12345"
+                onChange={(e) => {
+                  setFormData({ ...formData, address: e.target.value });
+                  setAddressLocked(false);
+                }}
+                placeholder="Click on the map below to set address, or type manually"
                 rows={3}
+                disabled={addressLocked}
+                className={addressLocked ? "opacity-75" : ""}
               />
-              {formData.address && (
-                <div className="mt-4 rounded-lg overflow-hidden border">
-                  <iframe
-                    width="100%"
-                    height="300"
-                    frameBorder="0"
-                    scrolling="no"
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(formData.address)}&output=embed`}
-                    title="Clinic Location"
-                  />
-                </div>
-              )}
+              <p className="text-xs text-muted-foreground">
+                {addressLocked 
+                  ? "Address set from map. Click 'Unlock to edit' to change manually." 
+                  : "Click anywhere on the map to set the address automatically"}
+              </p>
+              <div 
+                ref={mapContainerRef}
+                className="mt-4 rounded-lg overflow-hidden border h-[400px] w-full"
+                style={{ zIndex: 0 }}
+              />
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
