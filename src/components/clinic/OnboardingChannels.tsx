@@ -21,8 +21,6 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneChannels, setPhoneChannels] = useState<string[]>(["sms"]);
   const [clinicEmail, setClinicEmail] = useState("");
-  const [instagramHandle, setInstagramHandle] = useState("");
-  const [facebookPageId, setFacebookPageId] = useState("");
   const [adding, setAdding] = useState(false);
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
   const [pendingPhoneVerification, setPendingPhoneVerification] = useState<{id: string, number: string} | null>(null);
@@ -189,34 +187,6 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
     }
   };
 
-  const handleSaveSocials = async () => {
-    if (!locationId) {
-      toast.error("Location not found");
-      return;
-    }
-
-    setAdding(true);
-    try {
-      const { error } = await supabase
-        .from("clinic_locations")
-        .update({
-          instagram_handle: instagramHandle || null,
-          instagram_connected: !!instagramHandle,
-          facebook_page_id: facebookPageId || null,
-          facebook_connected: !!facebookPageId,
-        })
-        .eq("id", locationId);
-
-      if (error) throw error;
-
-      toast.success("Social media connections saved!");
-      await checkConnections();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to save social connections");
-    } finally {
-      setAdding(false);
-    }
-  };
 
   const hasAnyConnection = Object.values(connectionStatus).some(status => status);
 
@@ -408,35 +378,60 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="space-y-4 pt-0">
-              <div className="space-y-2">
-                <Label htmlFor="instagram">Instagram Handle</Label>
-                <Input
-                  id="instagram"
-                  placeholder="@yourhandle"
-                  value={instagramHandle}
-                  onChange={(e) => setInstagramHandle(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  You'll need to connect this through Facebook's Business Suite
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="facebook">Facebook Page ID</Label>
-                <Input
-                  id="facebook"
-                  placeholder="123456789"
-                  value={facebookPageId}
-                  onChange={(e) => setFacebookPageId(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Find this in your Facebook Page settings
-                </p>
+              <div className="p-4 bg-muted/50 rounded-lg border border-dashed">
+                <div className="flex items-start gap-3">
+                  <div className="flex gap-2 mt-1">
+                    <Instagram className="h-5 w-5 text-muted-foreground" />
+                    <MessageCircle className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium mb-1">
+                        OAuth Connection Required
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Social media accounts must be connected through proper OAuth integration in the Tools section. Manual entry of handles or IDs is not supported.
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      You can connect Instagram DM and Facebook Messenger after completing onboarding.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <Button onClick={handleSaveSocials} disabled={adding} className="w-full">
-                Save Social Media
-              </Button>
+              {/* Show connected accounts if any */}
+              {(connectionStatus.instagram || connectionStatus.facebook) && (
+                <div className="space-y-2">
+                  {connectionStatus.instagram && (
+                    <Card className="bg-success/5 border-success/20">
+                      <CardContent className="pt-3 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Instagram className="h-4 w-4 text-pink-600" />
+                          <p className="text-sm font-medium flex-1">Instagram DM</p>
+                          <Badge variant="default" className="bg-success/10 text-success text-xs">
+                            Connected
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {connectionStatus.facebook && (
+                    <Card className="bg-success/5 border-success/20">
+                      <CardContent className="pt-3 pb-3">
+                        <div className="flex items-center gap-2">
+                          <MessageCircle className="h-4 w-4 text-blue-600" />
+                          <p className="text-sm font-medium flex-1">Facebook Messenger</p>
+                          <Badge variant="default" className="bg-success/10 text-success text-xs">
+                            Connected
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
             </CardContent>
           </CollapsibleContent>
         </Card>
