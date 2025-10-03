@@ -17,7 +17,6 @@ interface Contact {
   phone: string;
   email?: string;
   notes?: string;
-  tags?: string[];
   last_contacted?: string;
   created_at: string;
 }
@@ -38,8 +37,7 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
     name: "",
     phone: "",
     email: "",
-    notes: "",
-    tags: "",
+    notes: ""
   });
 
   useEffect(() => {
@@ -90,7 +88,6 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
                 phone: log.contact_info || "",
                 email: undefined,
                 notes: log.summary || "",
-                tags: log.type ? [log.type] : [],
                 last_contacted: log.created_at,
                 created_at: log.created_at,
               });
@@ -159,8 +156,7 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
         name: formData.name,
         phone: formData.phone,
         email: formData.email || null,
-        notes: formData.notes || null,
-        tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : []
+        notes: formData.notes || null
       };
 
       if (editingContact) {
@@ -190,7 +186,7 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", phone: "", email: "", notes: "", tags: "" });
+    setFormData({ name: "", phone: "", email: "", notes: "" });
     setEditingContact(null);
   };
 
@@ -200,8 +196,7 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
       name: contact.name,
       phone: contact.phone,
       email: contact.email || "",
-      notes: contact.notes || "",
-      tags: contact.tags?.join(", ") || "",
+      notes: contact.notes || ""
     });
     setDialogOpen(true);
   };
@@ -296,16 +291,6 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="tags">Tags (comma separated)</Label>
-                <Input
-                  id="tags"
-                  value={formData.tags}
-                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                  placeholder="patient, vip, regular"
-                />
-              </div>
-
               <Button type="submit" className="w-full">
                 {editingContact ? "Update Contact" : "Add Contact"}
               </Button>
@@ -358,15 +343,6 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold">{contact.name}</h3>
-                      {contact.tags && contact.tags.length > 0 && (
-                        <div className="flex gap-1">
-                          {contact.tags.slice(0, 2).map((tag, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
                     </div>
                     <div className="space-y-1 text-sm text-muted-foreground">
                       {contact.phone && (

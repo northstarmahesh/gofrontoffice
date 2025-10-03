@@ -40,7 +40,6 @@ interface Contact {
   phone: string;
   email?: string;
   notes?: string;
-  tags?: string[];
 }
 
 const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpenChange, onContactUpdated }: ContactDetailDialogProps) => {
@@ -52,9 +51,11 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
     name: "",
     phone: "",
     email: "",
-    notes: "",
-    tags: ""
+    notes: ""
   });
+  const [message, setMessage] = useState("");
+  const [selectedChannel, setSelectedChannel] = useState<string>("sms");
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     if (open && (contactId || contactName)) {
@@ -79,8 +80,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
           name: data.name,
           phone: data.phone,
           email: data.email || "",
-          notes: data.notes || "",
-          tags: data.tags?.join(", ") || ""
+          notes: data.notes || ""
         });
       }
     }
@@ -99,6 +99,21 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
 
       if (historyError) throw historyError;
       setActivityHistory((historyData as ActivityLog[]) || []);
+      
+      // Set default channel based on last conversation
+      if (historyData && historyData.length > 0) {
+        const lastLog = historyData[historyData.length - 1];
+        const type = lastLog.type.toLowerCase();
+        if (type.includes('whatsapp')) {
+          setSelectedChannel('whatsapp');
+        } else if (type.includes('instagram')) {
+          setSelectedChannel('instagram');
+        } else if (type.includes('phone') || type.includes('call')) {
+          setSelectedChannel('phone');
+        } else {
+          setSelectedChannel('sms');
+        }
+      }
     } catch (error) {
       console.error("Error loading contact history:", error);
     } finally {
@@ -114,8 +129,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         name: editForm.name,
         phone: editForm.phone,
         email: editForm.email || null,
-        notes: editForm.notes || null,
-        tags: editForm.tags ? editForm.tags.split(",").map(t => t.trim()) : []
+        notes: editForm.notes || null
       };
 
       if (contactId) {
@@ -155,6 +169,56 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
     } catch (error) {
       console.error("Error saving contact:", error);
       toast.error("Failed to save contact");
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || !contactName) return;
+
+    setIsSending(true);
+    try {
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .single();
+
+      if (!clinicData?.clinic_id) {
+        toast.error("No clinic found for user");
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const channelType = selectedChannel === 'phone' ? 'call' : selectedChannel;
+
+      const { error } = await supabase
+        .from("activity_logs")
+        .insert({
+          user_id: user.id,
+          clinic_id: clinicData.clinic_id,
+          type: channelType,
+          title: `${channelType.toUpperCase()} message`,
+          summary: message,
+          contact_name: contactName,
+          contact_info: contactInfo || contact?.phone,
+          status: 'pending',
+          direction: 'outbound'
+        });
+
+      if (error) throw error;
+
+      toast.success("Message sent successfully");
+      setMessage("");
+      loadContactHistory();
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -322,16 +386,6 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                     rows={4}
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-tags">Tags (comma separated)</Label>
-                  <Input
-                    id="edit-tags"
-                    value={editForm.tags}
-                    onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
-                    placeholder="vip, patient, regular"
-                  />
-                </div>
               </div>
             ) : (
               <>
@@ -352,16 +406,6 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                         <div>
                           <p className="text-sm text-muted-foreground">Notes</p>
                           <p className="whitespace-pre-wrap">{contact.notes}</p>
-                        </div>
-                      )}
-                      {contact.tags && contact.tags.length > 0 && (
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-2">Tags</p>
-                          <div className="flex flex-wrap gap-1">
-                            {contact.tags.map((tag, idx) => (
-                              <Badge key={idx} variant="secondary">{tag}</Badge>
-                            ))}
-                          </div>
                         </div>
                       )}
                     </div>
@@ -507,6 +551,64 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                       })}
                     </div>
                   </div>
+                )}
+
+                {/* Messaging Section */}
+                {!isEditing && (
+                  <Card className="border-2 mt-4">
+                    <div className="p-4 space-y-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-sm font-semibold">Send Message</Label>
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            variant={selectedChannel === 'sms' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSelectedChannel('sms')}
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={selectedChannel === 'whatsapp' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSelectedChannel('whatsapp')}
+                          >
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={selectedChannel === 'instagram' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSelectedChannel('instagram')}
+                          >
+                            <Instagram className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={selectedChannel === 'phone' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSelectedChannel('phone')}
+                          >
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <Textarea
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder={`Type your ${selectedChannel === 'phone' ? 'call note' : 'message'}...`}
+                        rows={3}
+                      />
+                      <Button 
+                        onClick={handleSendMessage} 
+                        disabled={!message.trim() || isSending}
+                        className="w-full"
+                      >
+                        {isSending ? "Sending..." : `Send via ${selectedChannel.toUpperCase()}`}
+                      </Button>
+                    </div>
+                  </Card>
                 )}
               </>
             )}
