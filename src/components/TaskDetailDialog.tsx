@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { AlertCircle, Clock, User, Phone, Mail, MessageSquare, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,9 +36,10 @@ interface TaskDetailDialogProps {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onViewContact?: (contactName: string) => void;
 }
 
-const TaskDetailDialog = ({ task, open, onOpenChange }: TaskDetailDialogProps) => {
+const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact }: TaskDetailDialogProps) => {
   const [relatedLog, setRelatedLog] = useState<ActivityLog | null>(null);
   const [activityHistory, setActivityHistory] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
@@ -148,7 +150,21 @@ const TaskDetailDialog = ({ task, open, onOpenChange }: TaskDetailDialogProps) =
               <>
                 <Separator />
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Contact Details</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground">Contact Details</h3>
+                    {relatedLog.contact_name && onViewContact && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          onViewContact(relatedLog.contact_name!);
+                          onOpenChange(false);
+                        }}
+                      >
+                        View Full Profile
+                      </Button>
+                    )}
+                  </div>
                   <Card className="border-0 bg-muted/30 p-4">
                     <div className="space-y-2">
                       {relatedLog.contact_name && (

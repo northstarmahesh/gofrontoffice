@@ -21,7 +21,11 @@ interface Contact {
   created_at: string;
 }
 
-export const Contacts = () => {
+interface ContactsProps {
+  selectedContactName?: string;
+}
+
+export const Contacts = ({ selectedContactName }: ContactsProps) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -38,6 +42,17 @@ export const Contacts = () => {
   useEffect(() => {
     loadContacts();
   }, []);
+
+  useEffect(() => {
+    if (selectedContactName && contacts.length > 0) {
+      setSearchQuery(selectedContactName);
+      // Scroll to the contact if found
+      const contactElement = document.getElementById(`contact-${selectedContactName}`);
+      if (contactElement) {
+        contactElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [selectedContactName, contacts]);
 
   const loadContacts = async () => {
     setLoading(true);
@@ -227,7 +242,12 @@ export const Contacts = () => {
               {filteredContacts.map((contact) => (
                 <div
                   key={contact.id}
-                  className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  id={`contact-${contact.name}`}
+                  className={`flex items-start justify-between p-4 border rounded-lg transition-colors ${
+                    selectedContactName === contact.name
+                      ? "bg-primary/10 border-primary"
+                      : "hover:bg-muted/50"
+                  }`}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">

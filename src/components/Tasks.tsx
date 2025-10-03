@@ -5,7 +5,11 @@ import ActivityLogs from "./ActivityLogs";
 import TaskDetailDialog from "./TaskDetailDialog";
 import { useState } from "react";
 
-const Tasks = () => {
+interface TasksProps {
+  onNavigateToContact?: (contactName: string) => void;
+}
+
+const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -228,6 +232,7 @@ const Tasks = () => {
         task={selectedTask}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        onViewContact={onNavigateToContact}
       />
     </div>
   );

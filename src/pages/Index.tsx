@@ -19,6 +19,7 @@ const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
+  const [selectedContactName, setSelectedContactName] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     checkAuthAndClinic();
@@ -81,6 +82,13 @@ const Index = () => {
     }
   }, [hasClinic]);
 
+  // Clear selected contact when changing views (except when going to contacts)
+  useEffect(() => {
+    if (currentView !== "contacts") {
+      setSelectedContactName(undefined);
+    }
+  }, [currentView]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-muted">
@@ -92,14 +100,19 @@ const Index = () => {
     );
   }
 
+  const handleNavigateToContact = (contactName: string) => {
+    setSelectedContactName(contactName);
+    setCurrentView("contacts");
+  };
+
   const renderView = () => {
     switch (currentView) {
       case "status":
         return <Status onNavigateToTasks={() => setCurrentView("tasks")} />;
       case "contacts":
-        return <Contacts />;
+        return <Contacts selectedContactName={selectedContactName} />;
       case "tasks":
-        return <Tasks />;
+        return <Tasks onNavigateToContact={handleNavigateToContact} />;
       case "clinic":
         return <ClinicManagement />;
       default:
