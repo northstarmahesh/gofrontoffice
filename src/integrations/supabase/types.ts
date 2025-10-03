@@ -420,6 +420,8 @@ export type Database = {
         Row: {
           address: string | null
           admin_email: string | null
+          assistant_prompt: string | null
+          assistant_voice: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -434,6 +436,8 @@ export type Database = {
         Insert: {
           address?: string | null
           admin_email?: string | null
+          assistant_prompt?: string | null
+          assistant_voice?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -448,6 +452,8 @@ export type Database = {
         Update: {
           address?: string | null
           admin_email?: string | null
+          assistant_prompt?: string | null
+          assistant_voice?: string | null
           created_at?: string | null
           email?: string | null
           id?: string

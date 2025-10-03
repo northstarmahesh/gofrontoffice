@@ -80,7 +80,7 @@ export const ClinicManagement = () => {
       <Tabs defaultValue="info" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
+          <TabsTrigger value="intelligence">Assistant Intelligence</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
 
@@ -88,7 +88,7 @@ export const ClinicManagement = () => {
           <ClinicInfo clinicId={clinicId!} />
         </TabsContent>
 
-        <TabsContent value="resources" className="mt-6">
+        <TabsContent value="intelligence" className="mt-6">
           <ResourcesManager clinicId={clinicId!} />
         </TabsContent>
 
