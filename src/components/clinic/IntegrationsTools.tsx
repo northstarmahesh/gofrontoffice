@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PhoneNumbers } from "./PhoneNumbers";
-import { Calendar, Mail, Database, Clock, ExternalLink } from "lucide-react";
+import { Calendar, Mail, Users, Clock, DollarSign, ExternalLink, Instagram, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -11,71 +11,68 @@ interface IntegrationsToolsProps {
   clinicId: string;
 }
 
-const integrations = [
+const serviceCategories = [
   {
-    id: "google",
-    name: "Google Workspace",
-    description: "Connect Google Calendar, Gmail, and Drive",
+    category: "Email",
+    icon: Mail,
+    services: [
+      { id: "gmail", name: "Gmail", description: "Connect Gmail for email management" },
+      { id: "outlook", name: "Outlook", description: "Connect Outlook/Microsoft 365" },
+    ]
+  },
+  {
+    category: "Calendar",
     icon: Calendar,
-    status: "not_connected",
-    providers: ["Google Calendar", "Gmail", "Google Drive", "Google Contacts"],
+    services: [
+      { id: "google-calendar", name: "Google Calendar", description: "Sync appointments and events" },
+      { id: "outlook-calendar", name: "Outlook Calendar", description: "Microsoft calendar integration" },
+    ]
   },
   {
-    id: "microsoft",
-    name: "Microsoft 365",
-    description: "Connect Outlook, Teams, and OneDrive",
-    icon: Mail,
-    status: "not_connected",
-    providers: ["Outlook Calendar", "Microsoft Teams", "OneDrive", "Exchange"],
+    category: "CRM",
+    icon: Users,
+    services: [
+      { id: "salesforce", name: "Salesforce", description: "Enterprise CRM platform" },
+      { id: "hubspot", name: "HubSpot", description: "Marketing & sales CRM" },
+      { id: "zoho", name: "Zoho CRM", description: "Cloud-based CRM solution" },
+      { id: "pipedrive", name: "Pipedrive", description: "Sales-focused CRM" },
+      { id: "lime", name: "Lime CRM", description: "Swedish CRM platform" },
+    ]
   },
   {
-    id: "whatsapp-business",
-    name: "WhatsApp Business",
-    description: "Connect WhatsApp Business API for messaging",
-    icon: Mail,
-    status: "not_connected",
-    providers: ["WhatsApp Business API"],
-    note: "One WhatsApp number per location",
-  },
-  {
-    id: "instagram",
-    name: "Instagram",
-    description: "Connect Instagram for direct messaging",
-    icon: Mail,
-    status: "not_connected",
-    providers: ["Instagram Direct Messages"],
-  },
-  {
-    id: "messenger",
-    name: "Facebook Messenger",
-    description: "Connect Facebook Messenger for customer chat",
-    icon: Mail,
-    status: "not_connected",
-    providers: ["Facebook Messenger"],
-  },
-  {
-    id: "crm",
-    name: "CRM Systems",
-    description: "Connect your customer relationship management platform",
-    icon: Database,
-    status: "not_connected",
-    providers: ["Salesforce", "HubSpot", "Zoho CRM", "Pipedrive", "Lime CRM"],
-  },
-  {
-    id: "booking",
-    name: "Booking Systems",
-    description: "Connect appointment booking platforms",
+    category: "Booking System",
     icon: Clock,
-    status: "not_connected",
-    providers: ["Clinicbuddy", "Bokadirekt", "Google Sheets", "Airtable"],
+    services: [
+      { id: "clinicbuddy", name: "Clinicbuddy", description: "Healthcare appointment system" },
+      { id: "bokadirekt", name: "Bokadirekt", description: "Swedish booking platform" },
+      { id: "google-sheets", name: "Google Sheets", description: "Spreadsheet-based booking" },
+      { id: "airtable", name: "Airtable", description: "Flexible booking database" },
+    ]
+  },
+  {
+    category: "Accounting System",
+    icon: DollarSign,
+    services: [
+      { id: "quickbooks", name: "QuickBooks", description: "Accounting software" },
+      { id: "xero", name: "Xero", description: "Cloud accounting platform" },
+      { id: "fortnox", name: "Fortnox", description: "Swedish accounting system" },
+    ]
+  },
+  {
+    category: "Social Media",
+    icon: Instagram,
+    services: [
+      { id: "instagram", name: "Instagram DM", description: "Direct message integration" },
+      { id: "messenger", name: "Facebook Messenger", description: "Facebook chat integration" },
+    ]
   },
 ];
 
 export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
 
-  const handleConnect = async (integrationId: string, integrationName: string) => {
-    setConnectingTo(integrationId);
+  const handleConnect = async (serviceId: string, serviceName: string) => {
+    setConnectingTo(serviceId);
     
     try {
       // Check if integration already exists
@@ -83,12 +80,11 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
         .from("clinic_integrations")
         .select("*")
         .eq("clinic_id", clinicId)
-        .eq("integration_type", integrationId)
+        .eq("integration_type", serviceId)
         .maybeSingle();
 
       if (existing) {
-        toast.info(`${integrationName} is already configured. Opening settings...`);
-        // TODO: Open integration management dialog
+        toast.info(`${serviceName} is already configured. Opening settings...`);
         return;
       }
 
@@ -97,21 +93,19 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
         .from("clinic_integrations")
         .insert({
           clinic_id: clinicId,
-          integration_type: integrationId,
+          integration_type: serviceId,
           is_connected: false,
         });
 
       if (error) throw error;
 
-      toast.success(`Starting ${integrationName} connection...`, {
+      toast.success(`Starting ${serviceName} connection...`, {
         description: "You'll be redirected to authorize the integration.",
       });
       
-      // In a real implementation, this would redirect to OAuth flow
-      // For now, show a helpful message
       setTimeout(() => {
         toast.info("Integration setup", {
-          description: `To complete ${integrationName} setup, you'll need to configure OAuth credentials in your integration settings.`,
+          description: `To complete ${serviceName} setup, you'll need to configure OAuth credentials in your integration settings.`,
         });
       }, 1500);
       
@@ -128,82 +122,59 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
       {/* Phone Numbers Section */}
       <PhoneNumbers clinicId={clinicId} />
 
-      {/* Integrations Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Connected Tools</CardTitle>
-          <CardDescription>
-            Connect your essential business tools to streamline operations
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {integrations.map((integration) => {
-            const Icon = integration.icon;
-            return (
-              <div
-                key={integration.id}
-                className="flex items-start justify-between p-4 border rounded-lg"
-              >
-                <div className="flex items-start space-x-4 flex-1">
-                  <div className="p-2 bg-muted rounded-lg">
-                    <Icon className="h-6 w-6" />
+      {/* Service Categories */}
+      <div className="space-y-6">
+        {serviceCategories.map((category) => {
+          const CategoryIcon = category.icon;
+          
+          return (
+            <Card key={category.category}>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-primary/10">
+                    <CategoryIcon className="h-6 w-6 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold">{integration.name}</h3>
-                      <Badge
-                        className={
-                          integration.status === "connected"
-                            ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
-                            : "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20"
-                        }
-                      >
-                        {integration.status === "connected"
-                          ? "Connected"
-                          : "Not Connected"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {integration.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {integration.providers.map((provider) => (
-                        <Badge key={provider} variant="outline" className="text-xs">
-                          {provider}
-                        </Badge>
-                      ))}
-                    </div>
-                    {(integration as any).note && (
-                      <p className="text-xs text-muted-foreground mt-2 italic">
-                        {(integration as any).note}
-                      </p>
-                    )}
+                  <div>
+                    <CardTitle className="text-lg">{category.category}</CardTitle>
+                    <CardDescription>Connect your {category.category.toLowerCase()} services</CardDescription>
                   </div>
                 </div>
-                <Button
-                  variant={
-                    integration.status === "connected" ? "outline" : "default"
-                  }
-                  size="sm"
-                  onClick={() => handleConnect(integration.id, integration.name)}
-                  disabled={connectingTo === integration.id}
-                >
-                  {connectingTo === integration.id ? (
-                    "Connecting..."
-                  ) : integration.status === "connected" ? (
-                    <>
-                      Manage
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </>
-                  ) : (
-                    "Connect"
-                  )}
-                </Button>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {category.services.map((service) => (
+                    <div
+                      key={service.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-sm truncate">{service.name}</h4>
+                          <Badge variant="outline" className="bg-muted text-xs shrink-0">
+                            Not Connected
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {service.description}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConnect(service.id, service.name)}
+                        disabled={connectingTo === service.id}
+                        className="ml-3 shrink-0"
+                      >
+                        {connectingTo === service.id ? "..." : "Connect"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 };

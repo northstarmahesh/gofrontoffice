@@ -618,106 +618,91 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
                       <h3 className="text-base font-semibold">Social Media Accounts</h3>
                     </div>
                     
-                    {/* Show connected accounts */}
-                    {(formData.instagram_connected || formData.facebook_connected) && (
-                      <div className="space-y-3">
-                        {formData.instagram_connected && (
-                          <Card className="bg-success/5 border-success/20">
-                            <CardContent className="pt-4">
-                              <div className="flex items-center gap-2">
-                                <Instagram className="h-4 w-4 text-pink-600" />
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium">Instagram DM</p>
+                    <Card className="bg-muted/30 border-2">
+                      <CardContent className="pt-6 space-y-4">
+                        {/* Instagram */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Instagram className="h-5 w-5 text-pink-600" />
+                              <div>
+                                <p className="text-sm font-medium">Instagram DM</p>
+                                {formData.instagram_connected ? (
                                   <p className="text-xs text-muted-foreground">
                                     {formData.instagram_handle || "Connected"}
                                   </p>
-                                </div>
-                                <Badge variant="default" className="bg-success/10 text-success">
-                                  Connected
-                                </Badge>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground">
+                                    Not connected
+                                  </p>
+                                )}
                               </div>
-                            </CardContent>
-                          </Card>
-                        )}
-                        
-                        {formData.facebook_connected && (
-                          <Card className="bg-success/5 border-success/20">
-                            <CardContent className="pt-4">
-                              <div className="flex items-center gap-2">
-                                <MessageCircle className="h-4 w-4 text-blue-600" />
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium">Facebook Messenger</p>
-                                  <p className="text-xs text-muted-foreground">Connected</p>
-                                </div>
-                                <Badge variant="default" className="bg-success/10 text-success">
-                                  Connected
-                                </Badge>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Show connection prompt if nothing connected */}
-                    {!formData.instagram_connected && !formData.facebook_connected && (
-                      <Card className="bg-muted/50 border-dashed">
-                        <CardContent className="pt-6 pb-6">
-                          <div className="text-center space-y-4">
-                            <div className="flex justify-center gap-3">
-                              <Instagram className="h-8 w-8 text-muted-foreground" />
-                              <MessageCircle className="h-8 w-8 text-muted-foreground" />
                             </div>
-                            <div>
-                              <p className="text-sm font-medium mb-1">
-                                No social media accounts connected
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Connect Instagram DM and Facebook Messenger to enable social messaging
-                              </p>
-                            </div>
-                            {onNavigateToTools && (
+                            {formData.instagram_connected ? (
+                              <Badge variant="default" className="bg-success/10 text-success">
+                                Connected
+                              </Badge>
+                            ) : (
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  setDialogOpen(false);
-                                  onNavigateToTools();
+                                  toast.info("Instagram OAuth", {
+                                    description: "Redirecting to Instagram authentication..."
+                                  });
+                                  // In real implementation, this would open OAuth flow
                                 }}
-                                className="w-full"
                               >
-                                Go to Tools to Connect Accounts →
+                                Connect
                               </Button>
                             )}
                           </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                    
-                    {/* Show partial connection prompt */}
-                    {(formData.instagram_connected || formData.facebook_connected) && 
-                     (!formData.instagram_connected || !formData.facebook_connected) && onNavigateToTools && (
-                      <Card className="bg-muted/30 border-dashed">
-                        <CardContent className="pt-4">
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Connect more social accounts in Tools
-                          </p>
-                          <Button
-                            type="button"
-                            variant="link"
-                            size="sm"
-                            onClick={() => {
-                              setDialogOpen(false);
-                              onNavigateToTools();
-                            }}
-                            className="h-auto p-0 text-xs"
-                          >
-                            Go to Tools →
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    )}
+                        </div>
+
+                        <Separator />
+
+                        {/* Facebook Messenger */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <MessageCircle className="h-5 w-5 text-blue-600" />
+                              <div>
+                                <p className="text-sm font-medium">Facebook Messenger</p>
+                                {formData.facebook_connected ? (
+                                  <p className="text-xs text-muted-foreground">Connected</p>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground">Not connected</p>
+                                )}
+                              </div>
+                            </div>
+                            {formData.facebook_connected ? (
+                              <Badge variant="default" className="bg-success/10 text-success">
+                                Connected
+                              </Badge>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  toast.info("Facebook OAuth", {
+                                    description: "Redirecting to Facebook authentication..."
+                                  });
+                                  // In real implementation, this would open OAuth flow
+                                }}
+                              >
+                                Connect
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-2 text-xs text-muted-foreground bg-blue-500/5 p-3 rounded-md border border-blue-500/10">
+                          <p><strong className="text-blue-600">Note:</strong> Social media connections require OAuth authentication through Meta Business Suite. You'll be redirected to authorize access.</p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
 
                   <Button type="submit" className="w-full">

@@ -305,8 +305,7 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
                     onCheckedChange={(checked) => handleToggle(phone.id, checked)}
                   />
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium">{phone.phone_number}</p>
+                    <div className="flex items-center gap-2 mb-2">
                       {phone.is_verified ? (
                         <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
                           <ShieldCheck className="h-3 w-3 mr-1" />
@@ -319,10 +318,10 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mb-1">
                       {(phone as any).clinic_locations?.name || 'Unknown Location'}
                     </p>
-                    <div className="flex gap-2 mt-1">
+                    <div className="flex gap-2">
                       {phone.channels?.map((channel) => (
                         <span
                           key={channel}
