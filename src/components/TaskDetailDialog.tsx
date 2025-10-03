@@ -386,7 +386,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                     }}
                   >
                     <Eye className="mr-2 h-4 w-4" />
-                    View Full Profile
+                    View Contact History
                   </Button>
                 )}
               </div>

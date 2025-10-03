@@ -66,11 +66,11 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       contact_info: "+1 (555) 123-4567",
       message_history: [
         {
-          id: "h1",
-          title: "Patient requested prescription refill",
-          type: "WhatsApp",
-          summary: "Mike: Hi, I need a refill on my blood pressure medication. Can you help?",
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          id: "h3",
+          title: "Previous interaction",
+          type: "SMS",
+          summary: "Appointment confirmation for next Tuesday at 3 PM",
+          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
         },
         {
           id: "h2",
@@ -80,11 +80,11 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
         },
         {
-          id: "h3",
-          title: "Previous interaction",
-          type: "SMS",
-          summary: "Appointment confirmation for next Tuesday at 3 PM",
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+          id: "h1",
+          title: "Patient requested prescription refill",
+          type: "WhatsApp",
+          summary: "Mike: Hi, I need a refill on my blood pressure medication. Can you help?",
+          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
         },
       ],
     },
@@ -102,18 +102,18 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       contact_info: "@sarahw_insta",
       message_history: [
         {
-          id: "h4",
-          title: "New patient inquiry",
-          type: "Instagram DM",
-          summary: "Sarah: Hi! What services do you offer and what are your prices?",
-          created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
-        },
-        {
           id: "h5",
           title: "AI draft created",
           type: "Draft",
           summary: "System generated pricing response",
           created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+        },
+        {
+          id: "h4",
+          title: "New patient inquiry",
+          type: "Instagram DM",
+          summary: "Sarah: Hi! What services do you offer and what are your prices?",
+          created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
         },
       ],
     },
