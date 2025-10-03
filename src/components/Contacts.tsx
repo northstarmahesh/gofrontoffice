@@ -60,38 +60,80 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
   const loadContacts = async () => {
     setLoading(true);
     
-    // For now, we'll extract contacts from activity_logs
-    // In a full implementation, you'd create a separate contacts table
-    const { data: logs, error } = await supabase
-      .from("activity_logs")
-      .select("*")
-      .not("contact_name", "is", null)
-      .order("created_at", { ascending: false });
+    try {
+      // First get clinic_id for current user
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .single();
 
-    if (error) {
+      if (!clinicData?.clinic_id) {
+        // If no clinic, fall back to extracting from activity_logs
+        const { data: logs, error } = await supabase
+          .from("activity_logs")
+          .select("*")
+          .not("contact_name", "is", null)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error loading contacts:", error);
+          toast.error("Failed to load contacts");
+        } else {
+          const contactMap = new Map<string, Contact>();
+          
+          logs?.forEach((log) => {
+            const key = log.contact_info || log.contact_name;
+            if (key && !contactMap.has(key)) {
+              contactMap.set(key, {
+                id: log.id,
+                name: log.contact_name || "Unknown",
+                phone: log.contact_info || "",
+                email: undefined,
+                notes: log.summary || "",
+                tags: log.type ? [log.type] : [],
+                last_contacted: log.created_at,
+                created_at: log.created_at,
+              });
+            }
+          });
+
+          setContacts(Array.from(contactMap.values()));
+        }
+      } else {
+        // Load from contacts table
+        const { data, error } = await supabase
+          .from("contacts")
+          .select("*")
+          .eq("clinic_id", clinicData.clinic_id)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error loading contacts:", error);
+          toast.error("Failed to load contacts");
+        } else {
+          // Also check for last_contacted from activity_logs
+          const contactsWithActivity = await Promise.all(
+            (data || []).map(async (contact) => {
+              const { data: logs } = await supabase
+                .from("activity_logs")
+                .select("created_at")
+                .eq("contact_info", contact.phone)
+                .order("created_at", { ascending: false })
+                .limit(1);
+
+              return {
+                ...contact,
+                last_contacted: logs?.[0]?.created_at || contact.created_at
+              };
+            })
+          );
+
+          setContacts(contactsWithActivity);
+        }
+      }
+    } catch (error) {
       console.error("Error loading contacts:", error);
       toast.error("Failed to load contacts");
-    } else {
-      // Group by phone/contact_name to create unique contacts
-      const contactMap = new Map<string, Contact>();
-      
-      logs?.forEach((log) => {
-        const key = log.contact_info || log.contact_name;
-        if (key && !contactMap.has(key)) {
-          contactMap.set(key, {
-            id: log.id,
-            name: log.contact_name || "Unknown",
-            phone: log.contact_info || "",
-            email: undefined,
-            notes: log.summary || "",
-            tags: log.type ? [log.type] : [],
-            last_contacted: log.created_at,
-            created_at: log.created_at,
-          });
-        }
-      });
-
-      setContacts(Array.from(contactMap.values()));
     }
     
     setLoading(false);
@@ -99,10 +141,52 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // This would save to a contacts table in a full implementation
-    toast.success("Contact saved! (Demo - would save to contacts table)");
-    setDialogOpen(false);
-    resetForm();
+    
+    try {
+      // Get clinic_id for current user
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .single();
+
+      if (!clinicData?.clinic_id) {
+        toast.error("No clinic found for user");
+        return;
+      }
+
+      const contactData = {
+        clinic_id: clinicData.clinic_id,
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || null,
+        notes: formData.notes || null,
+        tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : []
+      };
+
+      if (editingContact) {
+        const { error } = await supabase
+          .from("contacts")
+          .update(contactData)
+          .eq("id", editingContact.id);
+
+        if (error) throw error;
+        toast.success("Contact updated successfully");
+      } else {
+        const { error } = await supabase
+          .from("contacts")
+          .insert(contactData);
+
+        if (error) throw error;
+        toast.success("Contact added successfully");
+      }
+
+      setDialogOpen(false);
+      resetForm();
+      loadContacts();
+    } catch (error) {
+      console.error("Error saving contact:", error);
+      toast.error("Failed to save contact");
+    }
   };
 
   const resetForm = () => {
@@ -132,14 +216,20 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
     setDetailDialogOpen(true);
   };
 
+  const handleContactUpdated = () => {
+    loadContacts();
+  };
+
   return (
     <div className="space-y-6">
       {/* Contact Detail Dialog */}
       <ContactDetailDialog
+        contactId={selectedContact?.id}
         contactName={selectedContact?.name || null}
         contactInfo={selectedContact?.phone}
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
+        onContactUpdated={handleContactUpdated}
       />
       <div className="flex items-center justify-between">
         <div>

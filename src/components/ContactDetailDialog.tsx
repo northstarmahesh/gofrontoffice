@@ -3,9 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { User, Phone, Clock, MessageSquare, Mail, Instagram, Facebook, PhoneIncoming, PhoneOutgoing, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { User, Phone, Clock, MessageSquare, Mail, Instagram, Facebook, PhoneIncoming, PhoneOutgoing, X, Edit, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ActivityLog {
   id: string;
@@ -22,21 +26,65 @@ interface ActivityLog {
 }
 
 interface ContactDetailDialogProps {
+  contactId?: string;
   contactName: string | null;
   contactInfo?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onContactUpdated?: () => void;
 }
 
-const ContactDetailDialog = ({ contactName, contactInfo, open, onOpenChange }: ContactDetailDialogProps) => {
+interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  notes?: string;
+  tags?: string[];
+}
+
+const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpenChange, onContactUpdated }: ContactDetailDialogProps) => {
   const [activityHistory, setActivityHistory] = useState<ActivityLog[]>([]);
+  const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    notes: "",
+    tags: ""
+  });
 
   useEffect(() => {
-    if (contactName && open) {
+    if (open && (contactId || contactName)) {
+      loadContactData();
       loadContactHistory();
     }
-  }, [contactName, open]);
+  }, [open, contactId, contactName]);
+
+  const loadContactData = async () => {
+    if (contactId) {
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("id", contactId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error loading contact:", error);
+      } else if (data) {
+        setContact(data);
+        setEditForm({
+          name: data.name,
+          phone: data.phone,
+          email: data.email || "",
+          notes: data.notes || "",
+          tags: data.tags?.join(", ") || ""
+        });
+      }
+    }
+  };
 
   const loadContactHistory = async () => {
     if (!contactName) return;
@@ -55,6 +103,58 @@ const ContactDetailDialog = ({ contactName, contactInfo, open, onOpenChange }: C
       console.error("Error loading contact history:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveContact = async () => {
+    if (!contactId && !contactInfo) return;
+
+    try {
+      const contactData = {
+        name: editForm.name,
+        phone: editForm.phone,
+        email: editForm.email || null,
+        notes: editForm.notes || null,
+        tags: editForm.tags ? editForm.tags.split(",").map(t => t.trim()) : []
+      };
+
+      if (contactId) {
+        // Update existing contact
+        const { error } = await supabase
+          .from("contacts")
+          .update(contactData)
+          .eq("id", contactId);
+
+        if (error) throw error;
+      } else {
+        // Create new contact - need clinic_id from current user
+        const { data: clinicData } = await supabase
+          .from("clinic_users")
+          .select("clinic_id")
+          .single();
+
+        if (!clinicData?.clinic_id) {
+          toast.error("No clinic found for user");
+          return;
+        }
+
+        const { error } = await supabase
+          .from("contacts")
+          .insert({
+            ...contactData,
+            clinic_id: clinicData.clinic_id
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success("Contact saved successfully");
+      setIsEditing(false);
+      loadContactData();
+      onContactUpdated?.();
+    } catch (error) {
+      console.error("Error saving contact:", error);
+      toast.error("Failed to save contact");
     }
   };
 
@@ -146,161 +246,269 @@ const ContactDetailDialog = ({ contactName, contactInfo, open, onOpenChange }: C
             <div className="flex-1">
               <DialogTitle className="text-xl flex items-center gap-2">
                 <User className="h-5 w-5" />
-                {contactName}
+                {isEditing ? "Edit Contact" : (contact?.name || contactName || "Unknown")}
               </DialogTitle>
-              <DialogDescription className="mt-1">
-                {contactInfo && (
+              {!isEditing && contactInfo && (
+                <DialogDescription className="mt-1">
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-3 w-3" />
                     {contactInfo}
                   </div>
-                )}
-              </DialogDescription>
+                </DialogDescription>
+              )}
             </div>
+            {!isEditing ? (
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveContact}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save
+                </Button>
+              </div>
+            )}
           </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[70vh] pr-4">
           <div className="space-y-4">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <p className="text-sm text-muted-foreground">Loading conversation history...</p>
-              </div>
-            ) : activityHistory.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">No conversation history found</p>
+            {isEditing ? (
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Name *</Label>
+                  <Input
+                    id="edit-name"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    placeholder="Contact name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">Phone *</Label>
+                  <Input
+                    id="edit-phone"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    placeholder="email@example.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-notes">Notes</Label>
+                  <Textarea
+                    id="edit-notes"
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                    placeholder="Add notes about this contact..."
+                    rows={4}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-tags">Tags (comma separated)</Label>
+                  <Input
+                    id="edit-tags"
+                    value={editForm.tags}
+                    onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+                    placeholder="vip, patient, regular"
+                  />
+                </div>
               </div>
             ) : (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Complete Conversation History ({activityHistory.length} interactions)
-                </h3>
-                
-                {/* Chat-style messages - chronological order */}
-                <div className="space-y-4">
-                  {activityHistory.map((log) => {
-                    const fromAI = isFromAI(log.title, log.type);
-                    const phoneCall = isPhoneCall(log.type);
-                    const channelColor = getChannelColor(log.type);
+              <>
+                {contact && (
+                  <Card className="border-2">
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Phone</p>
+                        <p className="font-medium">{contact.phone}</p>
+                      </div>
+                      {contact.email && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Email</p>
+                          <p className="font-medium">{contact.email}</p>
+                        </div>
+                      )}
+                      {contact.notes && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Notes</p>
+                          <p className="whitespace-pre-wrap">{contact.notes}</p>
+                        </div>
+                      )}
+                      {contact.tags && contact.tags.length > 0 && (
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-2">Tags</p>
+                          <div className="flex flex-wrap gap-1">
+                            {contact.tags.map((tag, idx) => (
+                              <Badge key={idx} variant="secondary">{tag}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )}
+
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <p className="text-sm text-muted-foreground">Loading conversation history...</p>
+                  </div>
+                ) : activityHistory.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                    <p className="text-muted-foreground">No conversation history found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" />
+                      Complete Conversation History ({activityHistory.length} interactions)
+                    </h3>
                     
-                    // Extract contact name from summary if present
-                    let displayName = contactName;
-                    let messageText = log.summary || "";
-                    if (!fromAI && messageText) {
-                      const nameMatch = messageText.match(/^([^:]+):\s*(.+)$/);
-                      if (nameMatch) {
-                        displayName = nameMatch[1];
-                        messageText = nameMatch[2];
-                      }
-                    }
-                    
-                    // Render phone call summary card
-                    if (phoneCall) {
-                      return (
-                        <div key={log.id} className="flex justify-center">
-                          <Card className={`w-[90%] border-l-4 ${channelColor}`}>
-                            <div className="p-4 space-y-3">
-                              {/* Call header */}
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  {log.direction === 'inbound' ? (
-                                    <PhoneIncoming className="h-5 w-5" />
-                                  ) : (
-                                    <PhoneOutgoing className="h-5 w-5" />
+                    {/* Chat-style messages - chronological order */}
+                    <div className="space-y-4">
+                      {activityHistory.map((log) => {
+                        const fromAI = isFromAI(log.title, log.type);
+                        const phoneCall = isPhoneCall(log.type);
+                        const channelColor = getChannelColor(log.type);
+                        
+                        // Extract contact name from summary if present
+                        let displayName = contactName;
+                        let messageText = log.summary || "";
+                        if (!fromAI && messageText) {
+                          const nameMatch = messageText.match(/^([^:]+):\s*(.+)$/);
+                          if (nameMatch) {
+                            displayName = nameMatch[1];
+                            messageText = nameMatch[2];
+                          }
+                        }
+                        
+                        // Render phone call summary card
+                        if (phoneCall) {
+                          return (
+                            <div key={log.id} className="flex justify-center">
+                              <Card className={`w-[90%] border-l-4 ${channelColor}`}>
+                                <div className="p-4 space-y-3">
+                                  {/* Call header */}
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      {log.direction === 'inbound' ? (
+                                        <PhoneIncoming className="h-5 w-5" />
+                                      ) : (
+                                        <PhoneOutgoing className="h-5 w-5" />
+                                      )}
+                                      <span className="font-semibold text-sm">
+                                        {log.direction === 'inbound' ? 'Incoming Call' : 'Outgoing Call'}
+                                      </span>
+                                    </div>
+                                    {log.duration && (
+                                      <Badge variant="secondary" className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        {log.duration}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Call summary */}
+                                  {log.summary && (
+                                    <div className="space-y-1">
+                                      <p className="text-xs font-medium text-muted-foreground">Summary:</p>
+                                      <p className="text-sm text-foreground leading-relaxed">{log.summary}</p>
+                                    </div>
                                   )}
-                                  <span className="font-semibold text-sm">
-                                    {log.direction === 'inbound' ? 'Incoming Call' : 'Outgoing Call'}
-                                  </span>
+                                  
+                                  {/* Timestamp */}
+                                  <div className="text-xs text-muted-foreground pt-1 border-t border-border/50">
+                                    {formatDateTime(log.created_at)}
+                                  </div>
                                 </div>
-                                {log.duration && (
-                                  <Badge variant="secondary" className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {log.duration}
+                              </Card>
+                            </div>
+                          );
+                        }
+                        
+                        // Regular message rendering
+                        return (
+                          <div key={log.id} className={`flex gap-2 ${fromAI ? 'justify-end' : 'justify-start'}`}>
+                            {/* Channel icon for received messages */}
+                            {!fromAI && (
+                              <div className="shrink-0 mt-1">
+                                <div className={`h-9 w-9 rounded-full flex items-center justify-center ${channelColor} border`}>
+                                  {getChannelIcon(log.type)}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Message bubble */}
+                            <div className={`flex flex-col max-w-[75%] ${fromAI ? 'items-end' : 'items-start'}`}>
+                              {/* Contact name for received messages */}
+                              {!fromAI && (
+                                <span className="text-xs font-semibold text-foreground mb-1 px-1">
+                                  {displayName}
+                                </span>
+                              )}
+                              
+                              <div className={`rounded-2xl px-4 py-2 ${
+                                fromAI 
+                                  ? 'bg-primary text-primary-foreground' 
+                                  : 'bg-background border border-border'
+                              }`}>
+                                <p className="text-sm">{messageText}</p>
+                              </div>
+                              
+                              {/* Timestamp and channel badge */}
+                              <div className="flex items-center gap-2 mt-1 px-1">
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDateTime(log.created_at)}
+                                </span>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs px-1.5 py-0 ${channelColor} border`}
+                                >
+                                  {log.type}
+                                </Badge>
+                                {fromAI && (
+                                  <Badge variant="outline" className="text-xs px-1.5 py-0">
+                                    AI Draft
                                   </Badge>
                                 )}
                               </div>
-                              
-                              {/* Call summary */}
-                              {log.summary && (
-                                <div className="space-y-1">
-                                  <p className="text-xs font-medium text-muted-foreground">Summary:</p>
-                                  <p className="text-sm text-foreground leading-relaxed">{log.summary}</p>
-                                </div>
-                              )}
-                              
-                              {/* Timestamp */}
-                              <div className="text-xs text-muted-foreground pt-1 border-t border-border/50">
-                                {formatDateTime(log.created_at)}
-                              </div>
                             </div>
-                          </Card>
-                        </div>
-                      );
-                    }
-                    
-                    // Regular message rendering
-                    return (
-                      <div key={log.id} className={`flex gap-2 ${fromAI ? 'justify-end' : 'justify-start'}`}>
-                        {/* Channel icon for received messages */}
-                        {!fromAI && (
-                          <div className="shrink-0 mt-1">
-                            <div className={`h-9 w-9 rounded-full flex items-center justify-center ${channelColor} border`}>
-                              {getChannelIcon(log.type)}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Message bubble */}
-                        <div className={`flex flex-col max-w-[75%] ${fromAI ? 'items-end' : 'items-start'}`}>
-                          {/* Contact name for received messages */}
-                          {!fromAI && (
-                            <span className="text-xs font-semibold text-foreground mb-1 px-1">
-                              {displayName}
-                            </span>
-                          )}
-                          
-                          <div className={`rounded-2xl px-4 py-2 ${
-                            fromAI 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-background border border-border'
-                          }`}>
-                            <p className="text-sm">{messageText}</p>
-                          </div>
-                          
-                          {/* Timestamp and channel badge */}
-                          <div className="flex items-center gap-2 mt-1 px-1">
-                            <span className="text-xs text-muted-foreground">
-                              {formatDateTime(log.created_at)}
-                            </span>
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs px-1.5 py-0 ${channelColor} border`}
-                            >
-                              {log.type}
-                            </Badge>
+
+                            {/* AI icon for sent messages */}
                             {fromAI && (
-                              <Badge variant="outline" className="text-xs px-1.5 py-0">
-                                AI Draft
-                              </Badge>
+                              <div className="shrink-0 mt-1">
+                                <div className="h-9 w-9 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+                                  <MessageSquare className="h-5 w-5" />
+                                </div>
+                              </div>
                             )}
                           </div>
-                        </div>
-
-                        {/* AI icon for sent messages */}
-                        {fromAI && (
-                          <div className="shrink-0 mt-1">
-                            <div className="h-9 w-9 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                              <MessageSquare className="h-5 w-5" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </ScrollArea>
