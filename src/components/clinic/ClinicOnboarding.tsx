@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Building2, Users, Plug, Rocket } from "lucide-react";
-import { ClinicProfile } from "./ClinicProfile";
+import { OnboardingBasicInfo } from "./OnboardingBasicInfo";
 import { TeamManagement } from "./TeamManagement";
 import { OnboardingChannels } from "./OnboardingChannels";
 import { toast } from "sonner";
@@ -20,9 +20,9 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   const [hasChannelConnection, setHasChannelConnection] = useState(false);
 
   const steps = [
-    { id: "info" as OnboardingStep, label: "Basic Info", icon: Building2, description: "Tell us about your clinic" },
-    { id: "channels" as OnboardingStep, label: "Connect Channels", icon: Plug, description: "Set up communication" },
-    { id: "team" as OnboardingStep, label: "Team", icon: Users, description: "Invite your team members" },
+    { id: "info" as OnboardingStep, label: "Basic Information", icon: Building2, description: "Tell us about your clinic" },
+    { id: "channels" as OnboardingStep, label: "Phone & Channels", icon: Plug, description: "Set up communication" },
+    { id: "team" as OnboardingStep, label: "Team Members", icon: Users, description: "Invite your team" },
     { id: "complete" as OnboardingStep, label: "Get Started", icon: Rocket, description: "You're all set!" },
   ];
 
@@ -65,23 +65,24 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
       case "info":
         return (
           <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold text-foreground mb-2">Welcome to Front Office! 👋</h2>
-              <p className="text-lg text-muted-foreground">Let's set up your clinic in just a few steps</p>
+            <div className="flex items-center gap-3 pb-4 border-b">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+                1
+              </div>
+              <h2 className="text-xl font-semibold">Basic Information</h2>
             </div>
-            <ClinicProfile onSaved={handleClinicCreated} />
+            <OnboardingBasicInfo onComplete={handleClinicCreated} />
           </div>
         );
 
       case "channels":
         return (
           <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Connect Your Channels</h2>
-              <p className="text-muted-foreground">Connect at least one communication channel to get started</p>
-              <p className="text-sm text-muted-foreground/80 mt-2">
-                You can add phone numbers, enable SMS, and connect social media
-              </p>
+            <div className="flex items-center gap-3 pb-4 border-b">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+                2
+              </div>
+              <h2 className="text-xl font-semibold">Phone Number & Communication Channels</h2>
             </div>
             {clinicId ? (
               <>
@@ -91,7 +92,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
                 />
                 <div className="flex gap-3 pt-4">
                   <Button onClick={handleSkipOnboarding} variant="outline" className="flex-1">
-                    Complete Later
+                    Skip for Now
                   </Button>
                   <Button 
                     onClick={handleNext} 
@@ -111,22 +112,24 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
       case "team":
         return (
           <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Build Your Team</h2>
-              <p className="text-muted-foreground">Invite team members to help manage your clinic</p>
-              <p className="text-sm text-muted-foreground/80 mt-2">
-                Optional - you can always add team members later
-              </p>
+            <div className="flex items-center gap-3 pb-4 border-b">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+                3
+              </div>
+              <h2 className="text-xl font-semibold">Invite Team Members</h2>
             </div>
             {clinicId ? (
               <>
+                <div className="text-sm text-muted-foreground mb-4">
+                  Optional - you can always add team members later in Clinic Settings
+                </div>
                 <TeamManagement clinicId={clinicId} />
                 <div className="flex gap-3 pt-4">
                   <Button onClick={handleSkip} variant="outline" className="flex-1">
-                    Skip for now
+                    Skip for Now
                   </Button>
                   <Button onClick={handleNext} className="flex-1">
-                    Continue
+                    Complete Setup
                   </Button>
                 </div>
               </>
@@ -186,54 +189,36 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Progress Bar */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-muted-foreground">
-            Step {currentStepIndex + 1} of {steps.length}
-          </p>
-          <p className="text-sm font-medium text-primary">{Math.round(progress)}% Complete</p>
-        </div>
-        <Progress value={progress} className="h-2" />
-      </div>
-
-      {/* Step Indicators */}
-      <div className="flex items-center justify-between gap-2">
-        {steps.map((step, index) => {
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Step Indicators with numbered circles */}
+      <div className="flex items-start justify-between gap-2 mb-8">
+        {steps.slice(0, -1).map((step, index) => {
           const Icon = step.icon;
           const isCompleted = index < currentStepIndex;
           const isCurrent = index === currentStepIndex;
           
           return (
-            <div
-              key={step.id}
-              className={`flex-1 text-center ${
-                isCurrent ? "scale-105" : ""
-              } transition-all`}
-            >
-              <div
-                className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                  isCompleted
-                    ? "bg-success text-success-foreground"
-                    : isCurrent
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {isCompleted ? (
-                  <CheckCircle2 className="h-6 w-6" />
-                ) : (
-                  <Icon className="h-6 w-6" />
-                )}
+            <div key={step.id} className="flex-1 relative">
+              <div className="flex flex-col items-center text-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 font-semibold text-sm ${
+                    isCompleted
+                      ? "bg-primary text-primary-foreground"
+                      : isCurrent
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {index + 1}
+                </div>
+                <p className={`text-xs font-medium ${isCurrent ? "text-foreground" : "text-muted-foreground"}`}>
+                  {step.label}
+                </p>
               </div>
-              <p
-                className={`text-xs font-medium ${
-                  isCurrent ? "text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                {step.label}
-              </p>
+              {/* Connector line */}
+              {index < steps.length - 2 && (
+                <div className={`absolute top-5 left-1/2 w-full h-0.5 ${isCompleted ? "bg-primary" : "bg-muted"}`} style={{ marginLeft: '50%' }} />
+              )}
             </div>
           );
         })}
