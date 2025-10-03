@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 const Status = () => {
   const [loading, setLoading] = useState(true);
   const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
+  const [autoPilotEnabled, setAutoPilotEnabled] = useState(true);
   const [channels, setChannels] = useState({
     sms: true,
     whatsapp: true,
@@ -37,6 +38,7 @@ const Status = () => {
 
       if (data) {
         setPhoneMode(data.phone_mode as "on" | "passive" | "off");
+        setAutoPilotEnabled(data.auto_pilot_enabled ?? true);
         setChannels({
           sms: data.sms_enabled,
           whatsapp: data.whatsapp_enabled,
@@ -86,6 +88,13 @@ const Status = () => {
         newValue ? "enabled" : "disabled"
       }`
     );
+  };
+
+  const handleAutoPilotToggle = async () => {
+    const newValue = !autoPilotEnabled;
+    setAutoPilotEnabled(newValue);
+    await updateSettings({ auto_pilot_enabled: newValue });
+    toast.success(`Messaging mode: ${newValue ? "Autopilot" : "Co-pilot"}`);
   };
 
   const stats = [
@@ -152,40 +161,108 @@ const Status = () => {
           </div>
           <div>
             <h3 className="text-xl font-bold text-foreground">Phone Calls</h3>
-            <p className="text-sm text-muted-foreground">How should calls be handled?</p>
+            <p className="text-sm text-muted-foreground">Choose how AI handles incoming calls</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          {["on", "passive", "off"].map((mode) => (
-            <button
-              key={mode}
-              onClick={() => handlePhoneModeChange(mode as "on" | "passive" | "off")}
-              className={`rounded-xl border-2 px-6 py-4 text-base font-semibold transition-all ${
-                phoneMode === mode
-                  ? "border-primary bg-primary text-primary-foreground shadow-lg scale-105"
-                  : "border-border bg-card text-foreground hover:border-primary/50 hover:scale-102"
-              }`}
-            >
-              {mode.charAt(0).toUpperCase() + mode.slice(1)}
-            </button>
-          ))}
+        <div className="space-y-3">
+          <button
+            onClick={() => handlePhoneModeChange("on")}
+            className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
+              phoneMode === "on"
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border bg-card hover:border-primary/50"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
+                phoneMode === "on" ? "border-primary" : "border-muted-foreground"
+              }`}>
+                {phoneMode === "on" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-foreground text-lg mb-1">Autopilot</p>
+                <p className="text-sm text-muted-foreground">AI answers calls, transcribes, summarizes, and takes action automatically</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handlePhoneModeChange("passive")}
+            className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
+              phoneMode === "passive"
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border bg-card hover:border-primary/50"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
+                phoneMode === "passive" ? "border-primary" : "border-muted-foreground"
+              }`}>
+                {phoneMode === "passive" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-foreground text-lg mb-1">Co-pilot</p>
+                <p className="text-sm text-muted-foreground">AI transcribes and drafts responses, but you review before sending</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handlePhoneModeChange("off")}
+            className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
+              phoneMode === "off"
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border bg-card hover:border-primary/50"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
+                phoneMode === "off" ? "border-primary" : "border-muted-foreground"
+              }`}>
+                {phoneMode === "off" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-foreground text-lg mb-1">Off</p>
+                <p className="text-sm text-muted-foreground">AI does not handle calls</p>
+              </div>
+            </div>
+          </button>
         </div>
       </Card>
 
       {/* Messaging Channels */}
       <Card className="border-0 p-6 shadow-lg">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-xl bg-secondary/10 p-3">
-            <MessageSquare className="h-6 w-6 text-secondary" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-foreground">Messaging Channels</h3>
-            <p className="text-sm text-muted-foreground">Enable or disable channels</p>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-secondary/10 p-3">
+                <MessageSquare className="h-6 w-6 text-secondary" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-foreground">Messaging Mode</h3>
+                <p className="text-sm text-muted-foreground">
+                  {autoPilotEnabled ? "AI replies automatically" : "AI drafts replies for your approval"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-base font-semibold text-foreground">
+                {autoPilotEnabled ? "Autopilot" : "Co-pilot"}
+              </span>
+              <Switch
+                checked={autoPilotEnabled}
+                onCheckedChange={handleAutoPilotToggle}
+                className="scale-125"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="border-t pt-4">
+          <p className="text-sm font-semibold text-muted-foreground mb-4">Active Channels</p>
+          
+          <div className="space-y-4">
           <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
             <div className="flex items-center gap-3">
               <MessageSquare className="h-6 w-6 text-muted-foreground" />
@@ -244,6 +321,7 @@ const Status = () => {
               onCheckedChange={() => handleChannelToggle("messenger")}
               className="scale-125"
             />
+          </div>
           </div>
         </div>
       </Card>
