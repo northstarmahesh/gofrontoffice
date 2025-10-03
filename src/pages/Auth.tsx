@@ -11,6 +11,7 @@ import { toast } from "sonner";
 const Auth = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,6 +91,31 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Please enter your email");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) throw error;
+
+      toast.success("Password reset link sent! Check your email.");
+      setIsForgotPassword(false);
+      setIsLogin(true);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send reset email");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-0 p-8 shadow-lg">
@@ -98,15 +124,15 @@ const Auth = () => {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-light shadow-lg">
             <Stethoscope className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Clinic Assistant</h1>
+          <h1 className="text-2xl font-bold text-foreground">Front Office</h1>
           <p className="text-sm text-muted-foreground">
-            {isLogin ? "Welcome back" : "Create your account"}
+            {isForgotPassword ? "Reset your password" : isLogin ? "Welcome back" : "Create your account"}
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4">
-          {!isLogin && (
+        <form onSubmit={isForgotPassword ? handleForgotPassword : isLogin ? handleLogin : handleSignUp} className="space-y-4">
+          {!isLogin && !isForgotPassword && (
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <div className="relative">
@@ -140,46 +166,76 @@ const Auth = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-9"
-                disabled={loading}
-              />
+          {!isForgotPassword && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-9"
+                  disabled={loading}
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {isLogin && !isForgotPassword && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(true)}
+                className="text-sm text-primary hover:underline"
+                disabled={loading}
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
 
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-primary to-primary-light"
             disabled={loading}
           >
-            {loading ? "Loading..." : isLogin ? "Log In" : "Sign Up"}
+            {loading ? "Loading..." : isForgotPassword ? "Send Reset Link" : isLogin ? "Log In" : "Sign Up"}
           </Button>
         </form>
 
         {/* Toggle */}
         <div className="mt-6 text-center text-sm">
-          <span className="text-muted-foreground">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-          </span>
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setPassword("");
-            }}
-            className="font-medium text-primary hover:underline"
-            disabled={loading}
-          >
-            {isLogin ? "Sign Up" : "Log In"}
-          </button>
+          {isForgotPassword ? (
+            <button
+              onClick={() => {
+                setIsForgotPassword(false);
+                setIsLogin(true);
+              }}
+              className="font-medium text-primary hover:underline"
+              disabled={loading}
+            >
+              Back to Log In
+            </button>
+          ) : (
+            <>
+              <span className="text-muted-foreground">
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
+              </span>
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setPassword("");
+                }}
+                className="font-medium text-primary hover:underline"
+                disabled={loading}
+              >
+                {isLogin ? "Sign Up" : "Log In"}
+              </button>
+            </>
+          )}
         </div>
       </Card>
     </div>
