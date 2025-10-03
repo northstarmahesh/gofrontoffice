@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import ActivityLogs from "./ActivityLogs";
 
 interface StatusProps {
   onNavigateToTasks?: () => void;
@@ -435,9 +434,6 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
           })}
         </div>
       </div>
-
-      {/* Activity Logs */}
-      <ActivityLogs />
     </div>
   );
 };
