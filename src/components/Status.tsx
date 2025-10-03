@@ -23,9 +23,9 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
-  const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
   const [messagingMode, setMessagingMode] = useState<"autopilot" | "copilot">("autopilot");
   const [channels, setChannels] = useState({
+    phone: true,
     sms: true,
     whatsapp: true,
     instagram: false,
@@ -82,9 +82,9 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
       if (error) throw error;
 
       if (data) {
-        setPhoneMode(data.phone_mode as "on" | "passive" | "off");
         setMessagingMode(data.auto_pilot_enabled ? "autopilot" : "copilot");
         setChannels({
+          phone: data.phone_mode !== "off",
           sms: data.sms_enabled,
           whatsapp: data.whatsapp_enabled,
           instagram: data.instagram_enabled,
@@ -165,18 +165,16 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
     }
   };
 
-  const handlePhoneModeChange = async (mode: "on" | "passive" | "off") => {
-    setPhoneMode(mode);
-    await updateSettings({ phone_mode: mode });
-    toast.success(`Phone mode set to ${mode.toUpperCase()}`);
-  };
-
   const handleChannelToggle = async (channel: keyof typeof channels) => {
     const newValue = !channels[channel];
     setChannels((prev) => ({ ...prev, [channel]: newValue }));
     
-    const updateKey = `${channel}_enabled`;
-    await updateSettings({ [updateKey]: newValue });
+    if (channel === "phone") {
+      await updateSettings({ phone_mode: newValue ? "on" : "off" });
+    } else {
+      const updateKey = `${channel}_enabled`;
+      await updateSettings({ [updateKey]: newValue });
+    }
     
     toast.success(
       `${channel.charAt(0).toUpperCase() + channel.slice(1)} ${
@@ -377,107 +375,16 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
         )}
       </div>
 
-      {/* Main Controls - Phone Handling */}
-      <Card className="border-0 p-6 shadow-lg">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-xl bg-primary/10 p-3">
-            <Phone className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-foreground">Phone Calls</h3>
-            <p className="text-sm text-muted-foreground">Choose how AI handles incoming calls</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <button
-            onClick={() => handlePhoneModeChange("on")}
-            className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
-              phoneMode === "on"
-                ? "border-primary bg-primary/5 shadow-md"
-                : "border-border bg-card hover:border-primary/50"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                phoneMode === "on" ? "border-primary" : "border-muted-foreground"
-              }`}>
-                {phoneMode === "on" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-foreground text-lg mb-1">Autopilot</p>
-                <p className="text-sm text-muted-foreground">AI answers calls, transcribes, summarizes, and takes action automatically</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => handlePhoneModeChange("passive")}
-            className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
-              phoneMode === "passive"
-                ? "border-primary bg-primary/5 shadow-md"
-                : "border-border bg-card hover:border-primary/50"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                phoneMode === "passive" ? "border-primary" : "border-muted-foreground"
-              }`}>
-                {phoneMode === "passive" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-foreground text-lg mb-1">Co-pilot</p>
-                <p className="text-sm text-muted-foreground">AI transcribes and drafts responses, but you review before sending</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => handlePhoneModeChange("off")}
-            className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
-              phoneMode === "off"
-                ? "border-primary bg-primary/5 shadow-md"
-                : "border-border bg-card hover:border-primary/50"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                phoneMode === "off" ? "border-primary" : "border-muted-foreground"
-              }`}>
-                {phoneMode === "off" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-foreground text-lg mb-1">Off</p>
-                <p className="text-sm text-muted-foreground">AI does not handle calls</p>
-              </div>
-            </div>
-          </button>
-        </div>
-      </Card>
-
-      {/* Messaging System */}
+      {/* AI Response System */}
       <Card className="border-0 p-6 shadow-lg">
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-secondary/10 p-3">
-                <MessageSquare className="h-6 w-6 text-secondary" />
+                <Bot className="h-6 w-6 text-secondary" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-foreground">AI Response System</h3>
-                <p className="text-sm text-muted-foreground">
-                  {messagingMode === "autopilot" ? "AI replies automatically to all channels" : (
-                    <>
-                      AI drafts replies for your approval as{" "}
-                      <button
-                        onClick={() => navigate("/?tab=tasks")}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        your todos
-                      </button>
-                    </>
-                  )}
-                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -491,58 +398,142 @@ const Status = ({ onNavigateToTasks }: StatusProps) => {
               />
             </div>
           </div>
+
+          {/* Explanation Box */}
+          <div className="rounded-lg bg-muted/50 p-4 mb-4">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <div className="space-y-2 text-sm">
+                {messagingMode === "autopilot" ? (
+                  <>
+                    <p className="font-semibold text-foreground">Autopilot Mode Active</p>
+                    <p className="text-muted-foreground">
+                      Your AI assistant will automatically respond to all incoming communications across enabled channels. 
+                      Responses are sent immediately without your review. Perfect for high-volume scenarios where speed matters.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold text-foreground">Co-pilot Mode Active</p>
+                    <p className="text-muted-foreground">
+                      Your AI assistant will draft responses and create tasks for your review. You'll see these as{" "}
+                      <button
+                        onClick={() => navigate("/?tab=tasks")}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        pending tasks
+                      </button>
+                      {" "}where you can approve, edit, or reject before sending. Ideal when you want oversight.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="border-t pt-4">
           <p className="text-sm font-semibold text-muted-foreground mb-4">Active Channels</p>
           
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center justify-between p-3 rounded-lg border">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="sms" className="text-sm font-medium cursor-pointer">SMS</Label>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Phone Calls */}
+            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <Label htmlFor="phone" className="text-sm font-medium cursor-pointer">Phone Calls</Label>
+                </div>
+                <Switch
+                  id="phone"
+                  checked={channels.phone}
+                  onCheckedChange={() => handleChannelToggle("phone")}
+                />
               </div>
-              <Switch
-                id="sms"
-                checked={channels.sms}
-                onCheckedChange={() => handleChannelToggle("sms")}
-              />
+              {channels.phone && (
+                <p className="text-xs text-muted-foreground pl-7">
+                  AI {messagingMode === "autopilot" ? "answers and responds to" : "transcribes and drafts responses for"} phone calls
+                </p>
+              )}
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg border">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="whatsapp" className="text-sm font-medium cursor-pointer">WhatsApp</Label>
+            {/* SMS */}
+            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                  <Label htmlFor="sms" className="text-sm font-medium cursor-pointer">SMS</Label>
+                </div>
+                <Switch
+                  id="sms"
+                  checked={channels.sms}
+                  onCheckedChange={() => handleChannelToggle("sms")}
+                />
               </div>
-              <Switch
-                id="whatsapp"
-                checked={channels.whatsapp}
-                onCheckedChange={() => handleChannelToggle("whatsapp")}
-              />
+              {channels.sms && (
+                <p className="text-xs text-muted-foreground pl-7">
+                  AI {messagingMode === "autopilot" ? "automatically replies to" : "drafts responses for"} text messages
+                </p>
+              )}
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg border">
-              <div className="flex items-center gap-2">
-                <Instagram className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="instagram" className="text-sm font-medium cursor-pointer">Instagram</Label>
+            {/* WhatsApp */}
+            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                  <Label htmlFor="whatsapp" className="text-sm font-medium cursor-pointer">WhatsApp</Label>
+                </div>
+                <Switch
+                  id="whatsapp"
+                  checked={channels.whatsapp}
+                  onCheckedChange={() => handleChannelToggle("whatsapp")}
+                />
               </div>
-              <Switch
-                id="instagram"
-                checked={channels.instagram}
-                onCheckedChange={() => handleChannelToggle("instagram")}
-              />
+              {channels.whatsapp && (
+                <p className="text-xs text-muted-foreground pl-7">
+                  AI {messagingMode === "autopilot" ? "automatically replies to" : "drafts responses for"} WhatsApp messages
+                </p>
+              )}
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg border">
-              <div className="flex items-center gap-2">
-                <Facebook className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="messenger" className="text-sm font-medium cursor-pointer">Messenger</Label>
+            {/* Instagram */}
+            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Instagram className="h-5 w-5 text-muted-foreground" />
+                  <Label htmlFor="instagram" className="text-sm font-medium cursor-pointer">Instagram</Label>
+                </div>
+                <Switch
+                  id="instagram"
+                  checked={channels.instagram}
+                  onCheckedChange={() => handleChannelToggle("instagram")}
+                />
               </div>
-              <Switch
-                id="messenger"
-                checked={channels.messenger}
-                onCheckedChange={() => handleChannelToggle("messenger")}
-              />
+              {channels.instagram && (
+                <p className="text-xs text-muted-foreground pl-7">
+                  AI {messagingMode === "autopilot" ? "automatically replies to" : "drafts responses for"} Instagram DMs
+                </p>
+              )}
+            </div>
+
+            {/* Messenger */}
+            <div className="flex flex-col gap-2 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Facebook className="h-5 w-5 text-muted-foreground" />
+                  <Label htmlFor="messenger" className="text-sm font-medium cursor-pointer">Messenger</Label>
+                </div>
+                <Switch
+                  id="messenger"
+                  checked={channels.messenger}
+                  onCheckedChange={() => handleChannelToggle("messenger")}
+                />
+              </div>
+              {channels.messenger && (
+                <p className="text-xs text-muted-foreground pl-7">
+                  AI {messagingMode === "autopilot" ? "automatically replies to" : "drafts responses for"} Facebook messages
+                </p>
+              )}
             </div>
           </div>
         </div>
