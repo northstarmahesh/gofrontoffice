@@ -108,8 +108,8 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
           setSelectedChannel('whatsapp');
         } else if (type.includes('instagram')) {
           setSelectedChannel('instagram');
-        } else if (type.includes('phone') || type.includes('call')) {
-          setSelectedChannel('phone');
+        } else if (type.includes('messenger') || type.includes('facebook')) {
+          setSelectedChannel('messenger');
         } else {
           setSelectedChannel('sms');
         }
@@ -193,15 +193,13 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         return;
       }
 
-      const channelType = selectedChannel === 'phone' ? 'call' : selectedChannel;
-
       const { error } = await supabase
         .from("activity_logs")
         .insert({
           user_id: user.id,
           clinic_id: clinicData.clinic_id,
-          type: channelType,
-          title: `${channelType.toUpperCase()} message`,
+          type: selectedChannel,
+          title: `${selectedChannel.toUpperCase()} message`,
           summary: message,
           contact_name: contactName,
           contact_info: contactInfo || contact?.phone,
@@ -586,18 +584,18 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                           </Button>
                           <Button
                             type="button"
-                            variant={selectedChannel === 'phone' ? 'default' : 'outline'}
+                            variant={selectedChannel === 'messenger' ? 'default' : 'outline'}
                             size="sm"
-                            onClick={() => setSelectedChannel('phone')}
+                            onClick={() => setSelectedChannel('messenger')}
                           >
-                            <Phone className="h-4 w-4" />
+                            <Facebook className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
                       <Textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        placeholder={`Type your ${selectedChannel === 'phone' ? 'call note' : 'message'}...`}
+                        placeholder="Type your message..."
                         rows={3}
                       />
                       <Button 
