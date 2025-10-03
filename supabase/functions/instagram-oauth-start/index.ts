@@ -33,7 +33,7 @@ serve(async (req) => {
     authUrl.searchParams.set('client_id', META_APP_ID);
     authUrl.searchParams.set('redirect_uri', redirectUri);
     authUrl.searchParams.set('state', state);
-    authUrl.searchParams.set('scope', 'pages_manage_metadata,pages_read_engagement,pages_messaging,instagram_basic,instagram_manage_messages');
+    authUrl.searchParams.set('scope', 'pages_show_list,instagram_basic');
     authUrl.searchParams.set('response_type', 'code');
 
     console.log('OAuth Start - Clinic:', clinicId, 'Location:', locationId);
