@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Building2, Globe as GlobeIcon, Mail } from "lucide-react";
 import { LocationManager } from "./LocationManager";
-import { PhoneNumbers } from "./PhoneNumbers";
+
 
 interface ClinicInfoProps {
   clinicId?: string;
@@ -172,9 +172,6 @@ export const ClinicInfo = ({ clinicId, onSaved }: ClinicInfoProps) => {
 
       {/* Locations Section */}
       {clinicId && <LocationManager clinicId={clinicId} />}
-
-      {/* Phone Numbers Section */}
-      {clinicId && <PhoneNumbers clinicId={clinicId} />}
     </div>
   );
 };

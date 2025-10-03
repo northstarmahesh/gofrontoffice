@@ -6,6 +6,7 @@ import { ResourcesManager } from "./clinic/ResourcesManager";
 import { TeamManagement } from "./clinic/TeamManagement";
 import { ConnectedServices } from "./clinic/ConnectedServices";
 import { ClinicOnboarding } from "./clinic/ClinicOnboarding";
+import { IntegrationsTools } from "./clinic/IntegrationsTools";
 import { toast } from "sonner";
 
 export const ClinicManagement = () => {
@@ -78,9 +79,10 @@ export const ClinicManagement = () => {
       </div>
 
       <Tabs defaultValue="info" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="info">Info</TabsTrigger>
           <TabsTrigger value="intelligence">Assistant Intelligence</TabsTrigger>
+          <TabsTrigger value="tools">Tools</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
 
@@ -90,6 +92,10 @@ export const ClinicManagement = () => {
 
         <TabsContent value="intelligence" className="mt-6">
           <ResourcesManager clinicId={clinicId!} />
+        </TabsContent>
+
+        <TabsContent value="tools" className="mt-6">
+          <IntegrationsTools clinicId={clinicId!} />
         </TabsContent>
 
         <TabsContent value="team" className="mt-6">
