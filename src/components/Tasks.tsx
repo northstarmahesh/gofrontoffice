@@ -73,6 +73,15 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
         },
         {
+          id: "h4",
+          title: "Phone call",
+          type: "Phone Call",
+          summary: "Patient called requesting prescription refill for blood pressure medication. Confirmed dosage (10mg Lisinopril) and discussed potential side effects. Patient reported no current issues. Advised to schedule follow-up appointment next month.",
+          created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+          duration: "5:23",
+          direction: "inbound" as const,
+        },
+        {
           id: "h1",
           title: "Patient requested prescription refill",
           type: "WhatsApp",

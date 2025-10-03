@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, Send, CheckCircle, Eye, User, Phone, Clock, MessageSquare, Mail, Instagram, Facebook } from "lucide-react";
+import { AlertCircle, Send, CheckCircle, Eye, User, Phone, Clock, MessageSquare, Mail, Instagram, Facebook, PhoneIncoming, PhoneOutgoing } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,6 +29,9 @@ interface Task {
     type: string;
     summary: string;
     created_at: string;
+    duration?: string;
+    direction?: 'inbound' | 'outbound';
+    transcript_snippet?: string;
   }>;
 }
 
@@ -41,6 +44,9 @@ interface ActivityLog {
   contact_info: string | null;
   status: string;
   created_at: string;
+  duration?: string;
+  direction?: 'inbound' | 'outbound';
+  transcript_snippet?: string;
 }
 
 interface TaskDetailDialogProps {
@@ -263,6 +269,11 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
            type.toLowerCase().includes('draft');
   };
 
+  const isPhoneCall = (type: string) => {
+    const typeUpper = type.toUpperCase();
+    return typeUpper.includes('PHONE') || typeUpper.includes('CALL') || typeUpper.includes('VOICE');
+  };
+
   if (!task) return null;
 
   return (
@@ -332,6 +343,53 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
                 <div className="space-y-3 bg-muted/30 rounded-lg p-4 max-h-[250px] overflow-y-auto">
                   {(showAllHistory ? [...activityHistory].reverse() : [...activityHistory].slice(0, 3).reverse()).map((log) => {
                     const fromAI = isFromAI(log.title, log.type);
+                    const phoneCall = isPhoneCall(log.type);
+                    
+                    // Render phone call summary card
+                    if (phoneCall) {
+                      return (
+                        <div key={log.id} className="flex justify-center">
+                          <Card className="w-[85%] border-l-4 border-l-primary bg-primary/5">
+                            <div className="p-4 space-y-3">
+                              {/* Call header with icon, direction, and duration */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  {log.direction === 'inbound' ? (
+                                    <PhoneIncoming className="h-5 w-5 text-primary" />
+                                  ) : (
+                                    <PhoneOutgoing className="h-5 w-5 text-primary" />
+                                  )}
+                                  <span className="font-semibold text-sm">
+                                    {log.direction === 'inbound' ? 'Incoming Call' : 'Outgoing Call'}
+                                  </span>
+                                </div>
+                                {log.duration && (
+                                  <Badge variant="secondary" className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {log.duration}
+                                  </Badge>
+                                )}
+                              </div>
+                              
+                              {/* Call summary */}
+                              {log.summary && (
+                                <div className="space-y-1">
+                                  <p className="text-xs font-medium text-muted-foreground">Summary:</p>
+                                  <p className="text-sm text-foreground leading-relaxed">{log.summary}</p>
+                                </div>
+                              )}
+                              
+                              {/* Timestamp */}
+                              <div className="text-xs text-muted-foreground pt-1 border-t border-border/50">
+                                {formatDateTime(log.created_at)}
+                              </div>
+                            </div>
+                          </Card>
+                        </div>
+                      );
+                    }
+                    
+                    // Regular message rendering
                     return (
                       <div key={log.id} className={`flex gap-2 ${fromAI ? 'justify-end' : 'justify-start'}`}>
                         {/* Channel icon on left for received messages */}
