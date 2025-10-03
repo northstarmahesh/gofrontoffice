@@ -93,6 +93,17 @@ const TaskDetailDialog = ({ task, open, onOpenChange }: TaskDetailDialogProps) =
     }
   };
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Invalid date";
+      return format(date, "PPp");
+    } catch {
+      return "Invalid date";
+    }
+  };
+
   if (!task) return null;
 
   return (
@@ -127,7 +138,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange }: TaskDetailDialogProps) =
                 )}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  Created: {format(new Date(task.created_at), "PPp")}
+                  Created: {formatDate(task.created_at)}
                 </div>
               </div>
             </div>
@@ -185,7 +196,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange }: TaskDetailDialogProps) =
                               <p className="text-xs text-muted-foreground">{log.summary}</p>
                             )}
                             <p className="text-xs text-muted-foreground">
-                              {format(new Date(log.created_at), "PPp")}
+                              {formatDate(log.created_at)}
                             </p>
                           </div>
                         </div>
