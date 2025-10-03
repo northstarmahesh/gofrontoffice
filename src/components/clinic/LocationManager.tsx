@@ -367,101 +367,119 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
                     {editingLocation ? "Edit Location" : "Add New Location"}
                   </DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Location Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      placeholder="Main Office, Downtown Branch, etc."
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
-                    <div className="relative">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="address"
-                          value={addressLocked ? formData.address : addressQuery}
-                          onChange={(e) => {
-                            setAddressQuery(e.target.value);
-                            if (!addressLocked) {
-                              setFormData({ ...formData, address: e.target.value });
-                            }
-                          }}
-                          onFocus={() => {
-                            if (!addressLocked && addressQuery) {
-                              setShowSuggestions(true);
-                            }
-                          }}
-                          placeholder="Start typing an address..."
-                          disabled={addressLocked}
-                          className={`pl-9 ${addressLocked ? "opacity-75" : ""}`}
-                        />
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Step 1: Basic Information */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                        1
                       </div>
-                      {showSuggestions && addressSuggestions.length > 0 && !addressLocked && (
-                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
-                          {addressSuggestions.map((suggestion, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() => handleAddressSelect(suggestion)}
-                              className="w-full px-4 py-2 text-left hover:bg-accent transition-colors text-sm border-b last:border-b-0"
-                            >
-                              {suggestion.display_name}
-                            </button>
-                          ))}
+                      <h3 className="text-base font-semibold">Basic Information</h3>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Location Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        placeholder="Main Office, Downtown Branch, etc."
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="address">Address</Label>
+                      <div className="relative">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="address"
+                            value={addressLocked ? formData.address : addressQuery}
+                            onChange={(e) => {
+                              setAddressQuery(e.target.value);
+                              if (!addressLocked) {
+                                setFormData({ ...formData, address: e.target.value });
+                              }
+                            }}
+                            onFocus={() => {
+                              if (!addressLocked && addressQuery) {
+                                setShowSuggestions(true);
+                              }
+                            }}
+                            placeholder="Start typing an address..."
+                            disabled={addressLocked}
+                            className={`pl-9 ${addressLocked ? "opacity-75" : ""}`}
+                          />
                         </div>
+                        {showSuggestions && addressSuggestions.length > 0 && !addressLocked && (
+                          <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
+                            {addressSuggestions.map((suggestion, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() => handleAddressSelect(suggestion)}
+                                className="w-full px-4 py-2 text-left hover:bg-accent transition-colors text-sm border-b last:border-b-0"
+                              >
+                                {suggestion.display_name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {addressLocked && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setAddressLocked(false);
+                            setAddressQuery(formData.address);
+                          }}
+                          className="h-auto py-1 px-2 text-xs"
+                        >
+                          Unlock to edit
+                        </Button>
                       )}
                     </div>
-                    {addressLocked && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setAddressLocked(false);
-                          setAddressQuery(formData.address);
-                        }}
-                        className="h-auto py-1 px-2 text-xs"
-                      >
-                        Unlock to edit
-                      </Button>
-                    )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="admin_email">Location Admin Email</Label>
+                      <Input
+                        id="admin_email"
+                        type="email"
+                        value={formData.admin_email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, admin_email: e.target.value })
+                        }
+                        placeholder="admin@example.com"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        If email doesn't exist, you'll be prompted to create a new user
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="admin_email">Location Admin Email</Label>
-                    <Input
-                      id="admin_email"
-                      type="email"
-                      value={formData.admin_email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, admin_email: e.target.value })
-                      }
-                      placeholder="admin@example.com"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      If email doesn't exist, you'll be prompted to create a new user
-                    </p>
-                  </div>
+                  <Separator />
 
-                  <Separator className="my-4" />
-
-                  {/* Existing Phone Numbers for this location (only when editing) */}
-                  {editingLocation && locationPhoneNumbers.length > 0 && (
-                    <>
-                      <div className="space-y-3">
-                        <h3 className="text-sm font-medium flex items-center gap-2">
+                  {/* Step 2: Phone Number & Verification */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                        2
+                      </div>
+                      <h3 className="text-base font-semibold">Phone Number & Verification</h3>
+                    </div>
+                    
+                    {/* Existing Phone Numbers for this location (only when editing) */}
+                    {editingLocation && locationPhoneNumbers.length > 0 && (
+                      <div className="space-y-3 mb-4">
+                        <h4 className="text-sm font-medium flex items-center gap-2">
                           <Phone className="h-4 w-4" />
                           Connected Phone Numbers
-                        </h3>
+                        </h4>
                         <div className="space-y-2">
                           {locationPhoneNumbers.map((phone) => (
                             <div
@@ -500,33 +518,120 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
                           ))}
                         </div>
                       </div>
-                      <Separator className="my-4" />
-                    </>
-                  )}
+                    )}
 
+                    <Card className="bg-muted/30 border-2">
+                      <CardContent className="pt-6 space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-sm font-medium">
+                            {editingLocation ? "Add Another Number" : "Add Phone Number"}
+                          </h4>
+                          <Checkbox
+                            id="enable-phone"
+                            checked={phoneNumberSetup.enabled}
+                            onCheckedChange={(checked) =>
+                              setPhoneNumberSetup({ ...phoneNumberSetup, enabled: !!checked })
+                            }
+                          />
+                        </div>
+
+                        {phoneNumberSetup.enabled && (
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="phone-number">Phone Number *</Label>
+                              <Input
+                                id="phone-number"
+                                value={phoneNumberSetup.number}
+                                onChange={(e) =>
+                                  setPhoneNumberSetup({ ...phoneNumberSetup, number: e.target.value })
+                                }
+                                placeholder="+14243298358"
+                                required={phoneNumberSetup.enabled}
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Include country code (e.g., +1 for US). You'll be asked to verify after saving.
+                              </p>
+                            </div>
+
+                            <div className="space-y-3">
+                              <Label>Channels *</Label>
+                              <div className="space-y-2">
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id="channel-sms"
+                                    checked={phoneNumberSetup.channels.includes("sms")}
+                                    onCheckedChange={() => toggleChannel("sms")}
+                                  />
+                                  <label htmlFor="channel-sms" className="text-sm cursor-pointer flex items-center gap-1">
+                                    <MessageSquare className="h-4 w-4" />
+                                    SMS
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id="channel-voice"
+                                    checked={phoneNumberSetup.channels.includes("voice")}
+                                    onCheckedChange={() => toggleChannel("voice")}
+                                  />
+                                  <label htmlFor="channel-voice" className="text-sm cursor-pointer flex items-center gap-1">
+                                    <Phone className="h-4 w-4" />
+                                    Voice
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id="channel-whatsapp"
+                                    checked={phoneNumberSetup.channels.includes("whatsapp")}
+                                    onCheckedChange={() => toggleChannel("whatsapp")}
+                                  />
+                                  <label htmlFor="channel-whatsapp" className="text-sm cursor-pointer flex items-center gap-1">
+                                    <MessageSquare className="h-4 w-4" />
+                                    WhatsApp
+                                  </label>
+                                </div>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Note: Only one WhatsApp number per location
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Separator />
+
+                  {/* Step 3: Social Media Accounts */}
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium">Social Media Connections</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                        3
+                      </div>
+                      <h3 className="text-base font-semibold">Social Media Accounts</h3>
+                    </div>
                     
                     {!formData.instagram_connected && !formData.facebook_connected && (
-                      <div className="p-3 bg-muted/50 rounded-lg border border-border">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Connect your Instagram and Facebook accounts to enable direct messaging.
-                        </p>
-                        {onNavigateToTools && (
-                          <Button
-                            type="button"
-                            variant="link"
-                            size="sm"
-                            onClick={() => {
-                              setDialogOpen(false);
-                              onNavigateToTools();
-                            }}
-                            className="h-auto p-0 text-primary"
-                          >
-                            Go to Tools to connect social accounts →
-                          </Button>
-                        )}
-                      </div>
+                      <Card className="bg-muted/50 border-dashed">
+                        <CardContent className="pt-4">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Connect your Instagram and Facebook accounts to enable direct messaging.
+                          </p>
+                          {onNavigateToTools && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setDialogOpen(false);
+                                onNavigateToTools();
+                              }}
+                            >
+                              Go to Tools to connect social accounts →
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
                     )}
                     
                     <div className="space-y-2">
@@ -562,90 +667,6 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
                         placeholder="123456789"
                       />
                     </div>
-                  </div>
-
-                  <Separator className="my-4" />
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="enable-phone"
-                          checked={phoneNumberSetup.enabled}
-                          onCheckedChange={(checked) =>
-                            setPhoneNumberSetup({ ...phoneNumberSetup, enabled: !!checked })
-                          }
-                        />
-                        <label
-                          htmlFor="enable-phone"
-                          className="text-sm font-medium leading-none cursor-pointer"
-                        >
-                          Add another phone number
-                        </label>
-                      </div>
-                    </div>
-
-                    {phoneNumberSetup.enabled && (
-                      <div className="space-y-4 pl-6 border-l-2 border-muted">
-                        <div className="space-y-2">
-                          <Label htmlFor="phone-number">Phone Number *</Label>
-                          <Input
-                            id="phone-number"
-                            value={phoneNumberSetup.number}
-                            onChange={(e) =>
-                              setPhoneNumberSetup({ ...phoneNumberSetup, number: e.target.value })
-                            }
-                            placeholder="+14243298358"
-                            required={phoneNumberSetup.enabled}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Include country code (e.g., +1 for US)
-                          </p>
-                        </div>
-
-                        <div className="space-y-3">
-                          <Label>Channels *</Label>
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="channel-sms"
-                                checked={phoneNumberSetup.channels.includes("sms")}
-                                onCheckedChange={() => toggleChannel("sms")}
-                              />
-                              <label htmlFor="channel-sms" className="text-sm cursor-pointer flex items-center gap-1">
-                                <Phone className="h-4 w-4" />
-                                SMS
-                              </label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="channel-voice"
-                                checked={phoneNumberSetup.channels.includes("voice")}
-                                onCheckedChange={() => toggleChannel("voice")}
-                              />
-                              <label htmlFor="channel-voice" className="text-sm cursor-pointer flex items-center gap-1">
-                                <Phone className="h-4 w-4" />
-                                Voice
-                              </label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="channel-whatsapp"
-                                checked={phoneNumberSetup.channels.includes("whatsapp")}
-                                onCheckedChange={() => toggleChannel("whatsapp")}
-                              />
-                              <label htmlFor="channel-whatsapp" className="text-sm cursor-pointer flex items-center gap-1">
-                                <MessageSquare className="h-4 w-4" />
-                                WhatsApp
-                              </label>
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Note: Only one WhatsApp number per location
-                          </p>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   <Button type="submit" className="w-full">
