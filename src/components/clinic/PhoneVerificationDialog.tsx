@@ -37,13 +37,19 @@ export const PhoneVerificationDialog = ({
   const handleSendCode = async () => {
     setSending(true);
     try {
-      const { error } = await supabase.functions.invoke("send-verification-otp", {
+      const { data, error } = await supabase.functions.invoke("send-verification-otp", {
         body: { phoneNumberId },
       });
 
       if (error) throw error;
       setCodeSent(true);
-      toast.success("Verification code sent to " + phoneNumber);
+      
+      // Show dev code in toast for testing
+      if (data?.devCode) {
+        toast.success(`Code sent to ${phoneNumber}! Dev code: ${data.devCode}`, { duration: 10000 });
+      } else {
+        toast.success("Verification code sent to " + phoneNumber);
+      }
     } catch (error: any) {
       console.error("Error sending code:", error);
       toast.error(error.message || "Failed to send verification code");

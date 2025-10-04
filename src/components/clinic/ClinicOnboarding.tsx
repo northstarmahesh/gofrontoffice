@@ -69,12 +69,12 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
     switch (currentStep) {
       case "info":
         return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b">
-              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-3 pb-3 sm:pb-4 border-b">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm sm:text-base">
                 1
               </div>
-              <h2 className="text-xl sm:text-base font-semibold">Clinic Information</h2>
+              <h2 className="text-lg sm:text-xl font-semibold">Clinic Information</h2>
             </div>
             <OnboardingBasicInfo onComplete={handleClinicCreated} />
           </div>
@@ -82,12 +82,12 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
 
       case "channels":
         return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b">
-              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-3 pb-3 sm:pb-4 border-b">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm sm:text-base">
                 2
               </div>
-              <h2 className="text-xl sm:text-base font-semibold">Connect Channels</h2>
+              <h2 className="text-lg sm:text-xl font-semibold">Connect Channels</h2>
             </div>
             {clinicId ? (
               <>
@@ -119,12 +119,12 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
 
       case "ai-setup":
         return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b">
-              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-3 pb-3 sm:pb-4 border-b">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm sm:text-base">
                 3
               </div>
-              <h2 className="text-xl sm:text-base font-semibold">Configure AI Assistant</h2>
+              <h2 className="text-lg sm:text-xl font-semibold">Configure AI Assistant</h2>
             </div>
             {clinicId ? (
               <OnboardingAISetup 
@@ -142,39 +142,39 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
 
       case "complete":
         return (
-          <div className="space-y-6 text-center py-12">
-            <div className="mx-auto w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
-              <CheckCircle2 className="h-10 w-10 text-success" />
+          <div className="space-y-4 sm:space-y-6 text-center py-6 sm:py-12">
+            <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-success/10 flex items-center justify-center mb-3 sm:mb-6">
+              <CheckCircle2 className="h-8 w-8 sm:h-10 sm:w-10 text-success" />
             </div>
-            <h2 className="text-3xl sm:text-2xl font-bold text-foreground">You're All Set! 🎉</h2>
-            <p className="text-lg sm:text-base text-muted-foreground max-w-md mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground px-4">You're All Set! 🎉</h2>
+            <p className="text-sm sm:text-lg text-muted-foreground max-w-md mx-auto px-4">
               Your clinic is configured and ready. Your AI assistant will now help manage your front office operations.
             </p>
             
             <Card className="max-w-md mx-auto border-0 shadow-lg bg-gradient-to-br from-primary/10 to-secondary/10">
-              <CardHeader>
-                <CardTitle className="text-left">What's Next?</CardTitle>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-left text-base sm:text-lg">What's Next?</CardTitle>
               </CardHeader>
-              <CardContent className="text-left space-y-3">
-                <div className="flex gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+              <CardContent className="text-left space-y-2 sm:space-y-3">
+                <div className="flex gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-sm">Monitor your assistant</p>
-                    <p className="text-xs text-muted-foreground">View tasks and communications in the dashboard</p>
+                    <p className="font-semibold text-xs sm:text-sm">Monitor your assistant</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">View tasks and communications in the dashboard</p>
                   </div>
                 </div>
-                <div className="flex gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div className="flex gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-sm">Add knowledge base</p>
-                    <p className="text-xs text-muted-foreground">Help your AI answer specific questions</p>
+                    <p className="font-semibold text-xs sm:text-sm">Add knowledge base</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">Help your AI answer specific questions</p>
                   </div>
                 </div>
-                <div className="flex gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div className="flex gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-sm">Invite your team</p>
-                    <p className="text-xs text-muted-foreground">Collaborate with staff members</p>
+                    <p className="font-semibold text-xs sm:text-sm">Invite your team</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">Collaborate with staff members</p>
                   </div>
                 </div>
               </CardContent>

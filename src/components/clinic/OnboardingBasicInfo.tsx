@@ -83,14 +83,19 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
 
     setSendingCode(true);
     try {
-      const { error } = await supabase.functions.invoke('send-email-verification', {
+      const { data, error } = await supabase.functions.invoke('send-email-verification', {
         body: { email: formData.email }
       });
 
       if (error) throw error;
 
+      // Show dev code in toast for testing
+      if (data?.devCode) {
+        toast.success(`Code sent! Dev code: ${data.devCode}`, { duration: 10000 });
+      } else {
+        toast.success("Verification code sent to your email");
+      }
       setShowCodeInput(true);
-      toast.success("Verification code sent to your email");
     } catch (error: any) {
       console.error("Error sending code:", error);
       toast.error(error.message || "Failed to send verification code");

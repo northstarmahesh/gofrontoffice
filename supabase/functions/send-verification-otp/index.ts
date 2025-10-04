@@ -95,7 +95,12 @@ serve(async (req) => {
     console.log(`OTP sent to ${phoneData.phone_number}`);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Verification code sent' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Verification code sent',
+        // Return code in dev for testing (remove in production)
+        devCode: otp
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
