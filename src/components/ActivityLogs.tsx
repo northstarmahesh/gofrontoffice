@@ -97,20 +97,14 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         }
       }
 
-      // If status is pending, fetch the draft reply
-      if (log.status === "pending") {
-        const { data: draftData } = await supabase
-          .from("draft_replies")
-          .select("draft_content")
-          .eq("log_id", log.id)
-          .eq("status", "pending")
-          .maybeSingle();
-
-        if (draftData) {
-          draftMessage = draftData.draft_content;
-        }
+      // If status is pending, use the summary as the draft message
+      // (the AI draft is stored in the summary field of pending outbound messages)
+      if (log.status === "pending" && log.summary) {
+        draftMessage = log.summary;
+        console.log("Found draft in activity log summary:", draftMessage);
       }
 
+      console.log("Opening dialog with draft:", draftMessage);
       setSelectedContact({
         name: log.contact_name,
         info: log.contact_info || "",
