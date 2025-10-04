@@ -216,364 +216,335 @@ const Auth = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[hsl(var(--auth-bg))] flex flex-col lg:flex-row">
-      {/* Left Column - Value Proposition */}
-      <div className="lg:w-1/2 flex flex-col justify-center p-8 lg:p-12 xl:p-16 text-white">
-        <div className="max-w-xl mx-auto lg:mx-0">
-          {/* Logo */}
-          <div className="mb-8">
-            <img 
-              src={logo} 
-              alt="Front Office" 
-              className="h-24 lg:h-32 w-auto"
+  const renderAuthForms = () => (
+    <>
+      {/* Card Header */}
+      <div className="mb-6 text-center">
+        <h2 className="text-xl font-bold text-foreground mb-2">
+          {step === "email" 
+            ? "Get Started"
+            : step === "code"
+              ? "Verification Code"
+              : isLogin 
+                ? "Welcome Back" 
+                : "Set Up Account"}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {step === "email" 
+            ? "Step 1 of 3: Create your login"
+            : step === "code"
+              ? "Step 2 of 3: Enter the 6-digit code from your email"
+              : isLogin 
+                ? "Sign in to access your dashboard" 
+                : "Step 2 of 3: Choose a secure password"}
+        </p>
+      </div>
+
+      {/* Email Step */}
+      {step === "email" && (
+        <form onSubmit={handleEmailContinue} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="your.name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              autoFocus
+              className="h-11 text-base"
             />
           </div>
 
-          {/* Main Headline */}
-          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight">
-            Meet Your New Digital Assistant
-          </h1>
-          <p className="text-xl lg:text-2xl text-yellow-accent font-semibold mb-8">
-            24x7 Available. No Vacation Needed.
-          </p>
+          <Button
+            type="submit"
+            className="w-full h-11 text-base"
+            disabled={loading}
+          >
+            Continue
+          </Button>
 
-          {/* Benefits */}
-          <div className="space-y-6 mb-8">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                <AlarmClock className="text-red-400" size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-1">Save 5+ Hours/Week</h3>
-                <p className="text-sm text-white/80">No more boring admin tasks or answering repetitive questions</p>
-              </div>
-            </div>
+          <div className="text-center text-sm">
+            <span className="text-muted-foreground">
+              Already have an account?{" "}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(true);
+                setStep("auth");
+              }}
+              className="font-medium text-yellow-accent hover:text-yellow-accent/80 hover:underline transition-colors"
+              disabled={loading}
+            >
+              Sign in
+            </button>
+          </div>
+        </form>
+      )}
 
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="text-blue-400" size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-1">Multiple Channels, 1 Assistant</h3>
-                <p className="text-sm text-white/80">Your assistant can email, sms, speak, text and integrate with your business systems.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                <Target className="text-purple-400" size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-1">Always In Control</h3>
-                <p className="text-sm text-white/80">Your brand, your words, your assistant.</p>
-              </div>
-            </div>
+      {/* Auth Step - Login or Signup */}
+      {step === "auth" && (
+        <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email-auth">Email Address</Label>
+            <Input
+              id="email-auth"
+              type="email"
+              placeholder="your.name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              className="h-11 text-base"
+            />
           </div>
 
-          {/* Integrations */}
-          <div className="hidden lg:block">
-            <p className="text-sm text-white/60 mb-4">Integrates seamlessly with</p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="px-4 py-2 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-purple-400/50 shadow-lg">
-                <span className="text-sm text-white font-medium">Instagram</span>
+          {!isLogin && (
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="Jane Smith"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={loading}
+                autoFocus
+                className="h-11 text-base"
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              autoFocus={isLogin}
+              className="h-11 text-base"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full h-11 text-base"
+            disabled={loading}
+          >
+            {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
+          </Button>
+        </form>
+      )}
+
+      {/* Code Verification Step */}
+      {step === "code" && (
+        <form onSubmit={handleVerifyCode} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="code">Verification Code</Label>
+            <Input
+              id="code"
+              type="text"
+              placeholder="Enter 6-digit code"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+              disabled={loading}
+              autoFocus
+              maxLength={6}
+              className="h-11 text-base text-center tracking-widest"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full h-11 text-base"
+            disabled={loading}
+          >
+            {loading ? "Verifying..." : "Verify Code"}
+          </Button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={handleSendCode}
+              className="text-sm text-muted-foreground hover:text-foreground"
+              disabled={loading}
+            >
+              Resend code
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Toggle between login/signup */}
+      {step === "auth" && (
+        <div className="mt-6 text-center text-sm">
+          <span className="text-muted-foreground">
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+          </span>
+          <button
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setPassword("");
+              setFullName("");
+            }}
+            className="font-medium text-primary hover:underline"
+            disabled={loading}
+          >
+            {isLogin ? "Create an account" : "Sign in"}
+          </button>
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <div className="min-h-screen bg-[hsl(var(--auth-bg))]">
+      {/* Mobile Layout - Single Column */}
+      <div className="lg:hidden min-h-screen flex flex-col">
+        {/* Mobile Header */}
+        <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-8 pb-6">
+          <img 
+            src={logo} 
+            alt="Front Office" 
+            className="h-16 w-auto mb-4"
+          />
+          <h1 className="text-2xl font-bold mb-1 leading-tight">
+            Your Digital Assistant
+          </h1>
+          <p className="text-lg text-yellow-accent font-semibold">
+            24x7 Available. Always Ready.
+          </p>
+          
+          {/* Key Benefits - Mobile */}
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <AlarmClock className="text-red-400" size={18} />
               </div>
-              <div className="px-4 py-2 rounded-full bg-blue-500/20 border border-blue-500/30">
-                <span className="text-sm text-white font-medium">Facebook</span>
+              <div>
+                <p className="text-sm font-semibold">Save 5+ Hours/Week</p>
+                <p className="text-xs text-white/70">Automate repetitive tasks</p>
               </div>
-              <div className="px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30 flex items-center gap-2">
-                <Phone size={16} className="text-green-400" />
-                <span className="text-sm text-white font-medium">Phone</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="text-blue-400" size={18} />
               </div>
-              <div className="px-4 py-2 rounded-full bg-blue-400/20 border border-blue-400/30 flex items-center gap-2">
-                <MessageSquare size={16} className="text-blue-400" />
-                <span className="text-sm text-white font-medium">SMS</span>
+              <div>
+                <p className="text-sm font-semibold">All Channels in One</p>
+                <p className="text-xs text-white/70">SMS, WhatsApp, Instagram, Phone</p>
               </div>
-              <div className="px-4 py-2 rounded-full bg-green-400/20 border border-green-400/30">
-                <span className="text-sm text-white font-medium">WhatsApp</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                <Target className="text-purple-400" size={18} />
               </div>
-              <div className="px-4 py-2 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center gap-2">
-                <Calendar size={16} className="text-orange-400" />
-                <span className="text-sm text-white font-medium">Bokadirekt</span>
-              </div>
-              <div className="px-4 py-2 rounded-full bg-cyan-500/20 border border-cyan-500/30">
-                <span className="text-sm text-white font-medium">ClinicBuddy</span>
+              <div>
+                <p className="text-sm font-semibold">You Stay In Control</p>
+                <p className="text-xs text-white/70">Your brand, your words</p>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Right Column - Auth Card */}
-      <div className="flex-1 flex flex-col items-center justify-center p-3 sm:p-4 lg:p-8 bg-background/95 backdrop-blur-sm">
-        <Card className="w-full max-w-[95vw] sm:max-w-md border-0 p-4 sm:p-6 lg:p-8 shadow-2xl">
-          {/* Card Header */}
-          <div className="mb-6 text-center">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-2">
-              {step === "email" 
-                ? "Get Started"
-                : step === "code"
-                  ? "Verification Code"
-                  : isLogin 
-                    ? "Welcome Back" 
-                    : "Set Up Account"}
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground px-2">
-              {step === "email" 
-                ? "Step 1 of 3: Create your login"
-                : step === "code"
-                  ? "Step 2 of 3: Enter the 6-digit code from your email"
-                  : isLogin 
-                    ? "Sign in to access your dashboard" 
-                    : "Step 2 of 3: Choose a secure password"}
-            </p>
+        {/* Mobile Auth Card */}
+        <div className="flex-1 bg-background rounded-t-3xl -mt-4 p-6">
+          <Card className="w-full border-0 shadow-none p-0">
+            {renderAuthForms()}
+          </Card>
+
+          {/* Testimonials - Mobile */}
+          <div className="mt-8">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              plugins={[
+                Autoplay({
+                  delay: 5000,
+                }),
+              ]}
+              className="w-full"
+            >
+              <CarouselContent>
+                <CarouselItem>
+                  <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
+                    <div className="flex gap-0.5 mb-2">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className="text-yellow-accent text-xs">⭐</span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground italic mb-3">
+                      "Our booking rate increased by 60% after switching to Front Office. Perfect replies every time!"
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                        💉
+                      </div>
+                      <div>
+                        <p className="font-medium text-xs">Lisa Andersson</p>
+                        <p className="text-[10px] text-muted-foreground">Stockholm Botox Clinic</p>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+
+                <CarouselItem>
+                  <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
+                    <div className="flex gap-0.5 mb-2">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className="text-yellow-accent text-xs">⭐</span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground italic mb-3">
+                      "Handles 80% of requests perfectly. Daily summaries keep me in the loop!"
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                        🦷
+                      </div>
+                      <div>
+                        <p className="font-medium text-xs">Dr. Anna Bergström</p>
+                        <p className="text-[10px] text-muted-foreground">Solna Dental Clinic</p>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+
+                <CarouselItem>
+                  <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
+                    <div className="flex gap-0.5 mb-2">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className="text-yellow-accent text-xs">⭐</span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground italic mb-3">
+                      "Front Office actually works. Flexible and trustworthy!"
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                        🏥
+                      </div>
+                      <div>
+                        <p className="font-medium text-xs">Dr. Erik Johansson</p>
+                        <p className="text-[10px] text-muted-foreground">HealthCare Plus</p>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+            </Carousel>
           </div>
 
-          {/* Email Step */}
-          {step === "email" && (
-            <form onSubmit={handleEmailContinue} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm sm:text-base">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your.name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  autoFocus
-                  className="h-11 sm:h-10 text-base"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-11 sm:h-10 text-base bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
-                disabled={loading}
-              >
-                Continue
-              </Button>
-
-              <div className="text-center text-sm">
-                <span className="text-muted-foreground">
-                  Already have an account?{" "}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(true);
-                    setStep("auth");
-                  }}
-                  className="font-medium text-yellow-accent hover:text-yellow-accent/80 hover:underline transition-colors"
-                  disabled={loading}
-                >
-                  Sign in
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Auth Step - Login or Signup */}
-          {step === "auth" && (
-            <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email-auth" className="text-sm sm:text-base">Email Address</Label>
-                <Input
-                  id="email-auth"
-                  type="email"
-                  placeholder="your.name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  className="h-11 sm:h-10 text-base"
-                />
-              </div>
-
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-sm sm:text-base">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Jane Smith"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    disabled={loading}
-                    autoFocus
-                    className="h-11 sm:h-10 text-base"
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm sm:text-base">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                  autoFocus={isLogin}
-                  className="h-11 sm:h-10 text-base"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-11 sm:h-10 text-base bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
-                disabled={loading}
-              >
-                {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
-              </Button>
-            </form>
-          )}
-
-          {/* Code Verification Step */}
-          {step === "code" && (
-            <form onSubmit={handleVerifyCode} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="code" className="text-sm sm:text-base">Verification Code</Label>
-                <Input
-                  id="code"
-                  type="text"
-                  placeholder="Enter 6-digit code"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  disabled={loading}
-                  autoFocus
-                  maxLength={6}
-                  className="h-11 sm:h-10 text-base text-center tracking-widest"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-11 sm:h-10 text-base bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
-                disabled={loading}
-              >
-                {loading ? "Verifying..." : "Verify Code"}
-              </Button>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                  disabled={loading}
-                >
-                  Resend code
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Toggle between login/signup */}
-          {step === "auth" && (
-            <div className="mt-6 text-center text-sm">
-              <span className="text-muted-foreground">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-              </span>
-              <button
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setPassword("");
-                  setFullName("");
-                }}
-                className="font-medium text-primary hover:underline"
-                disabled={loading}
-              >
-                {isLogin ? "Create an account" : "Sign in"}
-              </button>
-            </div>
-          )}
-        </Card>
-
-        {/* Testimonials Carousel - Below Card */}
-        <div className="w-full max-w-md mt-6">
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            plugins={[
-              Autoplay({
-                delay: 5000,
-              }),
-            ]}
-            className="w-full"
-          >
-            <CarouselContent>
-              <CarouselItem>
-                <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-accent text-xs">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground italic mb-3">
-                    "Our booking rate increased by 60% after switching to Front Office. Our digital assistant handles Instagram DMs, sms-es perfectly replying accurately!"
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                      💉
-                    </div>
-                    <div>
-                      <p className="font-medium text-xs">Lisa Andersson</p>
-                      <p className="text-[10px] text-muted-foreground">Stockholm Botox Clinic</p>
-                    </div>
-                  </div>
-                </div>
-              </CarouselItem>
-
-              <CarouselItem>
-                <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-accent text-xs">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground italic mb-3">
-                    "I love our digital assistant. It handles 80% of all incoming requests perfectly. And it send me summaries via text at the end of the day with my todos!"
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                      🦷
-                    </div>
-                    <div>
-                      <p className="font-medium text-xs">Dr. Anna Bergström</p>
-                      <p className="text-[10px] text-muted-foreground">Solna Dental Clinic</p>
-                    </div>
-                  </div>
-                </div>
-              </CarouselItem>
-
-              <CarouselItem>
-                <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-accent text-xs">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground italic mb-3">
-                    "Lots of AIs sound good but don't work. Front Office actually works as the assistant is flexible and trustworthy!"
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                      🏥
-                    </div>
-                    <div>
-                      <p className="font-medium text-xs">Dr. Erik Johansson</p>
-                      <p className="text-[10px] text-muted-foreground">HealthCare Plus</p>
-                    </div>
-                  </div>
-                </div>
-              </CarouselItem>
-            </CarouselContent>
-          </Carousel>
-
-          {/* Need Help Link */}
-          <div className="text-center mt-4">
+          {/* Help Link */}
+          <div className="text-center mt-6">
             <a 
               href="tel:+46707300605" 
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -581,6 +552,98 @@ const Auth = () => {
               Need help? Call us at +46 70 730 06 05
             </a>
           </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout - 2 Columns */}
+      <div className="hidden lg:flex min-h-screen">
+        {/* Left Column - Value Proposition */}
+        <div className="w-1/2 flex flex-col justify-center p-12 xl:p-16 text-white">
+          <div className="max-w-xl">
+            <div className="mb-8">
+              <img 
+                src={logo} 
+                alt="Front Office" 
+                className="h-32 w-auto"
+              />
+            </div>
+
+            <h1 className="text-4xl xl:text-5xl font-bold mb-2 leading-tight">
+              Meet Your New Digital Assistant
+            </h1>
+            <p className="text-2xl text-yellow-accent font-semibold mb-8">
+              24x7 Available. No Vacation Needed.
+            </p>
+
+            <div className="space-y-6 mb-8">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                  <AlarmClock className="text-red-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-1">Save 5+ Hours/Week</h3>
+                  <p className="text-sm text-white/80">No more boring admin tasks or answering repetitive questions</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="text-blue-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-1">Multiple Channels, 1 Assistant</h3>
+                  <p className="text-sm text-white/80">Your assistant can email, sms, speak, text and integrate with your business systems.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                  <Target className="text-purple-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-1">Always In Control</h3>
+                  <p className="text-sm text-white/80">Your brand, your words, your assistant.</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm text-white/60 mb-4">Integrates seamlessly with</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="px-4 py-2 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-purple-400/50 shadow-lg">
+                  <span className="text-sm text-white font-medium">Instagram</span>
+                </div>
+                <div className="px-4 py-2 rounded-full bg-blue-500/20 border border-blue-500/30">
+                  <span className="text-sm text-white font-medium">Facebook</span>
+                </div>
+                <div className="px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30 flex items-center gap-2">
+                  <Phone size={16} className="text-green-400" />
+                  <span className="text-sm text-white font-medium">Phone</span>
+                </div>
+                <div className="px-4 py-2 rounded-full bg-blue-400/20 border border-blue-400/30 flex items-center gap-2">
+                  <MessageSquare size={16} className="text-blue-400" />
+                  <span className="text-sm text-white font-medium">SMS</span>
+                </div>
+                <div className="px-4 py-2 rounded-full bg-green-400/20 border border-green-400/30">
+                  <span className="text-sm text-white font-medium">WhatsApp</span>
+                </div>
+                <div className="px-4 py-2 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center gap-2">
+                  <Calendar size={16} className="text-orange-400" />
+                  <span className="text-sm text-white font-medium">Bokadirekt</span>
+                </div>
+                <div className="px-4 py-2 rounded-full bg-cyan-500/20 border border-cyan-500/30">
+                  <span className="text-sm text-white font-medium">ClinicBuddy</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Auth Card */}
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background/95 backdrop-blur-sm">
+          <Card className="w-full max-w-md border-0 p-8 shadow-2xl">
+            {renderAuthForms()}
+          </Card>
         </div>
       </div>
     </div>
