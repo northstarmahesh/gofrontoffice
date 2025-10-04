@@ -283,7 +283,7 @@ const Auth = () => {
                   ? "Enter Verification Code"
                   : isLogin 
                     ? "Welcome Back" 
-                    : "Create Account"}
+                    : "Get Started With Your Account"}
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === "email" 
@@ -292,7 +292,7 @@ const Auth = () => {
                   ? "Check your email for the 6-digit code"
                   : isLogin 
                     ? "Sign in to your account" 
-                    : "Join thousands of healthcare providers"}
+                    : "You can change these details later on"}
             </p>
           </div>
 
