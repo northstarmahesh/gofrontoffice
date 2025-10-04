@@ -402,24 +402,24 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       value: "24",
       change: "+8%",
       icon: MessageSquare,
-      color: "text-secondary",
-      bgColor: "bg-secondary/10",
+      color: "text-yellow-accent",
+      bgColor: "bg-yellow-accent/10",
     },
     {
       label: "Time Saved",
       value: "4.5h",
       change: "Today",
       icon: Clock,
-      color: "text-success",
-      bgColor: "bg-success/10",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
     },
     {
       label: "Cost Saved",
       value: "$180",
       change: "This week",
       icon: DollarSign,
-      color: "text-warning",
-      bgColor: "bg-warning/10",
+      color: "text-yellow-accent",
+      bgColor: "bg-yellow-accent/10",
     },
   ];
 
@@ -559,7 +559,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <Phone className="h-5 w-5 text-primary" />
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="phone" className="text-sm font-semibold cursor-pointer">Phone Calls</Label>
@@ -633,7 +633,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                  <MessageSquare className="h-5 w-5 text-yellow-accent" />
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="sms" className="text-sm font-semibold cursor-pointer">SMS</Label>
@@ -707,7 +707,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                  <MessageSquare className="h-5 w-5 text-primary" />
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="whatsapp" className="text-sm font-semibold cursor-pointer">WhatsApp</Label>
@@ -781,7 +781,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Instagram className="h-5 w-5 text-muted-foreground" />
+                  <Instagram className="h-5 w-5 text-yellow-accent" />
                   <div className="flex items-center gap-2">
                     <Label htmlFor="instagram" className="text-sm font-semibold cursor-pointer">Instagram</Label>
                     {!connectionStatus.instagram && (
@@ -850,7 +850,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Facebook className="h-5 w-5 text-muted-foreground" />
+                  <Facebook className="h-5 w-5 text-primary" />
                   <div className="flex items-center gap-2">
                     <Label htmlFor="messenger" className="text-sm font-semibold cursor-pointer">Messenger</Label>
                     {!connectionStatus.messenger && (
