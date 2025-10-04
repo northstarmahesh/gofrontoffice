@@ -565,14 +565,10 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         className="border-2 border-yellow-accent/20 p-6 shadow-lg transition-all hover:shadow-xl hover:border-yellow-accent/40 bg-card"
       >
         <div className="space-y-4">
-          {/* Header: Type badge and Channel */}
+          {/* Header: Type badge */}
           <div className="flex items-start justify-between gap-3">
             <Badge className={`text-sm px-3 py-1 border ${taskType.color}`}>
               {taskType.label}
-            </Badge>
-            <Badge className={`flex items-center gap-1.5 border text-sm px-3 py-1 ${getChannelColor(task.source)}`}>
-              <ChannelIcon className="h-4 w-4" />
-              {getChannelDisplay(task.source)}
             </Badge>
           </div>
 
@@ -581,14 +577,30 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             className="space-y-3 cursor-pointer" 
             onClick={() => handleTaskClick(task)}
           >
-            {/* Customer/Contact name */}
+            {/* Customer/Contact name with View Conversation button */}
             {isContactTask && task.contact_name && (
-              <div>
-                <h3 className="text-2xl font-bold text-foreground mb-1">
-                  {task.contact_name}
-                </h3>
-                {task.contact_info && (
-                  <p className="text-sm text-muted-foreground">{task.contact_info}</p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-2xl font-bold text-foreground mb-1">
+                    {task.contact_name}
+                  </h3>
+                  {task.contact_info && (
+                    <p className="text-sm text-muted-foreground">{task.contact_info}</p>
+                  )}
+                </div>
+                {hasDraft && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTaskClick(task);
+                    }}
+                    className="text-sm flex items-center gap-1.5 flex-shrink-0"
+                  >
+                    <History className="h-4 w-4" />
+                    View Conversation
+                  </Button>
                 )}
               </div>
             )}
@@ -631,6 +643,10 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                 <div className="space-y-2 p-4 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="outline" className="text-xs">Original Message</Badge>
+                    <Badge className={`flex items-center gap-1.5 border text-xs px-2 py-0.5 ${getChannelColor(task.source)}`}>
+                      <ChannelIcon className="h-3 w-3" />
+                      {getChannelDisplay(task.source)}
+                    </Badge>
                   </div>
                   <p className={cn(
                     "text-sm text-foreground leading-relaxed whitespace-pre-wrap",
@@ -691,28 +707,14 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             <span className="text-sm text-muted-foreground">{task.time}</span>
             <div className="flex items-center gap-2">
               {hasDraft ? (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTaskClick(task);
-                    }}
-                    className="text-sm flex items-center gap-1.5"
-                  >
-                    <History className="h-4 w-4" />
-                    View Conversation
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={(e) => handleQuickSend(task, e)}
-                    className="text-sm flex items-center gap-1.5"
-                  >
-                    <Send className="h-4 w-4" />
-                    Send
-                  </Button>
-                </>
+                <Button
+                  size="sm"
+                  onClick={(e) => handleQuickSend(task, e)}
+                  className="text-sm flex items-center gap-1.5"
+                >
+                  <Send className="h-4 w-4" />
+                  Send
+                </Button>
               ) : (
                 <div className="flex items-center gap-2 text-primary font-medium text-sm cursor-pointer" onClick={() => handleTaskClick(task)}>
                   {task.callSummary ? "Review & Complete" : task.draftMessage ? "Review & Send" : "Take Action"}
