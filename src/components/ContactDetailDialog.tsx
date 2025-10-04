@@ -336,46 +336,15 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <DialogTitle className="text-xl flex items-center gap-2">
-                <User className="h-5 w-5" />
-                {isEditing ? "Edit Contact" : (contact?.name || contactName || "Unknown")}
-              </DialogTitle>
-              {!isEditing && contactInfo && (
-                <DialogDescription className="mt-1">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-3 w-3" />
-                    {contactInfo}
-                  </div>
-                </DialogDescription>
-              )}
-            </div>
-            {!isEditing ? (
-              <div className="flex gap-2">
-                {onViewFullProfile && (
-                  <Button variant="outline" size="sm" onClick={() => {
-                    onViewFullProfile();
-                    onOpenChange(false);
-                  }}>
-                    View Full Profile
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={handleSaveContact}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save
-                </Button>
+          <div className="space-y-2">
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <User className="h-5 w-5" />
+              {isEditing ? "Edit Contact" : (contact?.name || contactName || "Unknown")}
+            </DialogTitle>
+            {!isEditing && contactInfo && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Phone className="h-4 w-4" />
+                {contactInfo}
               </div>
             )}
           </div>

@@ -280,67 +280,38 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <DialogTitle className="text-xl">{task.title}</DialogTitle>
-              <DialogDescription className="mt-1">
-                {relatedLog?.contact_name && `Contact: ${relatedLog.contact_name}`}
-              </DialogDescription>
-            </div>
-            <Badge className={getPriorityColor(task.priority)}>
-              {task.priority === "high" && <AlertCircle className="mr-1 h-3 w-3" />}
-              {task.priority?.toUpperCase()}
-            </Badge>
+          <div className="space-y-2">
+            <DialogTitle className="text-2xl">{task.title}</DialogTitle>
+            {relatedLog?.contact_name && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span className="text-sm">{relatedLog.contact_name}</span>
+                {relatedLog.contact_info && (
+                  <>
+                    <span className="text-xs">•</span>
+                    <span className="text-sm">{relatedLog.contact_info}</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-4">
-          <div className="space-y-4">
-            {/* Contact Info Card */}
-            {relatedLog && (
-              <Card className="border-0 bg-muted/30 p-4">
-                <div className="space-y-2">
-                  {relatedLog.contact_name && (
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{relatedLog.contact_name}</span>
-                    </div>
-                  )}
-                  {relatedLog.contact_info && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{relatedLog.contact_info}</span>
-                    </div>
-                  )}
-                  {relatedLog.summary && (
-                    <p className="text-sm text-muted-foreground mt-2">{relatedLog.summary}</p>
-                  )}
-                </div>
-              </Card>
+          <div className="space-y-6">
+            {/* Contact Info - Only show if available */}
+            {relatedLog?.summary && (
+              <div className="p-4 rounded-lg bg-muted/30">
+                <p className="text-sm text-foreground leading-relaxed">{relatedLog.summary}</p>
+              </div>
             )}
 
-            {/* Message History - Chat Style */}
+            {/* Message History */}
             {activityHistory.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Conversation History
-                  </h3>
-                  {activityHistory.length > 3 && !showAllHistory && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setShowAllHistory(true)}
-                      className="text-xs"
-                    >
-                      Show All ({activityHistory.length})
-                    </Button>
-                  )}
-                </div>
+                <h3 className="text-sm font-semibold text-foreground">Conversation History</h3>
                 
-                {/* Chat-style messages - chronological order (oldest to newest) */}
-                <div className="space-y-3 bg-muted/30 rounded-lg p-4 max-h-[250px] overflow-y-auto">
+                <div className="space-y-3 bg-muted/20 rounded-lg p-4 max-h-[300px] overflow-y-auto">
                   {(showAllHistory ? activityHistory : activityHistory.slice(0, 3)).map((log) => {
                     const fromAI = isFromAI(log.title, log.type);
                     const phoneCall = isPhoneCall(log.type);

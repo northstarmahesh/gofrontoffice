@@ -128,19 +128,38 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const dummyHumanTasks = [
     {
       id: "dummy1",
-      title: "Review and approve draft message",
-      description: "AI prepared response about appointment rescheduling",
+      title: "Appointment booking request",
+      description: "AI drafted response with available time slots",
       status: "pending",
       date: "Today",
-      time: "11:30 AM",
+      time: "1:30 PM",
       source: "whatsapp",
       isInternal: false,
-      contact_name: "Emma Rodriguez",
-      contact_info: "+46 76 345 6789",
-      draftMessage: "Hi Emma! Thanks for reaching out. I'd be happy to help you reschedule your appointment. We have availability next Tuesday at 2 PM or Thursday at 10 AM. Which time works better for you?",
+      contact_name: "Emma Anderson",
+      contact_info: "+46 70 987 6543",
+      draftMessage: "Hi Emma! Thanks for reaching out. I have these slots available this week:\n\n• Tuesday 2:00 PM\n• Wednesday 10:30 AM\n• Friday 3:00 PM\n\nWhich works best for you?",
     },
     {
       id: "dummy2",
+      title: "AI Call Summary - New Patient Consultation",
+      description: "Call handled by AI - Review summary and complete follow-up actions",
+      status: "pending",
+      date: "Today",
+      time: "10:45 AM",
+      source: "phone",
+      isInternal: true,
+      contact_name: "Sarah Martinez",
+      contact_info: "+46 70 234 5678",
+      callSummary: "Sarah called inquiring about teeth whitening services. She's interested in booking a consultation and asked about pricing. She mentioned she has sensitive teeth and wants to know if that's an issue.",
+      actions: [
+        "Send pricing information via SMS",
+        "Schedule consultation appointment",
+        "Add note about teeth sensitivity to patient file"
+      ],
+      duration: "4m 32s",
+    },
+    {
+      id: "dummy3",
       title: "Follow up on prescription inquiry",
       description: "Draft message ready: Information about prescription refill process",
       status: "pending",
@@ -151,19 +170,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       contact_name: "Mike Johnson",
       contact_info: "+46 70 123 4567",
       draftMessage: "Hello Mike! For your prescription refill, please call us at least 48 hours before you run out. We'll need to check with your doctor for authorization. You can also use our online refill request form on our website.",
-    },
-    {
-      id: "dummy3",
-      title: "Respond to pricing question",
-      description: "AI drafted detailed pricing breakdown",
-      status: "pending",
-      date: "Today",
-      time: "3:45 PM",
-      source: "instagram",
-      isInternal: false,
-      contact_name: "Sarah Williams",
-      contact_info: "@sarah_williams",
-      draftMessage: "Hi Sarah! Thanks for your interest! Our teeth whitening packages start at 2,500 SEK for a single session, or 4,500 SEK for a complete package (3 sessions). The full cleaning and whitening combo is 5,800 SEK. Would you like to book a free consultation?",
     },
   ];
 
@@ -304,6 +310,9 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const completedTasks = allTasks.filter((t) => t.status === "completed").length;
 
   const getTaskTypeLabel = (task: any) => {
+    if (task.callSummary) {
+      return { label: "AI Call Summary", color: "bg-green-500/10 text-green-600 border-green-500/30" };
+    }
     if (task.draftMessage) {
       return { label: "Draft Message", color: "bg-blue-500/10 text-blue-600 border-blue-500/30" };
     }
@@ -314,6 +323,9 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   };
 
   const getTaskInstruction = (task: any) => {
+    if (task.callSummary) {
+      return "Review AI call summary and complete the action items below";
+    }
     if (task.draftMessage) {
       return "Review and send this AI-drafted message";
     }
@@ -366,7 +378,35 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
               {!isContactTask && (
                 <h4 className="text-xl font-bold text-foreground">{task.title}</h4>
               )}
-              {task.description && (
+              
+              {/* Call Summary */}
+              {task.callSummary && (
+                <div className="space-y-3 p-4 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Phone className="h-4 w-4" />
+                    <span>Call Duration: {task.duration}</span>
+                  </div>
+                  <p className="text-base text-foreground leading-relaxed">
+                    {task.callSummary}
+                  </p>
+                  
+                  {task.actions && task.actions.length > 0 && (
+                    <div className="space-y-2 pt-2 border-t">
+                      <p className="text-sm font-semibold text-foreground">Action Items:</p>
+                      <ul className="space-y-1.5">
+                        {task.actions.map((action: string, index: number) => (
+                          <li key={index} className="flex items-start gap-2 text-sm text-foreground">
+                            <Circle className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                            <span>{action}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {task.description && !task.callSummary && (
                 <p className="text-base text-foreground leading-relaxed">
                   {task.description}
                 </p>
@@ -386,7 +426,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           <div className="flex items-center justify-between pt-2 border-t">
             <span className="text-sm text-muted-foreground">{task.time}</span>
             <div className="flex items-center gap-2 text-primary font-medium text-sm">
-              {task.draftMessage ? "Review & Send" : "Take Action"}
+              {task.callSummary ? "Review & Complete" : task.draftMessage ? "Review & Send" : "Take Action"}
               <ArrowRight className="h-4 w-4" />
             </div>
           </div>
