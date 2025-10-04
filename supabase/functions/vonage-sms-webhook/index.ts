@@ -41,21 +41,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Normalize phone number - add + if missing
-    const normalizedTo = to?.startsWith('+') ? to : `+${to}`;
-    const normalizedFrom = from?.startsWith('+') ? from : `+${from}`;
+    // Normalize phone number - add + if missing and trim whitespace
+    const normalizedTo = (to?.trim().startsWith('+') ? to.trim() : `+${to?.trim()}`);
+    const normalizedFrom = (from?.trim().startsWith('+') ? from.trim() : `+${from?.trim()}`);
 
     console.log('Normalized numbers - From:', normalizedFrom, 'To:', normalizedTo);
 
     // Find clinic by phone number
     const { data: phoneData, error: phoneError } = await supabase
       .from('clinic_phone_numbers')
-      .select('clinic_id, location_id')
+      .select('clinic_id, location_id, phone_number, is_active')
       .eq('phone_number', normalizedTo)
+      .eq('is_active', true)
       .maybeSingle();
 
+    console.log('Phone lookup - Query:', normalizedTo, 'Result:', phoneData, 'Error:', phoneError);
+
     if (phoneError || !phoneData) {
-      console.error('Phone number not found:', phoneError);
+      console.error('Phone number not found. Searched for:', normalizedTo);
       return new Response(JSON.stringify({ error: 'Phone not configured' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
