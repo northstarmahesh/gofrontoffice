@@ -8,7 +8,7 @@ import { Search, CheckCircle2, Lock } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 interface OnboardingBasicInfoProps {
-  onComplete: (clinicId: string) => void;
+  onComplete: (clinicId: string, clinicName: string, clinicType: string) => void;
 }
 
 export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) => {
@@ -20,6 +20,7 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
     email: "",
     address: "",
     timezone: "Europe/Stockholm",
+    clinicType: "medical",
   });
   const [sendingCode, setSendingCode] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -167,7 +168,7 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
       if (locationError) console.error("Error creating location:", locationError);
 
       toast.success("Clinic profile created!");
-      onComplete(clinic.id);
+      onComplete(clinic.id, formData.name, formData.clinicType);
     } catch (error: any) {
       console.error("Error creating clinic:", error);
       toast.error(error.message || "Failed to create clinic");
@@ -205,6 +206,26 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
             required
             placeholder="Main Office, Downtown Branch, etc."
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="clinicType">Clinic Type *</Label>
+          <select
+            id="clinicType"
+            className="w-full h-12 sm:h-10 px-4 py-3 sm:px-3 sm:py-2 rounded-md border border-input bg-background text-base sm:text-sm"
+            value={formData.clinicType}
+            onChange={(e) => setFormData({ ...formData, clinicType: e.target.value })}
+            required
+          >
+            <option value="medical">Medical Clinic</option>
+            <option value="dental">Dental Office</option>
+            <option value="veterinary">Veterinary Clinic</option>
+            <option value="therapy">Therapy/Counseling Practice</option>
+            <option value="default">Other Healthcare</option>
+          </select>
+          <p className="text-xs text-muted-foreground">
+            This helps us customize your AI assistant's responses
+          </p>
         </div>
 
         <div className="space-y-2">

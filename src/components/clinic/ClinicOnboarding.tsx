@@ -4,34 +4,39 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Building2, Users, Plug, Rocket } from "lucide-react";
 import { OnboardingBasicInfo } from "./OnboardingBasicInfo";
-import { TeamManagement } from "./TeamManagement";
 import { OnboardingChannels } from "./OnboardingChannels";
+import { OnboardingAISetup } from "./OnboardingAISetup";
 import { toast } from "sonner";
 
 interface ClinicOnboardingProps {
   onComplete: (clinicId: string) => void;
 }
 
-type OnboardingStep = "info" | "channels" | "team" | "complete";
+type OnboardingStep = "info" | "channels" | "ai-setup" | "complete";
 
 export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("info");
   const [clinicId, setClinicId] = useState<string | null>(null);
-  const [hasChannelConnection, setHasChannelConnection] = useState(false);
+  const [clinicName, setClinicName] = useState("");
+  const [clinicType, setClinicType] = useState("medical");
+  const [hasMinimumChannels, setHasMinimumChannels] = useState(false);
+  const [hasPhoneConnection, setHasPhoneConnection] = useState(false);
 
   const steps = [
-    { id: "info" as OnboardingStep, label: "Basic Information", icon: Building2, description: "Tell us about your clinic" },
-    { id: "channels" as OnboardingStep, label: "Phone & Channels", icon: Plug, description: "Set up communication" },
-    { id: "team" as OnboardingStep, label: "Team Members", icon: Users, description: "Invite your team" },
-    { id: "complete" as OnboardingStep, label: "Get Started", icon: Rocket, description: "You're all set!" },
+    { id: "info" as OnboardingStep, label: "Clinic Info", icon: Building2, description: "Basic details" },
+    { id: "channels" as OnboardingStep, label: "Connect Channels", icon: Plug, description: "2+ channels" },
+    { id: "ai-setup" as OnboardingStep, label: "AI Assistant", icon: Users, description: "Configure AI" },
+    { id: "complete" as OnboardingStep, label: "Complete", icon: Rocket, description: "All set!" },
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
-  const handleClinicCreated = (newClinicId: string) => {
+  const handleClinicCreated = (newClinicId: string, name: string, type: string) => {
     setClinicId(newClinicId);
-    toast.success("Clinic profile created! Now let's connect your channels.");
+    setClinicName(name);
+    setClinicType(type);
+    toast.success("Clinic profile created! Now connect at least 2 channels.");
     setCurrentStep("channels");
   };
 
@@ -69,7 +74,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
               <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
                 1
               </div>
-              <h2 className="text-xl font-semibold">Basic Information</h2>
+              <h2 className="text-xl sm:text-base font-semibold">Clinic Information</h2>
             </div>
             <OnboardingBasicInfo onComplete={handleClinicCreated} />
           </div>
@@ -82,13 +87,16 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
               <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
                 2
               </div>
-              <h2 className="text-xl font-semibold">Phone Number & Communication Channels</h2>
+              <h2 className="text-xl sm:text-base font-semibold">Connect Channels</h2>
             </div>
             {clinicId ? (
               <>
                 <OnboardingChannels 
                   clinicId={clinicId} 
-                  onChannelsConnected={setHasChannelConnection}
+                  onChannelsConnected={(hasMinimum, hasPhone) => {
+                    setHasMinimumChannels(hasMinimum);
+                    setHasPhoneConnection(hasPhone || false);
+                  }}
                 />
                 <div className="flex gap-3 pt-4">
                   <Button onClick={handleSkipOnboarding} variant="outline" className="flex-1">
@@ -97,9 +105,9 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
                   <Button 
                     onClick={handleNext} 
                     className="flex-1"
-                    disabled={!hasChannelConnection}
+                    disabled={!hasMinimumChannels}
                   >
-                    {hasChannelConnection ? "Continue" : "Connect at least 1 channel"}
+                    {hasMinimumChannels ? "Continue to AI Setup" : "Connect at least 2 channels"}
                   </Button>
                 </div>
               </>
@@ -109,32 +117,25 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
           </div>
         );
 
-      case "team":
+      case "ai-setup":
         return (
           <div className="space-y-6">
             <div className="flex items-center gap-3 pb-4 border-b">
               <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
                 3
               </div>
-              <h2 className="text-xl font-semibold">Invite Team Members</h2>
+              <h2 className="text-xl sm:text-base font-semibold">Configure AI Assistant</h2>
             </div>
             {clinicId ? (
-              <>
-                <div className="text-sm text-muted-foreground mb-4">
-                  Optional - you can always add team members later in Clinic Settings
-                </div>
-                <TeamManagement clinicId={clinicId} />
-                <div className="flex gap-3 pt-4">
-                  <Button onClick={handleSkip} variant="outline" className="flex-1">
-                    Skip for Now
-                  </Button>
-                  <Button onClick={handleNext} className="flex-1">
-                    Complete Setup
-                  </Button>
-                </div>
-              </>
+              <OnboardingAISetup 
+                clinicId={clinicId}
+                clinicType={clinicType}
+                clinicName={clinicName}
+                hasPhoneConnection={hasPhoneConnection}
+                onComplete={handleNext}
+              />
             ) : (
-              <p className="text-center text-muted-foreground">Please complete clinic info first</p>
+              <p className="text-center text-muted-foreground">Please complete previous steps first</p>
             )}
           </div>
         );
@@ -145,9 +146,9 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
             <div className="mx-auto w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
               <CheckCircle2 className="h-10 w-10 text-success" />
             </div>
-            <h2 className="text-3xl font-bold text-foreground">You're All Set! 🎉</h2>
-            <p className="text-lg text-muted-foreground max-w-md mx-auto">
-              Your clinic is configured and ready. Your AI assistant will now handle calls, messages, and help you manage your front office.
+            <h2 className="text-3xl sm:text-2xl font-bold text-foreground">You're All Set! 🎉</h2>
+            <p className="text-lg sm:text-base text-muted-foreground max-w-md mx-auto">
+              Your clinic is configured and ready. Your AI assistant will now help manage your front office operations.
             </p>
             
             <Card className="max-w-md mx-auto border-0 shadow-lg bg-gradient-to-br from-primary/10 to-secondary/10">
@@ -158,22 +159,22 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
                 <div className="flex gap-3">
                   <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-sm">Configure your assistant</p>
-                    <p className="text-xs text-muted-foreground">Set up phone modes and messaging channels</p>
+                    <p className="font-semibold text-sm">Monitor your assistant</p>
+                    <p className="text-xs text-muted-foreground">View tasks and communications in the dashboard</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
                   <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-sm">Add knowledge base content</p>
-                    <p className="text-xs text-muted-foreground">Help your assistant answer common questions</p>
+                    <p className="font-semibold text-sm">Add knowledge base</p>
+                    <p className="text-xs text-muted-foreground">Help your AI answer specific questions</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
                   <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-sm">Set your schedule</p>
-                    <p className="text-xs text-muted-foreground">Let patients know when you're available</p>
+                    <p className="font-semibold text-sm">Invite your team</p>
+                    <p className="text-xs text-muted-foreground">Collaborate with staff members</p>
                   </div>
                 </div>
               </CardContent>

@@ -13,7 +13,7 @@ import { PhoneVerificationDialog } from "./PhoneVerificationDialog";
 
 interface OnboardingChannelsProps {
   clinicId: string;
-  onChannelsConnected?: (hasConnection: boolean) => void;
+  onChannelsConnected?: (hasMinimumChannels: boolean, hasPhone?: boolean) => void;
 }
 
 export const OnboardingChannels = ({ clinicId, onChannelsConnected }: OnboardingChannelsProps) => {
@@ -39,8 +39,10 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
   }, [clinicId]);
 
   useEffect(() => {
-    const hasAnyConnection = Object.values(connectionStatus).some(status => status);
-    onChannelsConnected?.(hasAnyConnection);
+    // Count connected channels and check for phone
+    const connectedCount = Object.values(connectionStatus).filter(status => status).length;
+    const hasPhone = connectionStatus.phone;
+    onChannelsConnected?.(connectedCount >= 2, hasPhone);
   }, [connectionStatus]);
 
   const loadClinicData = async () => {
@@ -189,19 +191,25 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
   };
 
 
-  const hasAnyConnection = Object.values(connectionStatus).some(status => status);
+  const connectedCount = Object.values(connectionStatus).filter(status => status).length;
+  const hasMinimumConnections = connectedCount >= 2;
 
   return (
     <div className="space-y-4">
       {/* Connection Summary */}
-      <Card className={hasAnyConnection ? "border-success/50 bg-success/5" : "border-warning/50 bg-warning/5"}>
+      <Card className={hasMinimumConnections ? "border-success/50 bg-success/5" : "border-warning/50 bg-warning/5"}>
         <CardContent className="pt-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">
-              {hasAnyConnection 
-                ? "✅ Great! You have at least one channel connected" 
-                : "⚠️ Connect at least one channel to continue"}
-            </p>
+            <div className="flex-1">
+              <p className="text-sm font-medium mb-1">
+                {hasMinimumConnections 
+                  ? "✅ Perfect! You have enough channels connected" 
+                  : `⚠️ Connect at least 2 channels to continue (${connectedCount}/2)`}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Multiple channels help ensure you never miss a patient message
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
