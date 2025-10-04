@@ -278,7 +278,7 @@ const Auth = () => {
           <div className="mb-4 text-center">
             <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
               {step === "email" 
-                ? "Get Started" 
+                ? "Get Started With Front Office" 
                 : step === "code"
                   ? "Enter Verification Code"
                   : isLogin 
@@ -287,7 +287,7 @@ const Auth = () => {
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === "email" 
-                ? "Start your journey to better patient engagement" 
+                ? "Enter your email to get started." 
                 : step === "code"
                   ? "Check your email for the 6-digit code"
                   : isLogin 
