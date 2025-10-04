@@ -470,30 +470,21 @@ const Auth = () => {
 
           {/* Toggle between login/signup */}
           {step === "auth" && (
-            <div className="mt-6 text-center text-sm space-y-2">
+            <div className="mt-6 text-center text-sm">
+              <span className="text-muted-foreground">
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
+              </span>
               <button
-                onClick={() => setStep("email")}
-                className="text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setPassword("");
+                  setFullName("");
+                }}
+                className="font-medium text-primary hover:underline"
                 disabled={loading}
               >
-                ← Change email
+                {isLogin ? "Create an account" : "Sign in"}
               </button>
-              <div>
-                <span className="text-muted-foreground">
-                  {isLogin ? "Don't have an account? " : "Already have an account? "}
-                </span>
-                <button
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setPassword("");
-                    setFullName("");
-                  }}
-                  className="font-medium text-primary hover:underline"
-                  disabled={loading}
-                >
-                  {isLogin ? "Create an account" : "Sign in"}
-                </button>
-              </div>
             </div>
           )}
         </Card>
