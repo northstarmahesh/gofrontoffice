@@ -4,15 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClinicInfo } from "./clinic/ClinicInfo";
 import { ResourcesManager } from "./clinic/ResourcesManager";
 import { TeamManagement } from "./clinic/TeamManagement";
-import { ConnectedServices } from "./clinic/ConnectedServices";
 import { ClinicOnboarding } from "./clinic/ClinicOnboarding";
 import { IntegrationsTools } from "./clinic/IntegrationsTools";
-import { TaskRouting } from "./clinic/TaskRouting";
 import { toast } from "sonner";
 
 export const ClinicManagement = () => {
   const [clinicId, setClinicId] = useState<string | null>(null);
-  const [locationId, setLocationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState(false);
   const [defaultTab, setDefaultTab] = useState<string>("info");
@@ -46,21 +43,16 @@ export const ClinicManagement = () => {
         setClinicId(clinicUser.clinic_id);
         setHasClinic(true);
         
-        // Load first location for this clinic
+        // Check if social accounts are connected to default to tools tab
         const { data: locationData } = await supabase
           .from("clinic_locations")
-          .select("id, instagram_connected, facebook_connected")
+          .select("instagram_connected, facebook_connected")
           .eq("clinic_id", clinicUser.clinic_id)
           .limit(1)
           .maybeSingle();
         
-        if (locationData) {
-          setLocationId(locationData.id);
-          
-          // If social accounts aren't connected, default to tools tab
-          if (!locationData.instagram_connected && !locationData.facebook_connected) {
-            setDefaultTab("tools");
-          }
+        if (locationData && !locationData.instagram_connected && !locationData.facebook_connected) {
+          setDefaultTab("tools");
         }
       }
     } catch (error) {
@@ -99,19 +91,18 @@ export const ClinicManagement = () => {
       </div>
 
       <Tabs value={defaultTab} onValueChange={setDefaultTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="info">Info</TabsTrigger>
           <TabsTrigger value="intelligence">Assistant Intelligence</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
-          <TabsTrigger value="routing">Task Routing</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="info" className="mt-6">
+        <TabsContent value="info" className="mt-6 space-y-6">
           <ClinicInfo 
             clinicId={clinicId!} 
             onNavigateToTools={() => setDefaultTab("tools")}
           />
+          <TeamManagement clinicId={clinicId!} />
         </TabsContent>
 
         <TabsContent value="intelligence" className="mt-6">
@@ -120,20 +111,6 @@ export const ClinicManagement = () => {
 
         <TabsContent value="tools" className="mt-6">
           <IntegrationsTools clinicId={clinicId!} />
-        </TabsContent>
-
-        <TabsContent value="routing" className="mt-6">
-          {locationId ? (
-            <TaskRouting clinicId={clinicId!} locationId={locationId} />
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Please create a location first to configure task routing</p>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="team" className="mt-6">
-          <TeamManagement clinicId={clinicId!} />
         </TabsContent>
       </Tabs>
     </div>
