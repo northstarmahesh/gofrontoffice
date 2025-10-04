@@ -85,14 +85,14 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
       throw new Error('AI configuration error');
     }
 
-    const aiResponse = await fetch('https://api.lovable.app/v1/chat', {
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${lovableApiKey}`,
       },
       body: JSON.stringify({
-        model: 'openai/gpt-5-mini',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userInput }
@@ -101,7 +101,9 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
     });
 
     if (!aiResponse.ok) {
-      throw new Error('AI API request failed');
+      const errorText = await aiResponse.text();
+      console.error('AI API error:', aiResponse.status, errorText);
+      throw new Error(`AI API request failed: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
