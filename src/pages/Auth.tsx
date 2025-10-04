@@ -35,13 +35,37 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleEmailContinue = (e: React.FormEvent) => {
+  const handleEmailContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
       toast.error("Please enter your email");
       return;
     }
-    setStep("auth");
+
+    setLoading(true);
+    try {
+      // Check if user exists by attempting to sign in with a dummy password
+      // This will fail but give us an error message that indicates if user exists
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: 'dummy-password-check',
+      });
+
+      // "Invalid login credentials" means user exists but wrong password
+      // "Email not confirmed" also means user exists
+      // Any other error likely means user doesn't exist
+      if (error) {
+        const userExists = error.message.includes('Invalid login credentials') || 
+                          error.message.includes('Email not confirmed');
+        setIsLogin(userExists);
+      }
+    } catch (error) {
+      // Default to signup if check fails
+      setIsLogin(false);
+    } finally {
+      setLoading(false);
+      setStep("auth");
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -327,7 +351,7 @@ const Auth = () => {
               </button>
               <div>
                 <span className="text-muted-foreground">
-                  {isLogin ? "Already have an account? " : "New here? "}
+                  {isLogin ? "Don't have an account? " : "Already have an account? "}
                 </span>
                 <button
                   onClick={() => {
@@ -338,7 +362,7 @@ const Auth = () => {
                   className="font-medium text-primary hover:underline"
                   disabled={loading}
                 >
-                  {isLogin ? "Sign in" : "Create an account"}
+                  {isLogin ? "Create an account" : "Sign in"}
                 </button>
               </div>
             </div>
