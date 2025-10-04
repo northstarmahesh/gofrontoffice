@@ -236,6 +236,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         "Add note about teeth sensitivity to patient file"
       ],
       duration: "4m 32s",
+      draftMessage: "Hi Sarah! Thanks for calling about our teeth whitening services. I'm happy to help!\n\nFor sensitive teeth, we offer a gentle whitening treatment that's specifically designed for this. Our consultation is 500 SEK (deducted from treatment if you proceed).\n\nFull treatment pricing:\n• In-office whitening: 3,500 SEK\n• Take-home kit: 2,200 SEK\n• Sensitivity treatment (if needed): 800 SEK\n\nWould you like to book a consultation? I have availability:\n• Tomorrow 2:00 PM\n• Thursday 10:30 AM\n• Friday 1:00 PM\n\nLet me know what works best for you!",
     },
     {
       id: "dummy3",
