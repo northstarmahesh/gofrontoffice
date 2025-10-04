@@ -47,6 +47,7 @@ All colors MUST be HSL.
     --success: 145 70% 45%;
     --warning: 35 95% 55%;
     --info: 210 90% 55%;
+    --auth-bg: 198 30% 31%;
     
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(210 90% 48%), hsl(210 90% 65%));

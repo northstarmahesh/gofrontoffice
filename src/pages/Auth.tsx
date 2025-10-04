@@ -178,68 +178,75 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary via-primary to-primary-light flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[hsl(var(--auth-bg))] flex flex-col lg:flex-row">
       {/* Left Column - Value Proposition */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-center p-12 text-white">
         <div className="max-w-xl">
-          {/* Logo and Badge */}
+          {/* Logo */}
           <div className="mb-8">
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-16 w-auto mb-6 brightness-0 invert"
+              className="h-16 w-auto mb-12 brightness-0 invert"
             />
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium">
-              <span className="text-lg">🏆</span>
-              <span>Trusted by 1,000+ healthcare businesses</span>
-            </div>
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+          <h1 className="text-4xl lg:text-5xl font-bold mb-12 leading-tight">
             Double your efficiency with{" "}
             <span className="text-yellow-300">Front Office</span>
           </h1>
 
-          {/* Testimonials */}
-          <div className="space-y-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-              <div className="flex gap-1 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-300">⭐</span>
-                ))}
+          {/* Benefits */}
+          <div className="space-y-6 mb-12">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
+                🤖
               </div>
-              <p className="text-sm lg:text-base italic mb-4">
-                "Our AI receptionist has been a game-changer. We used to miss calls when we were under the hood, but now every customer gets immediate attention. Bookings are up 40%!"
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
-                  👤
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Sarah Johnson</p>
-                  <p className="text-xs text-white/80">Johnson's Auto Repair</p>
-                </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1">AI-Powered Receptionist</h3>
+                <p className="text-sm text-white/80">Never miss a call again. Our AI handles patient inquiries, bookings, and FAQs 24/7 with natural conversation.</p>
               </div>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-              <div className="flex gap-1 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-300">⭐</span>
-                ))}
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
+                📅
               </div>
-              <p className="text-sm lg:text-base italic mb-4">
-                "The appointment scheduling feature is incredible. Patients can book 24/7 and the AI handles rescheduling perfectly. It's like having a full-time receptionist at a fraction of the cost."
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
-                  👨‍⚕️
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Dr. Mike Chen</p>
-                  <p className="text-xs text-white/80">Smile Dental</p>
-                </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1">Smart Scheduling</h3>
+                <p className="text-sm text-white/80">Automated appointment booking and rescheduling that syncs with your calendar and sends reminders.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
+                💬
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1">Multi-Channel Support</h3>
+                <p className="text-sm text-white/80">Connect with patients via phone, SMS, WhatsApp, Instagram, and Facebook Messenger from one dashboard.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Single Testimonial */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+            <div className="flex gap-1 mb-3">
+              {[...Array(5)].map((_, i) => (
+                <span key={i} className="text-yellow-300">⭐</span>
+              ))}
+            </div>
+            <p className="text-sm lg:text-base italic mb-4">
+              "Our AI receptionist has been a game-changer. We used to miss calls when we were under the hood, but now every customer gets immediate attention. Bookings are up 40%!"
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                👤
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Sarah Johnson</p>
+                <p className="text-xs text-white/80">Johnson&apos;s Auto Repair</p>
               </div>
             </div>
           </div>
