@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Mail, Users, Clock, DollarSign, ExternalLink, Instagram, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ChannelConnectionHub } from "./ChannelConnectionHub";
 
 interface IntegrationsToolsProps {
   clinicId: string;
@@ -160,8 +161,23 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Service Categories */}
+    <div className="space-y-8">
+      {/* Communication Channels - Primary Section */}
+      <ChannelConnectionHub clinicId={clinicId} />
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            Business Integrations
+          </span>
+        </div>
+      </div>
+
+      {/* Service Categories - Secondary Section */}
       <div className="space-y-6">
         {serviceCategories.map((category) => {
           const CategoryIcon = category.icon;
