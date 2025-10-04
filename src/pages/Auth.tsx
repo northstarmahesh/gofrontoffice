@@ -308,21 +308,21 @@ const Auth = () => {
           <div className="mb-4 text-center">
             <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
               {step === "email" 
-                ? "Get Started With Front Office"
+                ? "Create Your Admin Account"
                 : step === "code"
                   ? "Enter Verification Code"
                   : isLogin 
                     ? "Welcome Back" 
-                    : "Get Started With Your Account"}
+                    : "Create Your Admin Account"}
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === "email" 
-                ? "Enter your email to get started."
+                ? "This is your personal admin account. You'll add business contact info later."
                 : step === "code"
                   ? "Check your email for the 6-digit code"
                   : isLogin 
-                    ? "Sign in to your account" 
-                    : "You can change these details later on"}
+                    ? "Sign in to your admin account" 
+                    : "Your personal admin email and password"}
             </p>
           </div>
 
@@ -330,16 +330,19 @@ const Auth = () => {
           {step === "email" && (
             <form onSubmit={handleEmailContinue} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Your Email (Admin Account)</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@clinic.com"
+                  placeholder="your.name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                   autoFocus
                 />
+                <p className="text-xs text-muted-foreground">
+                  Not your business email - this is for you to log in
+                </p>
               </div>
 
               <Button
@@ -373,11 +376,11 @@ const Auth = () => {
           {step === "auth" && (
             <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email-auth">Email</Label>
+                <Label htmlFor="email-auth">Your Email (Admin Account)</Label>
                 <Input
                   id="email-auth"
                   type="email"
-                  placeholder="you@clinic.com"
+                  placeholder="your.name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
@@ -386,11 +389,11 @@ const Auth = () => {
 
               {!isLogin && (
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
+                  <Label htmlFor="fullName">Your Full Name</Label>
                   <Input
                     id="fullName"
                     type="text"
-                    placeholder="Dr. Jane Smith"
+                    placeholder="Jane Smith"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     disabled={loading}
