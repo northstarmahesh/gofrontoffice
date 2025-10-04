@@ -325,20 +325,6 @@ const Auth = () => {
           {/* Auth Step - Login or Signup */}
           {step === "auth" && (
             <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4">
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Dr. Jane Smith"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-              )}
-
               <div className="space-y-2">
                 <Label htmlFor="email-auth">Email</Label>
                 <Input
@@ -351,6 +337,21 @@ const Auth = () => {
                 />
               </div>
 
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Dr. Jane Smith"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    disabled={loading}
+                    autoFocus
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -360,7 +361,7 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
-                  autoFocus
+                  autoFocus={isLogin}
                 />
               </div>
 
