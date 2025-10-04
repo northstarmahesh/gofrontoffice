@@ -223,7 +223,7 @@ const Auth = () => {
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-16 lg:h-20 w-auto"
+              className="h-24 lg:h-32 w-auto"
             />
           </div>
 
