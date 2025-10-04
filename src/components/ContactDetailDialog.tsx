@@ -425,10 +425,23 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       <DialogContent className="max-w-4xl max-h-[95vh]">
         <DialogHeader>
           <div className="space-y-2">
-            <DialogTitle className="text-2xl flex items-center gap-2">
-              <User className="h-5 w-5" />
-              {isEditing ? "Edit Contact" : (contact?.name || contactName || "Unknown")}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <User className="h-5 w-5" />
+                {isEditing ? "Edit Contact" : (contact?.name || contactName || "Unknown")}
+              </DialogTitle>
+              {!isEditing && onViewFullProfile && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={onViewFullProfile}
+                  className="flex items-center gap-2"
+                >
+                  <User className="h-4 w-4" />
+                  View Full Contact
+                </Button>
+              )}
+            </div>
             {!isEditing && contactInfo && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4" />
@@ -525,9 +538,11 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                       Complete Conversation History ({activityHistory.length} interactions)
                     </h3>
                     
-                    {/* Chat-style messages - chronological order */}
+                    {/* Chat-style messages - chronological order, excluding drafts */}
                     <div className="space-y-4">
-                      {activityHistory.map((log) => {
+                      {activityHistory
+                        .filter(log => !isFromAI(log.title, log.type)) // Exclude draft messages
+                        .map((log) => {
                         const fromAI = isFromAI(log.title, log.type);
                         const phoneCall = isPhoneCall(log.type);
                         const channelColor = getChannelColor(log.type);
@@ -714,7 +729,8 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Type your message..."
-                        rows={3}
+                        rows={8}
+                        className="min-h-[160px]"
                       />
                       <Button 
                         onClick={handleSendMessage} 
