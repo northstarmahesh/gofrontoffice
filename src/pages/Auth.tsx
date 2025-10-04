@@ -487,29 +487,7 @@ const Auth = () => {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground italic mb-3">
-                    "We've saved over 25 hours per week since implementing Front Office. Our AI assistant handles appointment bookings flawlessly."
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                      🦷
-                    </div>
-                    <div>
-                      <p className="font-medium text-xs">Dr. Anna Bergström</p>
-                      <p className="text-[10px] text-muted-foreground">Solna Dental Clinic</p>
-                    </div>
-                  </div>
-                </div>
-              </CarouselItem>
-
-              <CarouselItem>
-                <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-500 text-xs">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground italic mb-3">
-                    "Our booking rate increased by 60% after switching to Front Office. The AI handles Instagram DMs and Facebook messages perfectly."
+                    "Our booking rate increased by 60% after switching to Front Office. Our digital assistant handles Instagram DMs, sms-es perfectly replying accurately!"
                   </p>
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
@@ -531,7 +509,29 @@ const Auth = () => {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground italic mb-3">
-                    "The co-pilot mode is brilliant. Our team gets AI suggestions for complex cases, and the system handles routine inquiries automatically."
+                    "I love our digital assistant. It handles 80% of all incoming requests perfectly. And it send me summaries via text at the end of the day with my todos!"
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                      🦷
+                    </div>
+                    <div>
+                      <p className="font-medium text-xs">Dr. Anna Bergström</p>
+                      <p className="text-[10px] text-muted-foreground">Solna Dental Clinic</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+
+              <CarouselItem>
+                <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
+                  <div className="flex gap-0.5 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-500 text-xs">⭐</span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground italic mb-3">
+                    "Lots of AIs sound good but don't work. Front Office actually works as the assistant is flexible and trustworthy!"
                   </p>
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
