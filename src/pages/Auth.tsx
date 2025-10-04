@@ -19,7 +19,7 @@ import { Phone, MessageSquare, Calendar, AlarmClock, MessageCircle, Target } fro
 const Auth = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<"email" | "auth" | "code">("email");
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -287,7 +287,7 @@ const Auth = () => {
           <div className="mb-4 text-center">
             <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
               {step === "email" 
-                ? (isLogin ? "Welcome Back" : "Get Started With Front Office")
+                ? "Get Started With Front Office"
                 : step === "code"
                   ? "Enter Verification Code"
                   : isLogin 
@@ -296,7 +296,7 @@ const Auth = () => {
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === "email" 
-                ? (isLogin ? "Sign in to your account" : "Enter your email to get started.")
+                ? "Enter your email to get started."
                 : step === "code"
                   ? "Check your email for the 6-digit code"
                   : isLogin 
@@ -331,15 +331,15 @@ const Auth = () => {
 
               <div className="text-center text-sm">
                 <span className="text-muted-foreground">
-                  {isLogin ? "New to Front Office? " : "Already have an account? "}
+                  Already have an account?{" "}
                 </span>
                 <button
                   type="button"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => setIsLogin(true)}
                   className="font-medium text-primary hover:underline"
                   disabled={loading}
                 >
-                  {isLogin ? "Create an account" : "Sign in"}
+                  Sign in
                 </button>
               </div>
             </form>
