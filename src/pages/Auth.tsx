@@ -303,68 +303,6 @@ const Auth = () => {
             </div>
           </div>
 
-          {/* Testimonials Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5">
-              <div className="flex gap-0.5 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-300">⭐</span>
-                ))}
-              </div>
-              <p className="text-sm italic mb-4 leading-relaxed">
-                "We've saved over 25 hours per week since implementing Front Office. Our AI assistant handles appointment bookings flawlessly."
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
-                  🦷
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Dr. Anna Bergström</p>
-                  <p className="text-xs text-white/80">Solna Dental Clinic</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5">
-              <div className="flex gap-0.5 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-300">⭐</span>
-                ))}
-              </div>
-              <p className="text-sm italic mb-4 leading-relaxed">
-                "Our booking rate increased by 60% after switching to Front Office. The AI handles Instagram DMs and Facebook messages perfectly."
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
-                  💉
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Lisa Andersson</p>
-                  <p className="text-xs text-white/80">Stockholm Botox Clinic</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5">
-              <div className="flex gap-0.5 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-300">⭐</span>
-                ))}
-              </div>
-              <p className="text-sm italic mb-4 leading-relaxed">
-                "The co-pilot mode is brilliant. Our team gets AI suggestions for complex cases, and the system handles routine inquiries automatically."
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
-                  🏥
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Dr. Erik Johansson</p>
-                  <p className="text-xs text-white/80">HealthCare Plus</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -565,6 +503,49 @@ const Auth = () => {
             </div>
           )}
         </Card>
+
+        {/* Testimonials - Subtle */}
+        <div className="w-full max-w-md mt-6 space-y-3">
+          <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
+            <div className="flex gap-0.5 mb-2">
+              {[...Array(5)].map((_, i) => (
+                <span key={i} className="text-yellow-500 text-xs">⭐</span>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground italic mb-3">
+              "We've saved over 25 hours per week since implementing Front Office. Our AI assistant handles appointment bookings flawlessly."
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                🦷
+              </div>
+              <div>
+                <p className="font-medium text-xs">Dr. Anna Bergström</p>
+                <p className="text-[10px] text-muted-foreground">Solna Dental Clinic</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
+            <div className="flex gap-0.5 mb-2">
+              {[...Array(5)].map((_, i) => (
+                <span key={i} className="text-yellow-500 text-xs">⭐</span>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground italic mb-3">
+              "Our booking rate increased by 60% after switching to Front Office. The AI handles Instagram DMs and Facebook messages perfectly."
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                💉
+              </div>
+              <div>
+                <p className="font-medium text-xs">Lisa Andersson</p>
+                <p className="text-[10px] text-muted-foreground">Stockholm Botox Clinic</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
