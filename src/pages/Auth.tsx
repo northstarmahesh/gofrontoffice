@@ -14,7 +14,7 @@ import Autoplay from "embla-carousel-autoplay";
 
 import { toast } from "sonner";
 import logo from "@/assets/front-office-logo.png";
-import { Instagram, Facebook, Phone, MessageSquare, Calendar } from "lucide-react";
+import { Phone, MessageSquare, Calendar, AlarmClock, MessageCircle, Target } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -186,137 +186,92 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--auth-bg))] flex flex-col lg:flex-row">
-      {/* Mobile Header - Visible only on mobile */}
-      <div className="lg:hidden bg-[hsl(var(--auth-bg))] text-white p-6 text-center">
-        <img 
-          src={logo} 
-          alt="Front Office" 
-          className="mx-auto mb-4 h-10 w-auto brightness-0 invert"
-        />
-        <h1 className="text-lg font-bold mb-2">
-          Meet Your New Digital Assistant: <span className="text-yellow-300">Always On. No Vacation Needed.</span>
-        </h1>
-        <p className="text-xs text-white/80">Save 5+ hours weekly • All channels • Always in control</p>
-      </div>
-
       {/* Left Column - Value Proposition */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center p-8 xl:p-12 text-white">
-        <div className="max-w-xl">
+      <div className="lg:w-1/2 flex flex-col justify-center p-8 lg:p-12 xl:p-16 text-white">
+        <div className="max-w-xl mx-auto lg:mx-0">
           {/* Logo */}
-          <div className="mb-6">
+          <div className="mb-8">
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-12 w-auto mb-6 brightness-0 invert"
+              className="h-10 lg:h-12 w-auto brightness-0 invert"
             />
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-3xl xl:text-4xl font-bold mb-6 leading-tight">
-            Meet Your New Digital Assistant:{" "}
-            <span className="text-yellow-300">Always On. No Vacation Needed.</span>
+          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight">
+            Meet Your New Digital Assistant
           </h1>
+          <p className="text-xl lg:text-2xl text-yellow-300 font-semibold mb-8">
+            24x7 Available. No Vacation Needed.
+          </p>
 
           {/* Benefits */}
-          <div className="space-y-4 mb-6">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-xl flex-shrink-0">
-                ⏰
+          <div className="space-y-6 mb-8">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <AlarmClock className="text-red-400" size={24} />
               </div>
               <div>
-                <h3 className="text-base font-semibold mb-0.5">Save 5+ Hours/Week</h3>
-                <p className="text-xs text-white/80">No more boring admin tasks - focus on what matters.</p>
+                <h3 className="text-lg font-semibold mb-1">Save 5+ Hours/Week</h3>
+                <p className="text-sm text-white/80">No more boring admin tasks or answering repetitive questions</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-xl flex-shrink-0">
-                💬
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="text-blue-400" size={24} />
               </div>
               <div>
-                <h3 className="text-base font-semibold mb-0.5">All Channels, One Place</h3>
-                <p className="text-xs text-white/80">Phone, SMS, WhatsApp, Instagram, and Facebook in one dashboard.</p>
+                <h3 className="text-lg font-semibold mb-1">Multiple Channels, 1 Assistant</h3>
+                <p className="text-sm text-white/80">Your assistant can email, sms, speak, text and integrate with your business systems.</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-xl flex-shrink-0">
-                🎯
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                <Target className="text-purple-400" size={24} />
               </div>
               <div>
-                <h3 className="text-base font-semibold mb-0.5">Always in Control</h3>
-                <p className="text-xs text-white/80">Choose between co-pilot or auto-pilot modes to control how your assistant responds.</p>
+                <h3 className="text-lg font-semibold mb-1">Always In Control</h3>
+                <p className="text-sm text-white/80">Your brand, your words, your assistant.</p>
               </div>
             </div>
           </div>
 
-          {/* Integrations - Animated Ticker */}
-          <div className="mb-6 overflow-hidden">
-            <p className="text-xs text-white/60 mb-3 text-center">Integrates seamlessly with</p>
-            <div className="relative">
-              <div className="flex animate-[scroll_20s_linear_infinite] gap-6">
-                {/* First set */}
-                <div className="flex items-center gap-6 shrink-0">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-                    <Instagram size={20} className="text-white" />
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                    <Facebook size={20} className="text-white" />
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-                    <Phone size={20} className="text-white" />
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg">
-                    <MessageSquare size={20} className="text-white" />
-                  </div>
-                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg">
-                    <span className="text-xs text-white font-semibold">WhatsApp</span>
-                  </div>
-                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg">
-                    <Calendar size={18} className="text-white mr-1.5" />
-                    <span className="text-xs text-white font-semibold">Bokadirekt</span>
-                  </div>
-                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-lg">
-                    <span className="text-xs text-white font-semibold">ClinicBuddy</span>
-                  </div>
-                </div>
-                {/* Duplicate set for seamless loop */}
-                <div className="flex items-center gap-6 shrink-0">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-                    <Instagram size={20} className="text-white" />
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                    <Facebook size={20} className="text-white" />
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-                    <Phone size={20} className="text-white" />
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg">
-                    <MessageSquare size={20} className="text-white" />
-                  </div>
-                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg">
-                    <span className="text-xs text-white font-semibold">WhatsApp</span>
-                  </div>
-                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg">
-                    <Calendar size={18} className="text-white mr-1.5" />
-                    <span className="text-xs text-white font-semibold">Bokadirekt</span>
-                  </div>
-                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-lg">
-                    <span className="text-xs text-white font-semibold">ClinicBuddy</span>
-                  </div>
-                </div>
+          {/* Integrations */}
+          <div className="hidden lg:block">
+            <p className="text-sm text-white/60 mb-4">Integrates seamlessly with</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="px-4 py-2 rounded-full bg-blue-500/20 border border-blue-500/30">
+                <span className="text-sm text-white font-medium">Facebook</span>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30 flex items-center gap-2">
+                <Phone size={16} className="text-green-400" />
+                <span className="text-sm text-white font-medium">Phone</span>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-blue-400/20 border border-blue-400/30 flex items-center gap-2">
+                <MessageSquare size={16} className="text-blue-400" />
+                <span className="text-sm text-white font-medium">SMS</span>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-green-400/20 border border-green-400/30">
+                <span className="text-sm text-white font-medium">WhatsApp</span>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center gap-2">
+                <Calendar size={16} className="text-orange-400" />
+                <span className="text-sm text-white font-medium">Bokadirekt</span>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-cyan-500/20 border border-cyan-500/30">
+                <span className="text-sm text-white font-medium">ClinicBuddy</span>
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
       {/* Right Column - Auth Card */}
-      <div className="flex-1 flex items-center justify-center p-4 lg:p-8 bg-background/95 backdrop-blur-sm min-h-[calc(100vh-200px)] lg:min-h-screen">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 lg:p-8 bg-background/95 backdrop-blur-sm">
         <Card className="w-full max-w-md border-0 p-6 lg:p-8 shadow-2xl">
-          {/* Mobile Logo - Removed as it's now in mobile header */}
-
           {/* Card Header */}
           <div className="mb-4 text-center">
             <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
@@ -510,7 +465,7 @@ const Auth = () => {
           )}
         </Card>
 
-        {/* Testimonials Carousel - Subtle */}
+        {/* Testimonials Carousel - Below Card */}
         <div className="w-full max-w-md mt-6">
           <Carousel
             opts={{
