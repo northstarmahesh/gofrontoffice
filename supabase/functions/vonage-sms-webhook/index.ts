@@ -12,8 +12,12 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const { from, to, text, messageId } = body;
+    // Vonage sends SMS data as form-urlencoded, not JSON
+    const formData = await req.formData();
+    const from = formData.get('msisdn') as string; // sender's number
+    const to = formData.get('to') as string; // your Vonage number
+    const text = formData.get('text') as string; // message content
+    const messageId = formData.get('messageId') as string;
     
     console.log('Incoming SMS from:', from, 'to:', to, 'text:', text);
 
