@@ -12,6 +12,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface TasksProps {
   onNavigateToContact?: (contactName: string) => void;
@@ -46,6 +47,27 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       loadTasks();
       loadActivityLogs();
     }
+
+    // Set up realtime subscription for tasks
+    const tasksChannel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          console.log('Task changed, refreshing...');
+          loadTasks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(tasksChannel);
+    };
   }, [refreshKey, selectedLocation, selectedDate]);
 
   const loadLocations = async () => {
@@ -247,6 +269,64 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
   const handleTaskComplete = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleQuickSend = async (task: any, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    
+    if (!task.draftMessage || !task.contact_info) {
+      toast.error("Missing draft message or contact info");
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Send the message via the appropriate channel
+      const { error: logError } = await supabase
+        .from('activity_logs')
+        .insert({
+          user_id: user.id,
+          clinic_id: task.clinic_id,
+          type: task.source,
+          title: `${task.source.toUpperCase()} message`,
+          summary: task.draftMessage,
+          contact_name: task.contact_name,
+          contact_info: task.contact_info,
+          status: 'completed',
+          direction: 'outbound'
+        });
+
+      if (logError) throw logError;
+
+      // Mark task as completed
+      if (task.id) {
+        const { error: taskError } = await supabase
+          .from('tasks')
+          .update({ status: 'completed', completed_at: new Date().toISOString() })
+          .eq('id', task.id);
+
+        if (taskError) throw taskError;
+      }
+
+      // Update draft_replies status if exists
+      if (task.related_log_id) {
+        const { error: draftError } = await supabase
+          .from('draft_replies')
+          .update({ status: 'approved', approved_at: new Date().toISOString() })
+          .eq('log_id', task.related_log_id)
+          .eq('status', 'pending');
+
+        if (draftError) console.error("Error updating draft:", draftError);
+      }
+
+      toast.success(`Message sent via ${task.source.toUpperCase()}`);
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
+    }
   };
 
   const assistantTasks = [
@@ -452,12 +532,12 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     const ChannelIcon = getChannelIcon(task.source);
     const taskType = getTaskTypeLabel(task);
     const instruction = getTaskInstruction(task);
+    const hasDraft = task.draftMessage;
     
     return (
       <Card
         key={task.id}
-        className="cursor-pointer border-2 border-yellow-accent/20 p-6 shadow-lg transition-all hover:shadow-xl hover:border-yellow-accent/40 bg-card"
-        onClick={() => handleTaskClick(task)}
+        className="border-2 border-yellow-accent/20 p-6 shadow-lg transition-all hover:shadow-xl hover:border-yellow-accent/40 bg-card"
       >
         <div className="space-y-4">
           {/* Header: Type badge and Channel */}
@@ -471,8 +551,11 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             </Badge>
           </div>
 
-          {/* Main content */}
-          <div className="space-y-3">
+          {/* Main content - clickable area */}
+          <div 
+            className="space-y-3 cursor-pointer" 
+            onClick={() => handleTaskClick(task)}
+          >
             {/* Customer/Contact name */}
             {isContactTask && task.contact_name && (
               <div>
@@ -532,14 +615,49 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                 {instruction}
               </p>
             </div>
+
+            {/* Show draft message inline if available */}
+            {hasDraft && (
+              <div className="space-y-2 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">AI Draft</Badge>
+                </div>
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                  {task.draftMessage}
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Footer: Time and CTA */}
+          {/* Footer: Time and Actions */}
           <div className="flex items-center justify-between pt-2 border-t">
             <span className="text-sm text-muted-foreground">{task.time}</span>
-            <div className="flex items-center gap-2 text-primary font-medium text-sm">
-              {task.callSummary ? "Review & Complete" : task.draftMessage ? "Review & Send" : "Take Action"}
-              <ArrowRight className="h-4 w-4" />
+            <div className="flex items-center gap-2">
+              {hasDraft ? (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleTaskClick(task)}
+                    className="text-sm"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={(e) => handleQuickSend(task, e)}
+                    className="text-sm flex items-center gap-1"
+                  >
+                    <Send className="h-4 w-4" />
+                    Send
+                  </Button>
+                </>
+              ) : (
+                <div className="flex items-center gap-2 text-primary font-medium text-sm cursor-pointer" onClick={() => handleTaskClick(task)}>
+                  {task.callSummary ? "Review & Complete" : task.draftMessage ? "Review & Send" : "Take Action"}
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              )}
             </div>
           </div>
         </div>
