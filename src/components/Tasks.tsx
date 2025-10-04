@@ -660,21 +660,15 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
               )}
             </div>
 
-            {/* Instruction - What to do */}
-            <div className="flex items-start gap-2 p-4 rounded-lg bg-yellow-accent/10 border border-yellow-accent/30">
-              <AlertCircle className="h-5 w-5 text-yellow-accent flex-shrink-0 mt-0.5" />
-              <p className="text-sm font-medium text-foreground">
-                {instruction}
-              </p>
-            </div>
-
-            {/* Show draft message inline if available */}
+            {/* Show draft message inline if available - prominent yellow box */}
             {hasDraft && (
-              <div className="space-y-2 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className="text-xs">AI Draft</Badge>
+              <div className="space-y-3 p-5 rounded-lg bg-yellow-accent/10 border-2 border-yellow-accent/50 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-yellow-accent text-yellow-accent-foreground text-xs font-semibold">
+                    ⚡ AI Draft - Action Required
+                  </Badge>
                 </div>
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap font-medium">
                   {task.draftMessage}
                 </p>
               </div>
