@@ -242,16 +242,6 @@ const Auth = () => {
                 <p className="text-xs text-white/80">Choose between co-pilot or auto-pilot modes to control how your assistant responds.</p>
               </div>
             </div>
-
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-xl flex-shrink-0">
-                🤝
-              </div>
-              <div>
-                <h3 className="text-base font-semibold mb-0.5">Your New Colleague</h3>
-                <p className="text-xs text-white/80">Keeps learning about you and improving automatically. No vacation, extra benefits, or union membership needed.</p>
-              </div>
-            </div>
           </div>
 
           {/* Integrations - Animated Ticker */}
