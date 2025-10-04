@@ -597,33 +597,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         )}
       </div>
 
-      {/* Analytics */}
-      <div>
-        <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card
-                key={stat.label}
-                className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
-                    <Icon className={`h-8 w-8 ${stat.color}`} />
-                  </div>
-                  <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
-                  <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
-                  <p className={`text-xs font-medium ${stat.change.startsWith('+') ? 'text-success' : 'text-muted-foreground'}`}>
-                    {stat.change}
-                  </p>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Location Tabs */}
       {locations.length > 0 && (
         <Tabs value={selectedLocation} onValueChange={setSelectedLocation} className="w-full">
@@ -639,11 +612,41 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           {locations.map((location) => (
             <TabsContent key={location.id} value={location.id} className="space-y-6 mt-6">
               {todayHumanTasks.length === 0 ? (
-                <Card className="p-8 text-center border-2 border-dashed">
-                  <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-foreground mb-2">All caught up!</h3>
-                  <p className="text-muted-foreground">No pending tasks at the moment. Great job!</p>
-                </Card>
+                <>
+                  <Card className="p-12 text-center border-2 border-dashed bg-gradient-to-br from-primary/5 to-primary/10">
+                    <div className="text-8xl mb-4">🏖️</div>
+                    <h3 className="text-2xl font-bold text-foreground mb-2">You're absolutely crushing it!</h3>
+                    <p className="text-lg text-muted-foreground mb-4">Zero tasks. Zip. Nada. Nothing! 🎉</p>
+                    <p className="text-sm text-muted-foreground italic">Your AI assistant is handling everything like a boss.</p>
+                  </Card>
+
+                  {/* Analytics when no tasks */}
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {stats.map((stat) => {
+                        const Icon = stat.icon;
+                        return (
+                          <Card
+                            key={stat.label}
+                            className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                          >
+                            <div className="flex flex-col items-center text-center">
+                              <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
+                                <Icon className={`h-8 w-8 ${stat.color}`} />
+                              </div>
+                              <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
+                              <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
+                              <p className={`text-xs font-medium ${stat.change.startsWith('+') ? 'text-success' : 'text-muted-foreground'}`}>
+                                {stat.change}
+                              </p>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="flex items-center justify-between">
@@ -658,6 +661,33 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                   {/* Your Tasks */}
                   <div className="space-y-4">
                     {todayHumanTasks.map((task) => renderTaskCard(task, false))}
+                  </div>
+
+                  {/* Analytics below tasks */}
+                  <div className="pt-6 border-t">
+                    <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {stats.map((stat) => {
+                        const Icon = stat.icon;
+                        return (
+                          <Card
+                            key={stat.label}
+                            className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                          >
+                            <div className="flex flex-col items-center text-center">
+                              <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
+                                <Icon className={`h-8 w-8 ${stat.color}`} />
+                              </div>
+                              <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
+                              <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
+                              <p className={`text-xs font-medium ${stat.change.startsWith('+') ? 'text-success' : 'text-muted-foreground'}`}>
+                                {stat.change}
+                              </p>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
                   </div>
                 </>
               )}
