@@ -470,13 +470,13 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <TabsContent key={location.id} value={location.id} className="space-y-6 mt-6">
       {/* Needs Attention Section - TOP */}
       {pendingTasks.length > 0 && (
-        <Card className="border-0 p-6 shadow-lg bg-gradient-to-br from-warning/10 to-warning/5">
+        <Card className="border-2 border-yellow-accent/30 p-6 shadow-lg bg-gradient-to-br from-yellow-accent/15 to-yellow-accent/5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-xl font-bold text-foreground">Needs Your Attention</h3>
               <p className="text-sm text-muted-foreground">Tasks requiring immediate action</p>
             </div>
-            <Badge variant="outline" className="text-2xl font-bold px-4 py-2 bg-warning/20 border-warning text-warning">
+            <Badge variant="outline" className="text-2xl font-bold px-4 py-2 bg-yellow-accent border-yellow-accent text-secondary">
               {pendingTasks.length}
             </Badge>
           </div>
@@ -513,7 +513,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       )}
 
       {/* Welcome Banner */}
-      <div className={`rounded-2xl ${backgroundGradient} p-6 text-white shadow-lg transition-all duration-1000`}>
+      <div className={`rounded-2xl ${backgroundGradient} p-6 text-white shadow-lg transition-all duration-1000 border-2 border-yellow-accent/20`}>
         <div className="flex items-center gap-3 mb-2">
           <Bot className="h-8 w-8" />
           <h2 className="text-2xl font-bold">{greeting}! {emoji}</h2>
@@ -531,13 +531,13 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       </div>
 
       {/* AI Response System - Collapsible */}
-      <Card className="border-0 p-6 shadow-lg">
+      <Card className="border-2 border-primary/20 p-6 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
         <Collapsible open={aiSystemOpen} onOpenChange={setAiSystemOpen}>
           <CollapsibleTrigger className="w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-secondary/10 p-3">
-                  <Bot className="h-6 w-6 text-secondary" />
+                <div className="rounded-xl bg-primary/20 p-3 border-2 border-primary/30">
+                  <Bot className="h-6 w-6 text-primary" />
                 </div>
                 <div className="text-left">
                   <h3 className="text-xl font-bold text-foreground">AI Response System</h3>

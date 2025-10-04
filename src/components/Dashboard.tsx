@@ -64,7 +64,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-4">
       {/* Welcome Section */}
-      <div className={`rounded-2xl ${backgroundGradient} p-4 text-white shadow-lg transition-all duration-1000`}>
+      <div className={`rounded-2xl ${backgroundGradient} p-4 text-white shadow-lg transition-all duration-1000 border-2 border-yellow-accent/20`}>
         <h2 className="mb-1 text-xl font-bold">{greeting}! {emoji}</h2>
         <p className="text-xs opacity-90">
           Your assistant is active and handling all incoming communications
@@ -79,8 +79,8 @@ const Dashboard = () => {
       {/* ROI Metrics */}
       <div className="grid grid-cols-3 gap-2">
         {roiMetrics.map((metric) => (
-          <Card key={metric.label} className="border-0 p-3 text-center shadow-sm">
-            <div className="flex items-center justify-center gap-1 text-primary">
+          <Card key={metric.label} className="border-0 p-3 text-center shadow-sm bg-gradient-to-br from-yellow-accent/10 to-yellow-accent/5 hover:from-yellow-accent/15 hover:to-yellow-accent/10 transition-all">
+            <div className="flex items-center justify-center gap-1 text-yellow-accent">
               <TrendingUp className="h-3 w-3" />
               <p className="text-lg font-bold">{metric.value}</p>
             </div>
@@ -118,11 +118,11 @@ const Dashboard = () => {
       </div>
 
       {/* Pending Tasks Snapshot */}
-      <Card className="border-0 p-4 shadow-sm">
+      <Card className="border-0 p-4 shadow-sm bg-gradient-to-br from-primary/5 to-primary/10">
         <div className="mb-3 flex items-center gap-2">
           <ListTodo className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Your Pending Tasks</h3>
-          <Badge variant="outline" className="ml-auto text-xs">
+          <Badge variant="outline" className="ml-auto text-xs bg-yellow-accent/20 border-yellow-accent text-yellow-accent">
             {pendingTasks.length}
           </Badge>
         </div>

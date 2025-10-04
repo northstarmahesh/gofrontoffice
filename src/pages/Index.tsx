@@ -128,7 +128,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b-2 border-yellow-accent/20 bg-card/95 backdrop-blur-md shadow-sm">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
             <img 
@@ -141,7 +141,7 @@ const Index = () => {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="gap-2"
+            className="gap-2 hover:bg-accent"
           >
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">Logout</span>
