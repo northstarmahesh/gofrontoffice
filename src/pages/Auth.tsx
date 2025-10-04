@@ -13,7 +13,7 @@ import {
 import Autoplay from "embla-carousel-autoplay";
 
 import { toast } from "sonner";
-import logo from "@/assets/front-office-logo-new.png";
+import logo from "@/assets/front-office-logo-full-new.png";
 import { Phone, MessageSquare, Calendar, AlarmClock, MessageCircle, Target } from "lucide-react";
 
 const Auth = () => {
