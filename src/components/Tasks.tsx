@@ -237,6 +237,31 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       ],
       duration: "4m 32s",
       draftMessage: "Hi Sarah! Thanks for calling about our teeth whitening services. I'm happy to help!\n\nFor sensitive teeth, we offer a gentle whitening treatment that's specifically designed for this. Our consultation is 500 SEK (deducted from treatment if you proceed).\n\nFull treatment pricing:\n• In-office whitening: 3,500 SEK\n• Take-home kit: 2,200 SEK\n• Sensitivity treatment (if needed): 800 SEK\n\nWould you like to book a consultation? I have availability:\n• Tomorrow 2:00 PM\n• Thursday 10:30 AM\n• Friday 1:00 PM\n\nLet me know what works best for you!",
+      message_history: [
+        {
+          id: "call1",
+          title: "Incoming call",
+          type: "phone",
+          summary: "Call from Sarah Martinez - Duration: 4m 32s",
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
+          duration: "4m 32s",
+          direction: "inbound",
+        },
+        {
+          id: "call_summary1",
+          title: "AI Call Summary",
+          type: "call_summary",
+          summary: "Sarah called inquiring about teeth whitening services. She's interested in booking a consultation and asked about pricing. She mentioned she has sensitive teeth and wants to know if that's an issue.\n\nAction Items:\n• Send pricing information via SMS\n• Schedule consultation appointment\n• Add note about teeth sensitivity to patient file",
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3 + 1000 * 60).toISOString(), // Just after call
+        },
+        {
+          id: "draft2",
+          title: "AI Draft Response",
+          type: "draft",
+          summary: "Hi Sarah! Thanks for calling about our teeth whitening services. I'm happy to help!\n\nFor sensitive teeth, we offer a gentle whitening treatment that's specifically designed for this. Our consultation is 500 SEK (deducted from treatment if you proceed).\n\nFull treatment pricing:\n• In-office whitening: 3,500 SEK\n• Take-home kit: 2,200 SEK\n• Sensitivity treatment (if needed): 800 SEK\n\nWould you like to book a consultation? I have availability:\n• Tomorrow 2:00 PM\n• Thursday 10:30 AM\n• Friday 1:00 PM\n\nLet me know what works best for you!",
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3 + 1000 * 120).toISOString(), // 2 mins after call
+        },
+      ],
     },
     {
       id: "dummy3",
