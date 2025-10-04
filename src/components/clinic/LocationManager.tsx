@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { MapPin, Plus, Trash2, Edit, Search, Phone, MessageSquare, Instagram, MessageCircle } from "lucide-react";
 import { CreateUserDialog } from "./CreateUserDialog";
@@ -56,6 +57,7 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
 
   const [phoneNumberSetup, setPhoneNumberSetup] = useState({
     enabled: false,
+    countryCode: "+46",
     number: "",
     channels: ["sms"] as string[],
   });
@@ -184,12 +186,13 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
 
       // Add phone number if enabled
       if (phoneNumberSetup.enabled && phoneNumberSetup.number && locationId) {
+        const fullPhoneNumber = `${phoneNumberSetup.countryCode}${phoneNumberSetup.number}`;
         const { data: phoneData, error: phoneError } = await supabase
           .from("clinic_phone_numbers")
           .insert({
             clinic_id: clinicId,
             location_id: locationId,
-            phone_number: phoneNumberSetup.number,
+            phone_number: fullPhoneNumber,
             channels: phoneNumberSetup.channels,
             is_active: true,
           })
@@ -207,7 +210,7 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
           // Trigger verification
           setPendingPhoneVerification({
             id: phoneData.id,
-            number: phoneNumberSetup.number
+            number: fullPhoneNumber
           });
           setVerificationDialogOpen(true);
           return; // Don't run the normal cleanup yet
@@ -311,7 +314,7 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
       instagram_connected: false,
       facebook_connected: false,
     });
-    setPhoneNumberSetup({ enabled: false, number: "", channels: ["sms"] });
+    setPhoneNumberSetup({ enabled: false, countryCode: "+46", number: "", channels: ["sms"] });
     setAddressQuery("");
     setAddressLocked(false);
     setEditingLocation(null);
@@ -524,17 +527,42 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
                           <div className="space-y-4">
                             <div className="space-y-2">
                               <Label htmlFor="phone-number">Phone Number *</Label>
-                              <Input
-                                id="phone-number"
-                                value={phoneNumberSetup.number}
-                                onChange={(e) =>
-                                  setPhoneNumberSetup({ ...phoneNumberSetup, number: e.target.value })
-                                }
-                                placeholder="+14243298358"
-                                required={phoneNumberSetup.enabled}
-                              />
+                              <div className="flex gap-2">
+                                <Select
+                                  value={phoneNumberSetup.countryCode}
+                                  onValueChange={(value) =>
+                                    setPhoneNumberSetup({ ...phoneNumberSetup, countryCode: value })
+                                  }
+                                >
+                                  <SelectTrigger className="w-[140px]">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="+46">🇸🇪 +46 (SE)</SelectItem>
+                                    <SelectItem value="+1">🇺🇸 +1 (US)</SelectItem>
+                                    <SelectItem value="+44">🇬🇧 +44 (UK)</SelectItem>
+                                    <SelectItem value="+47">🇳🇴 +47 (NO)</SelectItem>
+                                    <SelectItem value="+45">🇩🇰 +45 (DK)</SelectItem>
+                                    <SelectItem value="+358">🇫🇮 +358 (FI)</SelectItem>
+                                    <SelectItem value="+49">🇩🇪 +49 (DE)</SelectItem>
+                                    <SelectItem value="+33">🇫🇷 +33 (FR)</SelectItem>
+                                    <SelectItem value="+34">🇪🇸 +34 (ES)</SelectItem>
+                                    <SelectItem value="+39">🇮🇹 +39 (IT)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Input
+                                  id="phone-number"
+                                  value={phoneNumberSetup.number}
+                                  onChange={(e) =>
+                                    setPhoneNumberSetup({ ...phoneNumberSetup, number: e.target.value })
+                                  }
+                                  placeholder="769436750"
+                                  required={phoneNumberSetup.enabled}
+                                  className="flex-1"
+                                />
+                              </div>
                               <p className="text-xs text-muted-foreground">
-                                Include country code (e.g., +1 for US). You'll be asked to verify after saving.
+                                Enter your phone number without the country code. You'll be asked to verify after saving.
                               </p>
                             </div>
 
