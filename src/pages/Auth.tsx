@@ -308,21 +308,21 @@ const Auth = () => {
           <div className="mb-4 text-center">
             <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
               {step === "email" 
-                ? "Create Your Admin Account"
+                ? "Get Started With Front Office"
                 : step === "code"
                   ? "Enter Verification Code"
                   : isLogin 
                     ? "Welcome Back" 
-                    : "Create Your Admin Account"}
+                    : "Set Up Your Account"}
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === "email" 
-                ? "This is your personal admin account. You'll add business contact info later."
+                ? "Step 1 of 3: Create your personal login. You'll set up your business details after signing in."
                 : step === "code"
-                  ? "Check your email for the 6-digit code"
+                  ? "Step 2 of 3: Check your inbox and enter the 6-digit code we sent you"
                   : isLogin 
-                    ? "Sign in to your admin account" 
-                    : "Your personal admin email and password"}
+                    ? "Enter your credentials to access your Front Office dashboard" 
+                    : "Step 2 of 3: Choose a secure password for your account"}
             </p>
           </div>
 
@@ -330,7 +330,7 @@ const Auth = () => {
           {step === "email" && (
             <form onSubmit={handleEmailContinue} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Your Email (Admin Account)</Label>
+                <Label htmlFor="email">Your Email Address</Label>
                 <Input
                   id="email"
                   type="email"
@@ -340,9 +340,6 @@ const Auth = () => {
                   disabled={loading}
                   autoFocus
                 />
-                <p className="text-xs text-muted-foreground">
-                  Not your business email - this is for you to log in
-                </p>
               </div>
 
               <Button
