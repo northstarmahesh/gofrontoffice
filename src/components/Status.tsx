@@ -29,6 +29,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [aiSystemOpen, setAiSystemOpen] = useState(true);
+  const [activityLogsOpen, setActivityLogsOpen] = useState(true);
   const [channels, setChannels] = useState({
     phone: true,
     sms: true,
@@ -517,23 +518,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
         </Card>
       )}
 
-      {/* Welcome Banner */}
-      <div className={`rounded-2xl ${backgroundGradient} p-6 text-white shadow-lg transition-all duration-1000 border-2 border-yellow-accent/20`}>
-        <div className="flex items-center gap-3 mb-2">
-          <Bot className="h-8 w-8" />
-          <h2 className="text-2xl font-bold">{greeting}! {emoji}</h2>
-        </div>
-        <p className="text-base opacity-90">
-          {Object.values(connectionStatus).some(status => status)
-            ? "Your assistant is active and handling all incoming communications"
-            : "Connect channels below to activate your AI assistant"}
-        </p>
-        {weather && (
-          <p className="mt-2 text-sm opacity-75">
-            Currently {Math.round(weather.temp)}°C
-          </p>
-        )}
-      </div>
 
       {/* AI Response System - Collapsible */}
       <Card className="border-2 border-primary/20 p-6 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
@@ -1000,46 +984,61 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
         </Collapsible>
       </Card>
 
-      {/* Activity Logs Section with Date Picker */}
-      <div className="mt-6 space-y-4">
-        <Card className="p-4 border-2 border-primary/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold text-foreground">Activity Logs</h3>
-              <p className="text-sm text-muted-foreground">Assistant activity and message history</p>
+      {/* Activity Logs - Collapsible */}
+      <Card className="border-2 border-primary/20 p-6 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
+        <Collapsible open={activityLogsOpen} onOpenChange={setActivityLogsOpen}>
+          <CollapsibleTrigger className="w-full">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-primary/20 p-3 border-2 border-primary/30">
+                  <MessageSquare className="h-6 w-6 text-primary" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-foreground">Activity Logs</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {activityLogsOpen ? "Assistant activity and message history" : "Click to expand activity logs"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[200px] justify-start text-left font-normal",
+                        "border-primary/20"
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {format(new Date(), "PPP")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={new Date()}
+                      onSelect={(date) => {
+                        if (date) {
+                          console.log("Date selected:", date);
+                        }
+                      }}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${activityLogsOpen ? "rotate-180" : ""}`} />
+              </div>
             </div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-[240px] justify-start text-left font-normal",
-                    "border-primary/20"
-                  )}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {format(new Date(), "PPP")}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={new Date()}
-                  onSelect={(date) => {
-                    if (date) {
-                      console.log("Date selected:", date);
-                      // Date filtering will be handled by ActivityLogs component
-                    }
-                  }}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </Card>
-        <ActivityLogs onNavigateToContact={onNavigateToTasks} />
-      </div>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="mt-6">
+            <ActivityLogs onNavigateToContact={onNavigateToTasks} />
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
 
             </TabsContent>
           ))}
