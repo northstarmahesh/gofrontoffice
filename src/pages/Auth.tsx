@@ -50,30 +50,9 @@ const Auth = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      // Check if user exists by attempting to sign in with a dummy password
-      // This will fail but give us an error message that indicates if user exists
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password: 'dummy-password-check',
-      });
-
-      // "Invalid login credentials" means user exists but wrong password
-      // "Email not confirmed" also means user exists
-      // Any other error likely means user doesn't exist
-      if (error) {
-        const userExists = error.message.includes('Invalid login credentials') || 
-                          error.message.includes('Email not confirmed');
-        setIsLogin(userExists);
-      }
-    } catch (error) {
-      // Default to signup if check fails
-      setIsLogin(false);
-    } finally {
-      setLoading(false);
-      setStep("auth");
-    }
+    // Default to signup - users can easily switch to login if they have an account
+    setIsLogin(false);
+    setStep("auth");
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
