@@ -219,24 +219,24 @@ const Auth = () => {
   const renderAuthForms = () => (
     <>
       {/* Card Header */}
-      <div className="mb-6 text-center">
-        <h2 className="text-xl font-bold text-foreground mb-2">
+      <div className="mb-8 text-center">
+        <h2 className="text-2xl font-bold text-foreground mb-3">
           {step === "email" 
             ? "Get Started"
             : step === "code"
-              ? "Verification Code"
+              ? "Verify Your Email"
               : isLogin 
                 ? "Welcome Back" 
-                : "Set Up Account"}
+                : "Create Your Account"}
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           {step === "email" 
-            ? "Step 1 of 3: Create your login"
+            ? "Enter your email to begin"
             : step === "code"
-              ? "Step 2 of 3: Enter the 6-digit code from your email"
+              ? "Check your inbox for the 6-digit code"
               : isLogin 
                 ? "Sign in to access your dashboard" 
-                : "Step 2 of 3: Choose a secure password"}
+                : "Choose a secure password to continue"}
         </p>
       </div>
 
@@ -406,56 +406,47 @@ const Auth = () => {
       {/* Mobile Layout - Single Column */}
       <div className="lg:hidden min-h-screen flex flex-col">
         {/* Mobile Header */}
-        <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-8 pb-6">
+        <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-6 pb-8">
           <img 
             src={logo} 
             alt="Front Office" 
-            className="h-16 w-auto mb-4"
+            className="h-14 w-auto mb-6"
           />
-          <h1 className="text-2xl font-bold mb-1 leading-tight">
+          <h1 className="text-4xl font-bold mb-2 leading-tight">
             Your Digital Assistant
           </h1>
-          <p className="text-lg text-yellow-accent font-semibold">
+          <p className="text-xl text-yellow-accent font-semibold mb-6">
             24x7 Available. Always Ready.
           </p>
           
-          {/* Key Benefits - Mobile */}
-          <div className="mt-6 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                <AlarmClock className="text-red-400" size={18} />
+          {/* Key Benefits - Mobile - 3 Column Grid */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mb-2">
+                <AlarmClock className="text-red-400" size={20} />
               </div>
-              <div>
-                <p className="text-sm font-semibold">Save 5+ Hours/Week</p>
-                <p className="text-xs text-white/70">Automate repetitive tasks</p>
-              </div>
+              <p className="text-xs font-semibold leading-tight">Save 5+ Hours</p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="text-blue-400" size={18} />
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-2">
+                <MessageCircle className="text-blue-400" size={20} />
               </div>
-              <div>
-                <p className="text-sm font-semibold">All Channels in One</p>
-                <p className="text-xs text-white/70">SMS, WhatsApp, Instagram, Phone</p>
-              </div>
+              <p className="text-xs font-semibold leading-tight">All Channels</p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                <Target className="text-purple-400" size={18} />
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-2">
+                <Target className="text-purple-400" size={20} />
               </div>
-              <div>
-                <p className="text-sm font-semibold">You Stay In Control</p>
-                <p className="text-xs text-white/70">Your brand, your words</p>
-              </div>
+              <p className="text-xs font-semibold leading-tight">You Control</p>
             </div>
           </div>
         </div>
 
         {/* Mobile Auth Card */}
         <div className="flex-1 bg-background rounded-t-3xl -mt-4 p-6">
-          <Card className="w-full border-0 shadow-none p-0">
+          <Card className="w-full border-0 shadow-lg bg-card p-6 rounded-2xl">
             {renderAuthForms()}
           </Card>
 
