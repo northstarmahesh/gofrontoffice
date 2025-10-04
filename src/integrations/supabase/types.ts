@@ -487,6 +487,7 @@ export type Database = {
           admin_email: string | null
           assistant_prompt: string | null
           assistant_voice: string | null
+          clinic_type: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -503,6 +504,7 @@ export type Database = {
           admin_email?: string | null
           assistant_prompt?: string | null
           assistant_voice?: string | null
+          clinic_type?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -519,6 +521,7 @@ export type Database = {
           admin_email?: string | null
           assistant_prompt?: string | null
           assistant_voice?: string | null
+          clinic_type?: string | null
           created_at?: string | null
           email?: string | null
           id?: string

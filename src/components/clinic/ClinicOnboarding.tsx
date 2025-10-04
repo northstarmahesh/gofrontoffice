@@ -190,9 +190,9 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 px-4 sm:px-0">
       {/* Step Indicators with numbered circles */}
-      <div className="flex items-start justify-between gap-2 mb-8">
+      <div className="flex items-start justify-between gap-1 sm:gap-2 mb-8">
         {steps.slice(0, -1).map((step, index) => {
           const Icon = step.icon;
           const isCompleted = index < currentStepIndex;
@@ -202,7 +202,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
             <div key={step.id} className="flex-1 relative">
               <div className="flex flex-col items-center text-center">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 font-semibold text-sm ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-2 font-semibold text-sm ${
                     isCompleted
                       ? "bg-primary text-primary-foreground"
                       : isCurrent
@@ -212,13 +212,16 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
                 >
                   {index + 1}
                 </div>
-                <p className={`text-xs font-medium ${isCurrent ? "text-foreground" : "text-muted-foreground"}`}>
+                <p className={`text-xs sm:text-sm font-medium ${isCurrent ? "text-foreground" : "text-muted-foreground"} hidden sm:block`}>
                   {step.label}
+                </p>
+                <p className={`text-xs font-medium ${isCurrent ? "text-foreground" : "text-muted-foreground"} sm:hidden`}>
+                  Step {index + 1}
                 </p>
               </div>
               {/* Connector line */}
               {index < steps.length - 2 && (
-                <div className={`absolute top-5 left-1/2 w-full h-0.5 ${isCompleted ? "bg-primary" : "bg-muted"}`} style={{ marginLeft: '50%' }} />
+                <div className={`absolute top-5 sm:top-6 left-1/2 w-full h-0.5 ${isCompleted ? "bg-primary" : "bg-muted"}`} style={{ marginLeft: '50%' }} />
               )}
             </div>
           );
@@ -227,7 +230,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
 
       {/* Step Content */}
       <Card className="border-0 shadow-lg">
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 px-4 sm:px-6">
           {renderStepContent()}
         </CardContent>
       </Card>
