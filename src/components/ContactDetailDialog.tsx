@@ -58,11 +58,19 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
   const [message, setMessage] = useState("");
   const [selectedChannels, setSelectedChannels] = useState<string[]>(["sms"]);
   const [isSending, setIsSending] = useState(false);
+  const [availableChannels, setAvailableChannels] = useState<{
+    channel: string;
+    isConnected: boolean;
+    hasUsed: boolean;
+  }[]>([]);
 
   useEffect(() => {
     if (open && (contactId || contactName)) {
       loadContactData();
-      loadContactHistory();
+      loadContactHistory().then(() => {
+        // Load available channels after history is loaded
+        loadAvailableChannels();
+      });
       // Pre-fill message with draft if provided
       if (draftMessage) {
         setMessage(draftMessage);
@@ -127,6 +135,78 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       console.error("Error loading contact history:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAvailableChannels = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get clinic's connected channels
+      const { data: clinicUsers } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicUsers?.clinic_id) return;
+
+      // Get locations and their connections
+      const { data: locations } = await supabase
+        .from("clinic_locations")
+        .select("*")
+        .eq("clinic_id", clinicUsers.clinic_id);
+
+      const location = locations?.[0];
+      
+      // Check phone numbers for SMS/WhatsApp
+      const { data: phoneNumbers } = await supabase
+        .from("clinic_phone_numbers")
+        .select("*")
+        .eq("clinic_id", clinicUsers.clinic_id)
+        .eq("is_verified", true)
+        .eq("is_active", true);
+
+      const hasSms = phoneNumbers?.some(p => p.channels?.includes('sms'));
+      const hasWhatsApp = phoneNumbers?.some(p => p.channels?.includes('whatsapp'));
+
+      // Check which channels this contact has used
+      const usedChannels = new Set(
+        activityHistory.map(log => {
+          const type = log.type.toLowerCase();
+          if (type.includes('whatsapp')) return 'whatsapp';
+          if (type.includes('instagram')) return 'instagram';
+          if (type.includes('messenger') || type.includes('facebook')) return 'messenger';
+          if (type.includes('sms')) return 'sms';
+          return null;
+        }).filter(Boolean)
+      );
+
+      setAvailableChannels([
+        { 
+          channel: 'sms', 
+          isConnected: hasSms || false,
+          hasUsed: usedChannels.has('sms')
+        },
+        { 
+          channel: 'whatsapp', 
+          isConnected: hasWhatsApp || false,
+          hasUsed: usedChannels.has('whatsapp')
+        },
+        { 
+          channel: 'instagram', 
+          isConnected: location?.instagram_connected || false,
+          hasUsed: usedChannels.has('instagram')
+        },
+        { 
+          channel: 'messenger', 
+          isConnected: location?.facebook_connected || false,
+          hasUsed: usedChannels.has('messenger')
+        },
+      ]);
+    } catch (error) {
+      console.error("Error loading available channels:", error);
     }
   };
 
@@ -575,39 +655,51 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                             </Badge>
                           )}
                         </div>
-                        <div className="flex gap-1">
-                          <Button
-                            type="button"
-                            variant={selectedChannels.includes('sms') ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => toggleChannel('sms')}
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={selectedChannels.includes('whatsapp') ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => toggleChannel('whatsapp')}
-                          >
-                            WhatsApp
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={selectedChannels.includes('instagram') ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => toggleChannel('instagram')}
-                          >
-                            <Instagram className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={selectedChannels.includes('messenger') ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => toggleChannel('messenger')}
-                          >
-                            <Facebook className="h-4 w-4" />
-                          </Button>
+                        <div className="flex gap-1 flex-wrap">
+                          {availableChannels.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">Loading channels...</p>
+                          ) : (
+                            availableChannels.map((ch) => {
+                              const isAvailable = ch.isConnected && ch.hasUsed;
+                              const isSelected = selectedChannels.includes(ch.channel);
+                              
+                              const getChannelIcon = () => {
+                                switch (ch.channel) {
+                                  case 'sms': return <MessageSquare className="h-4 w-4" />;
+                                  case 'whatsapp': return <span className="text-xs">WhatsApp</span>;
+                                  case 'instagram': return <Instagram className="h-4 w-4" />;
+                                  case 'messenger': return <Facebook className="h-4 w-4" />;
+                                }
+                              };
+
+                              const getTooltip = () => {
+                                if (!ch.isConnected) return `${ch.channel.toUpperCase()} not connected to your clinic`;
+                                if (!ch.hasUsed) return `Contact hasn't used ${ch.channel.toUpperCase()} yet`;
+                                return '';
+                              };
+
+                              return (
+                                <div key={ch.channel} className="relative group">
+                                  <Button
+                                    type="button"
+                                    variant={isSelected ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => isAvailable && toggleChannel(ch.channel)}
+                                    disabled={!isAvailable}
+                                    className={!isAvailable ? 'opacity-40 cursor-not-allowed' : ''}
+                                    title={getTooltip()}
+                                  >
+                                    {getChannelIcon()}
+                                  </Button>
+                                  {!isAvailable && (
+                                    <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 border shadow-md pointer-events-none">
+                                      {getTooltip()}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
                         </div>
                       </div>
                       <Textarea

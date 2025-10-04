@@ -255,12 +255,16 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         name: task.contact_name,
         info: task.contact_info || "",
         id: undefined, // Will be looked up in ContactDetailDialog
-        draftMessage: task.draftMessage,
+        draftMessage: task.draftMessage || task.draft_message,
       });
       setContactDialogOpen(true);
     } else {
       // Open task detail dialog for internal tasks
-      setSelectedTask(task);
+      // Pass message_history to the dialog
+      setSelectedTask({
+        ...task,
+        message_history: task.message_history || [],
+      });
       setDialogOpen(true);
     }
   };
