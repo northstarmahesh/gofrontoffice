@@ -273,14 +273,28 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
                         {/* Content */}
                         <div className="flex-1 space-y-1.5">
                           <div className="flex items-start justify-between gap-2">
-                            <h4 className="text-sm font-semibold text-foreground">
-                              {log.title}
-                              {!isContact && (
-                                <Badge variant="outline" className="ml-2 text-xs bg-muted">
-                                  Internal
-                                </Badge>
+                            <div className="flex-1">
+                              {/* Show contact name first if it's a contact activity */}
+                              {isContact && log.contact_name ? (
+                                <>
+                                  <h4 className="text-base font-bold text-foreground">
+                                    {log.contact_name}
+                                  </h4>
+                                  <p className="text-sm text-foreground mt-0.5">
+                                    {log.title}
+                                  </p>
+                                </>
+                              ) : (
+                                <h4 className="text-sm font-semibold text-foreground">
+                                  {log.title}
+                                  {!isContact && (
+                                    <Badge variant="outline" className="ml-2 text-xs bg-muted">
+                                      Internal
+                                    </Badge>
+                                  )}
+                                </h4>
                               )}
-                            </h4>
+                            </div>
                             <Badge
                               variant="outline"
                               className={`shrink-0 text-xs ${
@@ -300,12 +314,6 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
                             <span>{time}</span>
-                            {isContact && log.contact_name && (
-                              <>
-                                <span>•</span>
-                                <span className="font-medium">{log.contact_name}</span>
-                              </>
-                            )}
                           </div>
 
                           {log.summary && (
