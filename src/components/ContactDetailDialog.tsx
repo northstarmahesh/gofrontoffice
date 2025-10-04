@@ -669,14 +669,23 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                 {!isEditing && (
                   <Card className="border-2 mt-4">
                     <div className="p-4 space-y-3">
+                      {/* AI Draft Display - Prominent Yellow Box */}
+                      {draftMessage && (
+                        <div className="space-y-3 p-5 rounded-lg bg-yellow-accent/10 border-2 border-yellow-accent/50 shadow-sm mb-4">
+                          <div className="flex items-center justify-between">
+                            <Badge className="bg-yellow-accent text-yellow-accent-foreground text-xs font-semibold">
+                              ⚡ AI Draft - Action Required
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap font-medium">
+                            {draftMessage}
+                          </p>
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Label className="text-sm font-semibold">Send Message</Label>
-                          {draftMessage && (
-                            <Badge variant="secondary" className="text-xs">
-                              AI Draft
-                            </Badge>
-                          )}
                         </div>
                         <div className="flex gap-1 flex-wrap">
                           {availableChannels.length === 0 ? (
