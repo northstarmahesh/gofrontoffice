@@ -133,6 +133,15 @@ All colors MUST be HSL.
   }
 }
 
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

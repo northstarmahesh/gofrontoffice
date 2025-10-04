@@ -187,10 +187,10 @@ const Auth = () => {
           alt="Front Office" 
           className="mx-auto mb-4 h-10 w-auto brightness-0 invert"
         />
-        <h1 className="text-xl font-bold mb-2">
-          Double your efficiency with <span className="text-yellow-300">Front Office</span>
+        <h1 className="text-lg font-bold mb-2">
+          Meet Your New Digital Assistant: <span className="text-yellow-300">Always On. No Vacation Needed.</span>
         </h1>
-        <p className="text-xs text-white/80">Save 20+ hours weekly • All channels in one place • Co-pilot mode</p>
+        <p className="text-xs text-white/80">Save 5+ hours weekly • All channels • Always in control</p>
       </div>
 
       {/* Left Column - Value Proposition */}
@@ -207,8 +207,8 @@ const Auth = () => {
 
           {/* Main Headline */}
           <h1 className="text-3xl xl:text-4xl font-bold mb-6 leading-tight">
-            Double your efficiency with{" "}
-            <span className="text-yellow-300">Front Office</span>
+            Meet Your New Digital Assistant:{" "}
+            <span className="text-yellow-300">Always On. No Vacation Needed.</span>
           </h1>
 
           {/* Benefits */}
@@ -254,31 +254,61 @@ const Auth = () => {
             </div>
           </div>
 
-          {/* Integrations */}
-          <div className="mb-6">
+          {/* Integrations - Animated Ticker */}
+          <div className="mb-6 overflow-hidden">
             <p className="text-xs text-white/60 mb-3 text-center">Integrates seamlessly with</p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Instagram size={18} className="text-white" />
-              </div>
-              <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Facebook size={18} className="text-white" />
-              </div>
-              <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Phone size={18} className="text-white" />
-              </div>
-              <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <MessageSquare size={18} className="text-white" />
-              </div>
-              <div className="w-auto px-3 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <span className="text-[10px] text-white font-medium">WhatsApp</span>
-              </div>
-              <div className="w-auto px-3 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Calendar size={16} className="text-white mr-1" />
-                <span className="text-[10px] text-white font-medium">Bokadirekt</span>
-              </div>
-              <div className="w-auto px-3 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <span className="text-[10px] text-white font-medium">ClinicBuddy</span>
+            <div className="relative">
+              <div className="flex animate-[scroll_20s_linear_infinite] gap-6">
+                {/* First set */}
+                <div className="flex items-center gap-6 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                    <Instagram size={20} className="text-white" />
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                    <Facebook size={20} className="text-white" />
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
+                    <Phone size={20} className="text-white" />
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg">
+                    <MessageSquare size={20} className="text-white" />
+                  </div>
+                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg">
+                    <span className="text-xs text-white font-semibold">WhatsApp</span>
+                  </div>
+                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg">
+                    <Calendar size={18} className="text-white mr-1.5" />
+                    <span className="text-xs text-white font-semibold">Bokadirekt</span>
+                  </div>
+                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-lg">
+                    <span className="text-xs text-white font-semibold">ClinicBuddy</span>
+                  </div>
+                </div>
+                {/* Duplicate set for seamless loop */}
+                <div className="flex items-center gap-6 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                    <Instagram size={20} className="text-white" />
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                    <Facebook size={20} className="text-white" />
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
+                    <Phone size={20} className="text-white" />
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg">
+                    <MessageSquare size={20} className="text-white" />
+                  </div>
+                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg">
+                    <span className="text-xs text-white font-semibold">WhatsApp</span>
+                  </div>
+                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg">
+                    <Calendar size={18} className="text-white mr-1.5" />
+                    <span className="text-xs text-white font-semibold">Bokadirekt</span>
+                  </div>
+                  <div className="w-auto px-4 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-lg">
+                    <span className="text-xs text-white font-semibold">ClinicBuddy</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
