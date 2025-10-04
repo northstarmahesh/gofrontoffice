@@ -53,7 +53,7 @@ serve(async (req: Request) => {
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "Front Office <onboarding@resend.dev>",
+      from: "Front Office <noreply@signup.frontoffice.se>",
       to: [email],
       subject: "Your Front Office Verification Code",
       html: `
