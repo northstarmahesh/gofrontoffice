@@ -8,6 +8,13 @@ import { Card } from "@/components/ui/card";
 
 import { toast } from "sonner";
 import logo from "@/assets/front-office-logo.png";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -201,21 +208,11 @@ const Auth = () => {
           <div className="space-y-6 mb-12">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
-                🤖
+                ⏰
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-1">AI-Powered Receptionist</h3>
-                <p className="text-sm text-white/80">Never miss a call again. Our AI handles patient inquiries, bookings, and FAQs 24/7 with natural conversation.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
-                📅
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-1">Smart Scheduling</h3>
-                <p className="text-sm text-white/80">Automated appointment booking and rescheduling that syncs with your calendar and sends reminders.</p>
+                <h3 className="text-lg font-semibold mb-1">Save 20+ Hours Weekly</h3>
+                <p className="text-sm text-white/80">Your AI assistant handles scheduling, inquiries, and follow-ups automatically - freeing your team to focus on patient care.</p>
               </div>
             </div>
 
@@ -224,32 +221,138 @@ const Auth = () => {
                 💬
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-1">Multi-Channel Support</h3>
-                <p className="text-sm text-white/80">Connect with patients via phone, SMS, WhatsApp, Instagram, and Facebook Messenger from one dashboard.</p>
+                <h3 className="text-lg font-semibold mb-1">All Channels, One Place</h3>
+                <p className="text-sm text-white/80">Manage phone, SMS, WhatsApp, Instagram, and Facebook Messenger conversations from a single dashboard.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
+                🎯
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1">Co-Pilot or Auto-Pilot Mode</h3>
+                <p className="text-sm text-white/80">Choose AI assistance for your team or full automation. Switch between modes anytime based on your needs.</p>
               </div>
             </div>
           </div>
 
-          {/* Single Testimonial */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-            <div className="flex gap-1 mb-3">
-              {[...Array(5)].map((_, i) => (
-                <span key={i} className="text-yellow-300">⭐</span>
-              ))}
-            </div>
-            <p className="text-sm lg:text-base italic mb-4">
-              "Our AI receptionist has been a game-changer. We used to miss calls when we were under the hood, but now every customer gets immediate attention. Bookings are up 40%!"
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
-                👤
-              </div>
-              <div>
-                <p className="font-semibold text-sm">Sarah Johnson</p>
-                <p className="text-xs text-white/80">Johnson&apos;s Auto Repair</p>
-              </div>
-            </div>
-          </div>
+          {/* Testimonials Carousel */}
+          <Carousel className="w-full">
+            <CarouselContent>
+              <CarouselItem>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-300">⭐</span>
+                    ))}
+                  </div>
+                  <p className="text-sm lg:text-base italic mb-4">
+                    "We've saved over 25 hours per week since implementing Front Office. Our AI assistant handles appointment bookings flawlessly, and patients love the instant responses on WhatsApp."
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                      🦷
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Dr. Anna Bergström</p>
+                      <p className="text-xs text-white/80">Solna Dental Clinic</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+
+              <CarouselItem>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-300">⭐</span>
+                    ))}
+                  </div>
+                  <p className="text-sm lg:text-base italic mb-4">
+                    "Our booking rate increased by 60% after switching to Front Office. The AI handles Instagram DMs and Facebook messages perfectly, and we never miss a consultation request."
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                      💉
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Lisa Andersson</p>
+                      <p className="text-xs text-white/80">Stockholm Botox Clinic</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+
+              <CarouselItem>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-300">⭐</span>
+                    ))}
+                  </div>
+                  <p className="text-sm lg:text-base italic mb-4">
+                    "The co-pilot mode is brilliant. Our team gets AI suggestions for complex cases, and the system handles routine inquiries automatically. Best investment we've made this year."
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                      🏥
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Dr. Erik Johansson</p>
+                      <p className="text-xs text-white/80">HealthCare Plus, Gothenburg</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+
+              <CarouselItem>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-300">⭐</span>
+                    ))}
+                  </div>
+                  <p className="text-sm lg:text-base italic mb-4">
+                    "We can finally focus on our patients instead of answering the phone all day. The multi-channel support means we're available 24/7 without hiring night staff."
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                      💆
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Maria Svensson</p>
+                      <p className="text-xs text-white/80">Wellness Spa, Malmö</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+
+              <CarouselItem>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-300">⭐</span>
+                    ))}
+                  </div>
+                  <p className="text-sm lg:text-base italic mb-4">
+                    "Front Office transformed our practice. No more missed calls, automatic reminders reduced no-shows by 40%, and patients appreciate the instant communication on their preferred channels."
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                      👁️
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Dr. Johan Lindgren</p>
+                      <p className="text-xs text-white/80">Vision Care Clinic, Uppsala</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselPrevious className="text-white border-white/20 hover:bg-white/10" />
+            <CarouselNext className="text-white border-white/20 hover:bg-white/10" />
+          </Carousel>
         </div>
       </div>
 
