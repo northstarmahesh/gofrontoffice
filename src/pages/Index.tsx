@@ -133,7 +133,7 @@ const Index = () => {
             />
             <div>
               <h1 className="text-lg font-bold text-foreground">Front Office</h1>
-              <p className="text-xs text-muted-foreground">Always here to help</p>
+              <p className="text-xs text-muted-foreground">Your Digital Assistant</p>
             </div>
           </div>
           <Button
