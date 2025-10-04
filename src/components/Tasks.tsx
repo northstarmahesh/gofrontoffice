@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ActivityLogs from "./ActivityLogs";
 import TaskDetailDialog from "./TaskDetailDialog";
@@ -303,63 +303,91 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const inProgressTasks = allTasks.filter((t) => t.status === "in-progress").length;
   const completedTasks = allTasks.filter((t) => t.status === "completed").length;
 
+  const getTaskTypeLabel = (task: any) => {
+    if (task.draftMessage) {
+      return { label: "Draft Message", color: "bg-blue-500/10 text-blue-600 border-blue-500/30" };
+    }
+    if (task.isInternal) {
+      return { label: "Review Task", color: "bg-purple-500/10 text-purple-600 border-purple-500/30" };
+    }
+    return { label: "Action Required", color: "bg-orange-500/10 text-orange-600 border-orange-500/30" };
+  };
+
+  const getTaskInstruction = (task: any) => {
+    if (task.draftMessage) {
+      return "Review and send this AI-drafted message";
+    }
+    if (task.isInternal) {
+      return "Review this AI-generated task and mark complete when done";
+    }
+    return "Take action on this task";
+  };
+
   const renderTaskCard = (task: any, isAssistant: boolean) => {
     const isContactTask = task.contact_name || !task.isInternal;
     const ChannelIcon = getChannelIcon(task.source);
+    const taskType = getTaskTypeLabel(task);
+    const instruction = getTaskInstruction(task);
     
     return (
       <Card
         key={task.id}
-        className={`cursor-pointer border-0 p-4 shadow-sm transition-all hover:shadow-md ${
-          isContactTask ? 'bg-card' : 'bg-muted/30'
-        }`}
+        className="cursor-pointer border-2 border-yellow-accent/20 p-6 shadow-lg transition-all hover:shadow-xl hover:border-yellow-accent/40 bg-card"
         onClick={() => handleTaskClick(task)}
       >
-        <div className="flex gap-3">
-          <div className="pt-0.5">{getStatusIcon(task.status)}</div>
-          
-          <div className="flex-1 space-y-2">
-            {/* Top row: Customer name (if contact task) + Channel badge */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">
-                {isContactTask && task.contact_name ? (
-                  <h3 className={`text-base font-bold ${
-                    task.status === "completed"
-                      ? "text-muted-foreground line-through"
-                      : "text-foreground"
-                  }`}>
-                    {task.contact_name}
-                  </h3>
-                ) : (
-                  <h4 className={`text-sm font-semibold ${
-                    task.status === "completed"
-                      ? "text-muted-foreground line-through"
-                      : "text-foreground"
-                  }`}>
-                    {task.title}
-                  </h4>
+        <div className="space-y-4">
+          {/* Header: Type badge and Channel */}
+          <div className="flex items-start justify-between gap-3">
+            <Badge className={`text-sm px-3 py-1 border ${taskType.color}`}>
+              {taskType.label}
+            </Badge>
+            <Badge className={`flex items-center gap-1.5 border text-sm px-3 py-1 ${getChannelColor(task.source)}`}>
+              <ChannelIcon className="h-4 w-4" />
+              {getChannelDisplay(task.source)}
+            </Badge>
+          </div>
+
+          {/* Main content */}
+          <div className="space-y-3">
+            {/* Customer/Contact name */}
+            {isContactTask && task.contact_name && (
+              <div>
+                <h3 className="text-2xl font-bold text-foreground mb-1">
+                  {task.contact_name}
+                </h3>
+                {task.contact_info && (
+                  <p className="text-sm text-muted-foreground">{task.contact_info}</p>
                 )}
               </div>
-              
-              <Badge className={`flex items-center gap-1.5 border ${getChannelColor(task.source)}`}>
-                <ChannelIcon className="h-3.5 w-3.5" />
-                {getChannelDisplay(task.source)}
-              </Badge>
-            </div>
-
-            {/* Description/Title row */}
-            {isContactTask && task.contact_name && (
-              <p className="text-sm text-muted-foreground">{task.description}</p>
             )}
 
-            {/* Bottom row: Time */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">{task.time}</span>
+            {/* Task title/description */}
+            <div className="space-y-2">
               {!isContactTask && (
-                <Badge variant="outline" className="text-xs bg-muted">
-                  Internal
-                </Badge>
+                <h4 className="text-xl font-bold text-foreground">{task.title}</h4>
               )}
+              {task.description && (
+                <p className="text-base text-foreground leading-relaxed">
+                  {task.description}
+                </p>
+              )}
+            </div>
+
+            {/* Instruction - What to do */}
+            <div className="flex items-start gap-2 p-4 rounded-lg bg-yellow-accent/10 border border-yellow-accent/30">
+              <AlertCircle className="h-5 w-5 text-yellow-accent flex-shrink-0 mt-0.5" />
+              <p className="text-sm font-medium text-foreground">
+                {instruction}
+              </p>
+            </div>
+          </div>
+
+          {/* Footer: Time and CTA */}
+          <div className="flex items-center justify-between pt-2 border-t">
+            <span className="text-sm text-muted-foreground">{task.time}</span>
+            <div className="flex items-center gap-2 text-primary font-medium text-sm">
+              {task.draftMessage ? "Review & Send" : "Take Action"}
+              <ArrowRight className="h-4 w-4" />
             </div>
           </div>
         </div>
@@ -431,60 +459,56 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
           {locations.map((location) => (
             <TabsContent key={location.id} value={location.id} className="space-y-6 mt-6">
-              <div>
-                <h2 className="mb-2 text-2xl font-bold text-foreground">Tasks for Today</h2>
-                <p className="text-sm text-muted-foreground">
-                  Actions you need to take based on AI drafts and your own tasks
-                </p>
-              </div>
+              {todayHumanTasks.length === 0 ? (
+                <Card className="p-8 text-center border-2 border-dashed">
+                  <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-foreground mb-2">All caught up!</h3>
+                  <p className="text-muted-foreground">No pending tasks at the moment. Great job!</p>
+                </Card>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">Your Tasks</h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {todayHumanTasks.length} {todayHumanTasks.length === 1 ? 'task' : 'tasks'} need your attention
+                      </p>
+                    </div>
+                  </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-2">
-        <Card className="border-0 p-3 text-center shadow-sm">
-          <p className="text-xl font-bold text-warning">{pendingTasks}</p>
-          <p className="text-xs text-muted-foreground">Pending</p>
-        </Card>
-        <Card className="border-0 p-3 text-center shadow-sm">
-          <p className="text-xl font-bold text-info">{inProgressTasks}</p>
-          <p className="text-xs text-muted-foreground">In Progress</p>
-        </Card>
-        <Card className="border-0 p-3 text-center shadow-sm">
-          <p className="text-xl font-bold text-success">{completedTasks}</p>
-          <p className="text-xs text-muted-foreground">Done</p>
-        </Card>
-      </div>
+                  {/* Your Tasks */}
+                  <div className="space-y-4">
+                    {todayHumanTasks.map((task) => renderTaskCard(task, false))}
+                  </div>
+                </>
+              )}
 
-      {/* Your Tasks (Human) */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <User className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">Your Tasks</h3>
-        </div>
-        {Object.entries(humanTasksByDate).map(([date, tasks]) => (
-          <div key={date} className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{date}</p>
-            <div className="space-y-2">
-              {tasks.map((task) => renderTaskCard(task, false))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Assistant Tasks */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-secondary" />
-          <h3 className="text-lg font-semibold text-foreground">Assistant Activity</h3>
-        </div>
-        {Object.entries(assistantTasksByDate).map(([date, tasks]) => (
-          <div key={date} className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{date}</p>
-            <div className="space-y-2">
-              {tasks.map((task) => renderTaskCard(task, true))}
-            </div>
-          </div>
-        ))}
-      </div>
+              {/* Assistant Activity - Collapsed by default */}
+              {assistantTasks.length > 0 && (
+                <div className="space-y-3 pt-6 border-t">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold text-muted-foreground">Assistant Activity</h3>
+                    <Badge variant="outline" className="ml-auto">
+                      {assistantTasks.length}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {assistantTasks.map((task) => (
+                      <Card key={task.id} className="p-4 bg-muted/30 border-0">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle2 className="h-5 w-5 text-success" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-foreground">{task.title}</p>
+                            <p className="text-xs text-muted-foreground">{task.description}</p>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{task.time}</span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Activity Logs Section */}
               <div className="mt-8">
