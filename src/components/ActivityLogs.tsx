@@ -34,6 +34,7 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
     name: string;
     info: string;
     id?: string;
+    draftMessage?: string;
   } | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
@@ -75,6 +76,7 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
     if (log.contact_name) {
       // It's a contact activity - open contact detail dialog
       let contactId = undefined;
+      let draftMessage = undefined;
       
       // Try to find the contact ID from contacts table
       if (log.contact_info) {
@@ -95,10 +97,25 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         }
       }
 
+      // If status is pending, fetch the draft reply
+      if (log.status === "pending") {
+        const { data: draftData } = await supabase
+          .from("draft_replies")
+          .select("draft_content")
+          .eq("log_id", log.id)
+          .eq("status", "pending")
+          .maybeSingle();
+
+        if (draftData) {
+          draftMessage = draftData.draft_content;
+        }
+      }
+
       setSelectedContact({
         name: log.contact_name,
         info: log.contact_info || "",
-        id: contactId
+        id: contactId,
+        draftMessage: draftMessage
       });
       setDetailDialogOpen(true);
     }
@@ -183,6 +200,7 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
           open={detailDialogOpen}
           onOpenChange={setDetailDialogOpen}
           onContactUpdated={loadActivityLogs}
+          draftMessage={selectedContact.draftMessage}
           onViewFullProfile={() => {
             if (onNavigateToContact && selectedContact.name) {
               onNavigateToContact(selectedContact.name);
