@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight, TrendingUp, DollarSign, Calendar, CalendarIcon } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight, TrendingUp, DollarSign, Calendar, CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TaskDetailDialog from "./TaskDetailDialog";
 import ContactDetailDialog from "./ContactDetailDialog";
@@ -37,6 +37,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadLocations();
@@ -527,12 +528,36 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     return "Take action on this task";
   };
 
+  const toggleExpanded = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedTasks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
+  };
+
+  const getOriginalMessage = (task: any) => {
+    // Get the first message from message_history (customer's original message)
+    if (task.message_history && task.message_history.length > 0) {
+      const firstMessage = task.message_history[0];
+      return firstMessage.summary || firstMessage.title;
+    }
+    return null;
+  };
+
   const renderTaskCard = (task: any, isAssistant: boolean) => {
     const isContactTask = task.contact_name || !task.isInternal;
     const ChannelIcon = getChannelIcon(task.source);
     const taskType = getTaskTypeLabel(task);
     const instruction = getTaskInstruction(task);
     const hasDraft = task.draftMessage;
+    const isExpanded = expandedTasks.has(task.id);
+    const originalMessage = getOriginalMessage(task);
     
     return (
       <Card
@@ -601,10 +626,37 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                 </div>
               )}
               
-              {task.description && !task.callSummary && (
-                <p className="text-base text-foreground leading-relaxed">
-                  {task.description}
-                </p>
+              {/* Original Message - Show for draft tasks */}
+              {originalMessage && !task.callSummary && (
+                <div className="space-y-2 p-4 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-xs">Original Message</Badge>
+                  </div>
+                  <p className={cn(
+                    "text-sm text-foreground leading-relaxed whitespace-pre-wrap",
+                    !isExpanded && "line-clamp-3"
+                  )}>
+                    {originalMessage}
+                  </p>
+                  {originalMessage.length > 150 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => toggleExpanded(task.id, e)}
+                      className="text-xs text-primary hover:text-primary/80 p-0 h-auto"
+                    >
+                      {isExpanded ? (
+                        <>
+                          Show less <ChevronUp className="h-3 w-3 ml-1" />
+                        </>
+                      ) : (
+                        <>
+                          Read more <ChevronDown className="h-3 w-3 ml-1" />
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
 
