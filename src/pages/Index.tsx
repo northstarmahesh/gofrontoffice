@@ -100,23 +100,17 @@ const Index = () => {
     );
   }
 
-  // If user hasn't completed onboarding, show only onboarding screen
-  if (hasClinic === false) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
-        <div className="container mx-auto px-4 py-8">
-          <ClinicManagement />
-        </div>
-      </div>
-    );
-  }
-
   const handleNavigateToContact = (contactName: string) => {
     setSelectedContactName(contactName);
     setCurrentView("contacts");
   };
 
   const renderView = () => {
+    // If user hasn't completed onboarding, show only onboarding
+    if (hasClinic === false) {
+      return <ClinicManagement />;
+    }
+
     switch (currentView) {
       case "status":
         return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
@@ -164,8 +158,8 @@ const Index = () => {
         {renderView()}
       </main>
 
-      {/* Bottom Navigation */}
-      <Navigation currentView={currentView} onViewChange={setCurrentView} />
+      {/* Bottom Navigation - Hidden during onboarding */}
+      {hasClinic && <Navigation currentView={currentView} onViewChange={setCurrentView} />}
     </div>
   );
 };
