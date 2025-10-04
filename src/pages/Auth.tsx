@@ -13,7 +13,7 @@ import {
 import Autoplay from "embla-carousel-autoplay";
 
 import { toast } from "sonner";
-import logo from "@/assets/front-office-logo.png";
+import logo from "@/assets/front-office-logo-auth.png";
 import { Phone, MessageSquare, Calendar, AlarmClock, MessageCircle, Target } from "lucide-react";
 
 const Auth = () => {
@@ -223,7 +223,7 @@ const Auth = () => {
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-10 lg:h-12 w-auto brightness-0 invert"
+              className="h-16 lg:h-20 w-auto"
             />
           </div>
 
@@ -231,7 +231,7 @@ const Auth = () => {
           <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight">
             Meet Your New Digital Assistant
           </h1>
-          <p className="text-xl lg:text-2xl text-yellow-300 font-semibold mb-8">
+          <p className="text-xl lg:text-2xl text-yellow-accent font-semibold mb-8">
             24x7 Available. No Vacation Needed.
           </p>
 
@@ -347,7 +347,7 @@ const Auth = () => {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
                 disabled={loading}
               >
                 Continue
@@ -363,7 +363,7 @@ const Auth = () => {
                     setIsLogin(true);
                     setStep("auth");
                   }}
-                  className="font-medium text-primary hover:underline"
+                  className="font-medium text-yellow-accent hover:text-yellow-accent/80 hover:underline transition-colors"
                   disabled={loading}
                 >
                   Sign in
@@ -417,7 +417,7 @@ const Auth = () => {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
                 disabled={loading}
               >
                 {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
@@ -457,7 +457,7 @@ const Auth = () => {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
                 disabled={loading}
               >
                 {loading ? "Verifying..." : "Verify Code"}
@@ -537,7 +537,7 @@ const Auth = () => {
                 <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
                   <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-500 text-xs">⭐</span>
+                      <span key={i} className="text-yellow-accent text-xs">⭐</span>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground italic mb-3">
@@ -559,7 +559,7 @@ const Auth = () => {
                 <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
                   <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-500 text-xs">⭐</span>
+                      <span key={i} className="text-yellow-accent text-xs">⭐</span>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground italic mb-3">
@@ -581,7 +581,7 @@ const Auth = () => {
                 <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
                   <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-500 text-xs">⭐</span>
+                      <span key={i} className="text-yellow-accent text-xs">⭐</span>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground italic mb-3">

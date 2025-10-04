@@ -48,6 +48,7 @@ All colors MUST be HSL.
     --warning: 35 95% 55%;
     --info: 203 38% 26%;
     --auth-bg: 198 30% 31%;
+    --yellow-accent: 48 97% 63%; /* #fde047 */
     
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(203 38% 26%), hsl(203 38% 35%));

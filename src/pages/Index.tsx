@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import frontOfficeLogo from "@/assets/front-office-logo.png";
+import frontOfficeLogo from "@/assets/front-office-logo-full.png";
 import Status from "@/components/Status";
 import ClinicManagement from "@/components/ClinicManagement";
 import Contacts from "@/components/Contacts";
@@ -134,12 +134,8 @@ const Index = () => {
             <img 
               src={frontOfficeLogo} 
               alt="Front Office Logo" 
-              className="h-10 w-10 object-contain"
+              className="h-8 w-auto"
             />
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Front Office</h1>
-              <p className="text-xs text-muted-foreground">Your Digital Assistant</p>
-            </div>
           </div>
           <Button
             variant="ghost"
