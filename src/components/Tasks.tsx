@@ -1,13 +1,17 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight, TrendingUp, DollarSign, Calendar, CalendarIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ActivityLogs from "./ActivityLogs";
 import TaskDetailDialog from "./TaskDetailDialog";
 import ContactDetailDialog from "./ContactDetailDialog";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface TasksProps {
   onNavigateToContact?: (contactName: string) => void;
@@ -30,6 +34,8 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     messageHistory?: any[];
   } | null>(null);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
 
   useEffect(() => {
     loadLocations();
@@ -38,8 +44,9 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   useEffect(() => {
     if (selectedLocation) {
       loadTasks();
+      loadActivityLogs();
     }
-  }, [refreshKey, selectedLocation]);
+  }, [refreshKey, selectedLocation, selectedDate]);
 
   const loadLocations = async () => {
     try {
@@ -68,6 +75,38 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       console.error("Error loading locations:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadActivityLogs = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: clinicUsers } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicUsers?.clinic_id) return;
+
+      // Filter by selected date
+      const startOfDay = selectedDate ? new Date(selectedDate.setHours(0, 0, 0, 0)).toISOString() : new Date().toISOString();
+      const endOfDay = selectedDate ? new Date(selectedDate.setHours(23, 59, 59, 999)).toISOString() : new Date().toISOString();
+
+      const { data, error } = await supabase
+        .from("activity_logs")
+        .select("*")
+        .eq("clinic_id", clinicUsers.clinic_id)
+        .gte("created_at", startOfDay)
+        .lte("created_at", endOfDay)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setActivityLogs(data || []);
+    } catch (error) {
+      console.error("Error loading activity logs:", error);
     }
   };
 
@@ -347,6 +386,41 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const inProgressTasks = allTasks.filter((t) => t.status === "in-progress").length;
   const completedTasks = allTasks.filter((t) => t.status === "completed").length;
 
+  const stats = [
+    {
+      label: "Calls Today",
+      value: "12",
+      change: "+15%",
+      icon: Phone,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      label: "Messages",
+      value: "24",
+      change: "+8%",
+      icon: MessageSquare,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      label: "Time Saved",
+      value: "4.5h",
+      change: "Today",
+      icon: Clock,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      label: "Cost Saved",
+      value: "$180",
+      change: "This week",
+      icon: DollarSign,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+  ];
+
   const getTaskTypeLabel = (task: any) => {
     if (task.callSummary) {
       return { label: "AI Call Summary", color: "bg-green-500/10 text-green-600 border-green-500/30" };
@@ -523,6 +597,33 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         )}
       </div>
 
+      {/* Analytics */}
+      <div>
+        <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <Card
+                key={stat.label}
+                className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
+                    <Icon className={`h-8 w-8 ${stat.color}`} />
+                  </div>
+                  <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
+                  <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
+                  <p className={`text-xs font-medium ${stat.change.startsWith('+') ? 'text-success' : 'text-muted-foreground'}`}>
+                    {stat.change}
+                  </p>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Location Tabs */}
       {locations.length > 0 && (
         <Tabs value={selectedLocation} onValueChange={setSelectedLocation} className="w-full">
@@ -561,37 +662,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                 </>
               )}
 
-              {/* Assistant Activity - Collapsed by default */}
-              {assistantTasks.length > 0 && (
-                <div className="space-y-3 pt-6 border-t">
-                  <div className="flex items-center gap-2">
-                    <Bot className="h-5 w-5 text-muted-foreground" />
-                    <h3 className="text-lg font-semibold text-muted-foreground">Assistant Activity</h3>
-                    <Badge variant="outline" className="ml-auto">
-                      {assistantTasks.length}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {assistantTasks.map((task) => (
-                      <Card key={task.id} className="p-4 bg-muted/30 border-0">
-                        <div className="flex items-center gap-3">
-                          <CheckCircle2 className="h-5 w-5 text-success" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">{task.title}</p>
-                            <p className="text-xs text-muted-foreground">{task.description}</p>
-                          </div>
-                          <span className="text-xs text-muted-foreground">{task.time}</span>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Activity Logs Section */}
-              <div className="mt-8">
-                <ActivityLogs onNavigateToContact={onNavigateToContact} />
-              </div>
             </TabsContent>
           ))}
         </Tabs>

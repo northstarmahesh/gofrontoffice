@@ -10,6 +10,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
+import ActivityLogs from "./ActivityLogs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 interface StatusProps {
   onNavigateToTasks?: () => void;
   onNavigateToClinic?: () => void;
@@ -995,31 +1000,45 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
         </Collapsible>
       </Card>
 
-      {/* Analytics - Bigger, More Visual */}
-      <div>
-        <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card
-                key={stat.label}
-                className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
-                    <Icon className={`h-8 w-8 ${stat.color}`} />
-                  </div>
-                  <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
-                  <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
-                  <p className={`text-xs font-medium ${stat.change.startsWith('+') ? 'text-success' : 'text-muted-foreground'}`}>
-                    {stat.change}
-                  </p>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+      {/* Activity Logs Section with Date Picker */}
+      <div className="mt-6 space-y-4">
+        <Card className="p-4 border-2 border-primary/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-foreground">Activity Logs</h3>
+              <p className="text-sm text-muted-foreground">Assistant activity and message history</p>
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal",
+                    "border-primary/20"
+                  )}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {format(new Date(), "PPP")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={new Date()}
+                  onSelect={(date) => {
+                    if (date) {
+                      console.log("Date selected:", date);
+                      // Date filtering will be handled by ActivityLogs component
+                    }
+                  }}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </Card>
+        <ActivityLogs onNavigateToContact={onNavigateToTasks} />
       </div>
 
             </TabsContent>
