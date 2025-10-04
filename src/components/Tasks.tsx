@@ -27,6 +27,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     info: string;
     id?: string;
     draftMessage?: string;
+    messageHistory?: any[];
   } | null>(null);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
@@ -254,8 +255,9 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       setSelectedContactForHistory({
         name: task.contact_name,
         info: task.contact_info || "",
-        id: undefined, // Will be looked up in ContactDetailDialog
+        id: undefined,
         draftMessage: task.draftMessage || task.draft_message,
+        messageHistory: task.message_history || [],
       });
       setContactDialogOpen(true);
     } else {
@@ -605,6 +607,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           onOpenChange={setContactDialogOpen}
           onContactUpdated={loadTasks}
           draftMessage={selectedContactForHistory.draftMessage}
+          messageHistory={selectedContactForHistory.messageHistory}
           onViewFullProfile={() => {
             if (onNavigateToContact && selectedContactForHistory.name) {
               onNavigateToContact(selectedContactForHistory.name);

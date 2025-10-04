@@ -34,6 +34,7 @@ interface ContactDetailDialogProps {
   onContactUpdated?: () => void;
   onViewFullProfile?: () => void;
   draftMessage?: string;
+  messageHistory?: ActivityLog[];
 }
 
 interface Contact {
@@ -44,7 +45,7 @@ interface Contact {
   notes?: string;
 }
 
-const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpenChange, onContactUpdated, onViewFullProfile, draftMessage }: ContactDetailDialogProps) => {
+const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpenChange, onContactUpdated, onViewFullProfile, draftMessage, messageHistory }: ContactDetailDialogProps) => {
   const [activityHistory, setActivityHistory] = useState<ActivityLog[]>([]);
   const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,10 +68,17 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
   useEffect(() => {
     if (open && (contactId || contactName)) {
       loadContactData();
-      loadContactHistory().then(() => {
-        // Load available channels after history is loaded
+      
+      // Use mock history if provided, otherwise load from database
+      if (messageHistory && messageHistory.length > 0) {
+        setActivityHistory(messageHistory);
         loadAvailableChannels();
-      });
+      } else {
+        loadContactHistory().then(() => {
+          loadAvailableChannels();
+        });
+      }
+      
       // Pre-fill message with draft if provided
       if (draftMessage) {
         setMessage(draftMessage);
@@ -79,7 +87,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       // Clear message when dialog closes
       setMessage("");
     }
-  }, [open, contactId, contactName, draftMessage]);
+  }, [open, contactId, contactName, draftMessage, messageHistory]);
 
   const loadContactData = async () => {
     if (contactId) {
