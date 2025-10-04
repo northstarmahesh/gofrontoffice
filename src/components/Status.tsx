@@ -536,8 +536,8 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
           <CollapsibleTrigger className="w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-primary/20 p-3 border-2 border-primary/30">
-                  <Bot className="h-6 w-6 text-primary" />
+                <div className="rounded-xl bg-yellow-accent/20 p-3 border-2 border-yellow-accent/30">
+                  <Bot className="h-6 w-6 text-yellow-accent" />
                 </div>
                 <div className="text-left">
                   <h3 className="text-xl font-bold text-foreground">AI Response System</h3>
@@ -921,13 +921,13 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       </Card>
 
       {/* Assistant Schedule - Collapsible */}
-      <Card className="border-0 p-6 shadow-lg">
+      <Card className="border-2 border-yellow-accent/20 p-6 shadow-lg bg-gradient-to-br from-yellow-accent/5 to-yellow-accent/10">
         <Collapsible open={scheduleOpen} onOpenChange={setScheduleOpen}>
           <CollapsibleTrigger className="w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-primary/10 p-3">
-                  <Calendar className="h-6 w-6 text-primary" />
+                <div className="rounded-xl bg-yellow-accent/20 p-3 border-2 border-yellow-accent/30">
+                  <Calendar className="h-6 w-6 text-yellow-accent" />
                 </div>
                 <div className="text-left">
                   <h3 className="text-xl font-bold text-foreground">Assistant Schedule</h3>
