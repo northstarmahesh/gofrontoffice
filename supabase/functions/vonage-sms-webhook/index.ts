@@ -12,12 +12,28 @@ serve(async (req) => {
   }
 
   try {
-    // Vonage sends SMS data as form-urlencoded, not JSON
-    const formData = await req.formData();
-    const from = formData.get('msisdn') as string; // sender's number
-    const to = formData.get('to') as string; // your Vonage number
-    const text = formData.get('text') as string; // message content
-    const messageId = formData.get('messageId') as string;
+    // Vonage sends SMS as URL-encoded query parameters or in the body
+    const url = new URL(req.url);
+    const params = url.searchParams;
+    
+    // Try to get data from query params first, then body
+    let from = params.get('msisdn') || params.get('from');
+    let to = params.get('to');
+    let text = params.get('text');
+    let messageId = params.get('messageId');
+    
+    // If not in query params, try parsing body as text
+    if (!from || !text) {
+      const bodyText = await req.text();
+      console.log('Raw body:', bodyText);
+      
+      // Parse URL-encoded body
+      const bodyParams = new URLSearchParams(bodyText);
+      from = from || bodyParams.get('msisdn') || bodyParams.get('from');
+      to = to || bodyParams.get('to');
+      text = text || bodyParams.get('text');
+      messageId = messageId || bodyParams.get('messageId');
+    }
     
     console.log('Incoming SMS from:', from, 'to:', to, 'text:', text);
 
