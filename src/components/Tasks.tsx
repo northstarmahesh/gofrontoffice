@@ -138,6 +138,22 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       contact_name: "Emma Anderson",
       contact_info: "+46 70 987 6543",
       draftMessage: "Hi Emma! Thanks for reaching out. I have these slots available this week:\n\n• Tuesday 2:00 PM\n• Wednesday 10:30 AM\n• Friday 3:00 PM\n\nWhich works best for you?",
+      message_history: [
+        {
+          id: "msg1",
+          title: "WhatsApp message",
+          type: "whatsapp",
+          summary: "Emma Anderson: Hi! I need to reschedule my appointment. Do you have any availability this week?",
+          created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 mins ago
+        },
+        {
+          id: "msg2",
+          title: "AI Draft Response",
+          type: "draft",
+          summary: "Hi Emma! Thanks for reaching out. I have these slots available this week:\n\n• Tuesday 2:00 PM\n• Wednesday 10:30 AM\n• Friday 3:00 PM\n\nWhich works best for you?",
+          created_at: new Date(Date.now() - 1000 * 60 * 2).toISOString(), // 2 mins ago
+        },
+      ],
     },
     {
       id: "dummy2",
@@ -170,6 +186,22 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       contact_name: "Mike Johnson",
       contact_info: "+46 70 123 4567",
       draftMessage: "Hello Mike! For your prescription refill, please call us at least 48 hours before you run out. We'll need to check with your doctor for authorization. You can also use our online refill request form on our website.",
+      message_history: [
+        {
+          id: "msg5",
+          title: "SMS message",
+          type: "sms",
+          summary: "Mike Johnson: Hi, I need to refill my prescription. What's the process?",
+          created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
+        },
+        {
+          id: "msg6",
+          title: "AI Draft Response",
+          type: "draft",
+          summary: "Hello Mike! For your prescription refill, please call us at least 48 hours before you run out. We'll need to check with your doctor for authorization. You can also use our online refill request form on our website.",
+          created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(), // 25 mins ago
+        },
+      ],
     },
   ];
 

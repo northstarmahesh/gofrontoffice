@@ -278,7 +278,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="max-w-3xl max-h-[95vh]">
         <DialogHeader>
           <div className="space-y-2">
             <DialogTitle className="text-2xl">{task.title}</DialogTitle>
@@ -297,7 +297,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
           </div>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh] pr-4">
+        <ScrollArea className="max-h-[70vh] pr-4">
           <div className="space-y-6">
             {/* Contact Info - Only show if available */}
             {relatedLog?.summary && (
@@ -311,7 +311,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-foreground">Conversation History</h3>
                 
-                <div className="space-y-3 bg-muted/20 rounded-lg p-4 max-h-[300px] overflow-y-auto">
+                <div className="space-y-3 bg-muted/20 rounded-lg p-4 max-h-[400px] overflow-y-auto">
                   {(showAllHistory ? activityHistory : activityHistory.slice(0, 3)).map((log) => {
                     const fromAI = isFromAI(log.title, log.type);
                     const phoneCall = isPhoneCall(log.type);

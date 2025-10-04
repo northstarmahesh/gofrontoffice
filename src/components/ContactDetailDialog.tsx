@@ -334,7 +334,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
+      <DialogContent className="max-w-4xl max-h-[95vh]">
         <DialogHeader>
           <div className="space-y-2">
             <DialogTitle className="text-2xl flex items-center gap-2">
@@ -350,7 +350,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
           </div>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[70vh] pr-4">
+        <ScrollArea className="max-h-[75vh] pr-4">
           <div className="space-y-4">
             {isEditing ? (
               <div className="space-y-4 py-4">
