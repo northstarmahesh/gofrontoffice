@@ -419,19 +419,6 @@ const Auth = () => {
               >
                 {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
               </Button>
-
-              {isLogin && (
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={handleSendCode}
-                    className="text-sm text-primary hover:underline"
-                    disabled={loading}
-                  >
-                    Or send me a code
-                  </button>
-                </div>
-              )}
             </form>
           )}
 
@@ -460,7 +447,7 @@ const Auth = () => {
                 {loading ? "Verifying..." : "Verify Code"}
               </Button>
 
-              <div className="text-center space-y-2">
+              <div className="text-center">
                 <button
                   type="button"
                   onClick={handleSendCode}
@@ -469,18 +456,6 @@ const Auth = () => {
                 >
                   Resend code
                 </button>
-                <div>
-                  <button
-                    onClick={() => {
-                      setStep("auth");
-                      setVerificationCode("");
-                    }}
-                    className="text-sm text-muted-foreground hover:text-foreground"
-                    disabled={loading}
-                  >
-                    ← Use password instead
-                  </button>
-                </div>
               </div>
             </form>
           )}
