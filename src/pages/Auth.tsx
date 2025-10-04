@@ -82,10 +82,13 @@ const Auth = () => {
       if (error) {
         // Handle case where user already exists
         if (error.message.includes('already registered') || 
-            error.message.includes('already exists')) {
-          toast.error("This email is already registered. Please sign in instead.");
+            error.message.includes('already exists') ||
+            error.message.includes('User already registered')) {
+          toast.info("This email is already registered. Switching to sign in...");
           setIsLogin(true);
+          setFullName("");
           setAwaitingVerification(false);
+          setLoading(false);
           return;
         }
         throw error;
