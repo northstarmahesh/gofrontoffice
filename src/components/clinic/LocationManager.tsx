@@ -184,21 +184,6 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
 
       // Add phone number if enabled
       if (phoneNumberSetup.enabled && phoneNumberSetup.number && locationId) {
-        // Check if WhatsApp is selected and already exists for this location
-        if (phoneNumberSetup.channels.includes("whatsapp")) {
-          const { data: existing } = await supabase
-            .from("clinic_phone_numbers")
-            .select("id")
-            .eq("location_id", locationId)
-            .contains("channels", ["whatsapp"])
-            .maybeSingle();
-
-          if (existing) {
-            toast.error("This location already has a WhatsApp number.");
-            return;
-          }
-        }
-
         const { data: phoneData, error: phoneError } = await supabase
           .from("clinic_phone_numbers")
           .insert({
