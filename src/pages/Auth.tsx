@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 import { toast } from "sonner";
 import logo from "@/assets/front-office-logo.png";
@@ -504,46 +510,97 @@ const Auth = () => {
           )}
         </Card>
 
-        {/* Testimonials - Subtle */}
-        <div className="w-full max-w-md mt-6 space-y-3">
-          <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
-            <div className="flex gap-0.5 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <span key={i} className="text-yellow-500 text-xs">⭐</span>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground italic mb-3">
-              "We've saved over 25 hours per week since implementing Front Office. Our AI assistant handles appointment bookings flawlessly."
-            </p>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                🦷
-              </div>
-              <div>
-                <p className="font-medium text-xs">Dr. Anna Bergström</p>
-                <p className="text-[10px] text-muted-foreground">Solna Dental Clinic</p>
-              </div>
-            </div>
-          </div>
+        {/* Testimonials Carousel - Subtle */}
+        <div className="w-full max-w-md mt-6">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 5000,
+              }),
+            ]}
+            className="w-full"
+          >
+            <CarouselContent>
+              <CarouselItem>
+                <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
+                  <div className="flex gap-0.5 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-500 text-xs">⭐</span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground italic mb-3">
+                    "We've saved over 25 hours per week since implementing Front Office. Our AI assistant handles appointment bookings flawlessly."
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                      🦷
+                    </div>
+                    <div>
+                      <p className="font-medium text-xs">Dr. Anna Bergström</p>
+                      <p className="text-[10px] text-muted-foreground">Solna Dental Clinic</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
 
-          <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
-            <div className="flex gap-0.5 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <span key={i} className="text-yellow-500 text-xs">⭐</span>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground italic mb-3">
-              "Our booking rate increased by 60% after switching to Front Office. The AI handles Instagram DMs and Facebook messages perfectly."
-            </p>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                💉
-              </div>
-              <div>
-                <p className="font-medium text-xs">Lisa Andersson</p>
-                <p className="text-[10px] text-muted-foreground">Stockholm Botox Clinic</p>
-              </div>
-            </div>
+              <CarouselItem>
+                <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
+                  <div className="flex gap-0.5 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-500 text-xs">⭐</span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground italic mb-3">
+                    "Our booking rate increased by 60% after switching to Front Office. The AI handles Instagram DMs and Facebook messages perfectly."
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                      💉
+                    </div>
+                    <div>
+                      <p className="font-medium text-xs">Lisa Andersson</p>
+                      <p className="text-[10px] text-muted-foreground">Stockholm Botox Clinic</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+
+              <CarouselItem>
+                <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
+                  <div className="flex gap-0.5 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-500 text-xs">⭐</span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground italic mb-3">
+                    "The co-pilot mode is brilliant. Our team gets AI suggestions for complex cases, and the system handles routine inquiries automatically."
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                      🏥
+                    </div>
+                    <div>
+                      <p className="font-medium text-xs">Dr. Erik Johansson</p>
+                      <p className="text-[10px] text-muted-foreground">HealthCare Plus</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+          </Carousel>
+
+          {/* Need Help Link */}
+          <div className="text-center mt-4">
+            <a 
+              href="tel:+46707300605" 
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Need help? Call us at +46 70 730 06 05
+            </a>
           </div>
         </div>
       </div>
