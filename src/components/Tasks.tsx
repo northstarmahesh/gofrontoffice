@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight, TrendingUp, DollarSign, Calendar, CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight, TrendingUp, DollarSign, Calendar, CalendarIcon, ChevronDown, ChevronUp, Pencil, History } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TaskDetailDialog from "./TaskDetailDialog";
 import ContactDetailDialog from "./ContactDetailDialog";
@@ -663,10 +663,21 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             {/* Show draft message inline if available - prominent yellow box */}
             {hasDraft && (
               <div className="space-y-3 p-5 rounded-lg bg-yellow-accent/10 border-2 border-yellow-accent/50 shadow-sm">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between">
                   <Badge className="bg-yellow-accent text-yellow-accent-foreground text-xs font-semibold">
                     ⚡ AI Draft - Action Required
                   </Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTaskClick(task);
+                    }}
+                    className="h-8 w-8 p-0 hover:bg-yellow-accent/20"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                 </div>
                 <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap font-medium">
                   {task.draftMessage}
@@ -684,15 +695,19 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleTaskClick(task)}
-                    className="text-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTaskClick(task);
+                    }}
+                    className="text-sm flex items-center gap-1.5"
                   >
-                    Edit
+                    <History className="h-4 w-4" />
+                    View Conversation
                   </Button>
                   <Button
                     size="sm"
                     onClick={(e) => handleQuickSend(task, e)}
-                    className="text-sm flex items-center gap-1"
+                    className="text-sm flex items-center gap-1.5"
                   >
                     <Send className="h-4 w-4" />
                     Send
