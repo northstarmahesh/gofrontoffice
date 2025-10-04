@@ -20,6 +20,7 @@ import {
 import { LocationManager } from "./LocationManager";
 import { KnowledgeBase } from "./KnowledgeBase";
 import { ClinicInfo } from "./ClinicInfo";
+import { TwilioConnection } from "./TwilioConnection";
 
 interface ChannelStatus {
   instagram: boolean;
@@ -205,8 +206,9 @@ const ClinicManagement = () => {
       </Card>
 
       <Tabs defaultValue="channels" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="channels">Channels</TabsTrigger>
+          <TabsTrigger value="twilio">Twilio Setup</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
         </TabsList>
@@ -409,8 +411,15 @@ const ClinicManagement = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="twilio">
+          <TwilioConnection 
+            clinicId={clinicId}
+            onConnectionSuccess={() => checkChannelStatus(clinicId)}
+          />
+        </TabsContent>
+
         <TabsContent value="locations">
-          <LocationManager 
+          <LocationManager
             clinicId={clinicId} 
             onUpdate={() => checkChannelStatus(clinicId)}
           />
