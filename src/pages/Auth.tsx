@@ -8,13 +8,7 @@ import { Card } from "@/components/ui/card";
 
 import { toast } from "sonner";
 import logo from "@/assets/front-office-logo.png";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { Instagram, Facebook, Phone, MessageSquare, Calendar } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -224,8 +218,8 @@ const Auth = () => {
                 ⏰
               </div>
               <div>
-                <h3 className="text-base font-semibold mb-0.5">Save 20+ Hours Weekly</h3>
-                <p className="text-xs text-white/80">AI handles scheduling, inquiries, and follow-ups automatically.</p>
+                <h3 className="text-base font-semibold mb-0.5">Save 5+ Hours/Week</h3>
+                <p className="text-xs text-white/80">No more boring admin tasks - focus on what matters.</p>
               </div>
             </div>
 
@@ -244,128 +238,113 @@ const Auth = () => {
                 🎯
               </div>
               <div>
-                <h3 className="text-base font-semibold mb-0.5">Co-Pilot or Auto-Pilot Mode</h3>
-                <p className="text-xs text-white/80">AI assistance or full automation - switch anytime based on your needs.</p>
+                <h3 className="text-base font-semibold mb-0.5">Always in Control</h3>
+                <p className="text-xs text-white/80">Choose between co-pilot or auto-pilot modes to control how your assistant responds.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-xl flex-shrink-0">
+                🤝
+              </div>
+              <div>
+                <h3 className="text-base font-semibold mb-0.5">Your New Colleague</h3>
+                <p className="text-xs text-white/80">Keeps learning about you and improving automatically. No vacation, extra benefits, or union membership needed.</p>
               </div>
             </div>
           </div>
 
-          {/* Testimonials Carousel */}
-          <Carousel className="w-full">
-            <CarouselContent>
-              <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-xs italic mb-3 leading-relaxed">
-                    "We've saved over 25 hours per week since implementing Front Office. Our AI assistant handles appointment bookings flawlessly, and patients love the instant responses on WhatsApp."
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
-                      🦷
-                    </div>
-                    <div>
-                      <p className="font-semibold text-xs">Dr. Anna Bergström</p>
-                      <p className="text-[10px] text-white/80">Solna Dental Clinic</p>
-                    </div>
-                  </div>
-                </div>
-              </CarouselItem>
+          {/* Integrations */}
+          <div className="mb-6">
+            <p className="text-xs text-white/60 mb-3 text-center">Integrates seamlessly with</p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <Instagram size={18} className="text-white" />
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <Facebook size={18} className="text-white" />
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <Phone size={18} className="text-white" />
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <MessageSquare size={18} className="text-white" />
+              </div>
+              <div className="w-auto px-3 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <span className="text-[10px] text-white font-medium">WhatsApp</span>
+              </div>
+              <div className="w-auto px-3 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <Calendar size={16} className="text-white mr-1" />
+                <span className="text-[10px] text-white font-medium">Bokadirekt</span>
+              </div>
+              <div className="w-auto px-3 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <span className="text-[10px] text-white font-medium">ClinicBuddy</span>
+              </div>
+            </div>
+          </div>
 
-              <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-xs italic mb-3 leading-relaxed">
-                    "Our booking rate increased by 60% after switching to Front Office. The AI handles Instagram DMs and Facebook messages perfectly, and we never miss a consultation request."
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
-                      💉
-                    </div>
-                    <div>
-                      <p className="font-semibold text-xs">Lisa Andersson</p>
-                      <p className="text-[10px] text-white/80">Stockholm Botox Clinic</p>
-                    </div>
-                  </div>
+          {/* Testimonials Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5">
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-300">⭐</span>
+                ))}
+              </div>
+              <p className="text-sm italic mb-4 leading-relaxed">
+                "We've saved over 25 hours per week since implementing Front Office. Our AI assistant handles appointment bookings flawlessly."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  🦷
                 </div>
-              </CarouselItem>
+                <div>
+                  <p className="font-semibold text-sm">Dr. Anna Bergström</p>
+                  <p className="text-xs text-white/80">Solna Dental Clinic</p>
+                </div>
+              </div>
+            </div>
 
-              <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-xs italic mb-3 leading-relaxed">
-                    "The co-pilot mode is brilliant. Our team gets AI suggestions for complex cases, and the system handles routine inquiries automatically. Best investment we've made this year."
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
-                      🏥
-                    </div>
-                    <div>
-                      <p className="font-semibold text-xs">Dr. Erik Johansson</p>
-                      <p className="text-[10px] text-white/80">HealthCare Plus, Gothenburg</p>
-                    </div>
-                  </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5">
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-300">⭐</span>
+                ))}
+              </div>
+              <p className="text-sm italic mb-4 leading-relaxed">
+                "Our booking rate increased by 60% after switching to Front Office. The AI handles Instagram DMs and Facebook messages perfectly."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  💉
                 </div>
-              </CarouselItem>
+                <div>
+                  <p className="font-semibold text-sm">Lisa Andersson</p>
+                  <p className="text-xs text-white/80">Stockholm Botox Clinic</p>
+                </div>
+              </div>
+            </div>
 
-              <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-xs italic mb-3 leading-relaxed">
-                    "We can finally focus on our patients instead of answering the phone all day. The multi-channel support means we're available 24/7 without hiring night staff."
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
-                      💆
-                    </div>
-                    <div>
-                      <p className="font-semibold text-xs">Maria Svensson</p>
-                      <p className="text-[10px] text-white/80">Wellness Spa, Malmö</p>
-                    </div>
-                  </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5">
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-300">⭐</span>
+                ))}
+              </div>
+              <p className="text-sm italic mb-4 leading-relaxed">
+                "The co-pilot mode is brilliant. Our team gets AI suggestions for complex cases, and the system handles routine inquiries automatically."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  🏥
                 </div>
-              </CarouselItem>
-
-              <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-xs italic mb-3 leading-relaxed">
-                    "Front Office transformed our practice. No more missed calls, automatic reminders reduced no-shows by 40%, and patients appreciate the instant communication on their preferred channels."
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
-                      👁️
-                    </div>
-                    <div>
-                      <p className="font-semibold text-xs">Dr. Johan Lindgren</p>
-                      <p className="text-[10px] text-white/80">Vision Care Clinic, Uppsala</p>
-                    </div>
-                  </div>
+                <div>
+                  <p className="font-semibold text-sm">Dr. Erik Johansson</p>
+                  <p className="text-xs text-white/80">HealthCare Plus</p>
                 </div>
-              </CarouselItem>
-            </CarouselContent>
-            <CarouselPrevious className="text-white border-white/20 hover:bg-white/10" />
-            <CarouselNext className="text-white border-white/20 hover:bg-white/10" />
-          </Carousel>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
