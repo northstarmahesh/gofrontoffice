@@ -50,7 +50,7 @@ const Auth = () => {
       return;
     }
 
-    // Default to signup - users can easily switch to login if they have an account
+    // Always default to signup - if user exists, they can toggle to login
     setIsLogin(false);
     setStep("auth");
   };
@@ -76,7 +76,16 @@ const Auth = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle case where user already exists
+        if (error.message.includes('already registered') || 
+            error.message.includes('already exists')) {
+          toast.error("This email is already registered. Please sign in instead.");
+          setIsLogin(true); // Switch to login view
+          return;
+        }
+        throw error;
+      }
 
       // Send verification code after signup
       const { error: otpError } = await supabase.auth.signInWithOtp({
