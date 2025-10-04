@@ -64,6 +64,7 @@ const Auth = () => {
 
     setLoading(true);
     try {
+      // Send OTP for email verification during signup
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -77,8 +78,18 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success("Account created! Redirecting to setup...");
-      // Will be redirected to clinic onboarding by Index.tsx
+      // Send verification code after signup
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false,
+        },
+      });
+
+      if (otpError) throw otpError;
+
+      toast.success("Check your email for the verification code!");
+      setStep("code");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign up");
     } finally {
