@@ -302,35 +302,35 @@ const Auth = () => {
       </div>
 
       {/* Right Column - Auth Card */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 lg:p-8 bg-background/95 backdrop-blur-sm">
-        <Card className="w-full max-w-md border-0 p-6 lg:p-8 shadow-2xl">
+      <div className="flex-1 flex flex-col items-center justify-center p-3 sm:p-4 lg:p-8 bg-background/95 backdrop-blur-sm">
+        <Card className="w-full max-w-[95vw] sm:max-w-md border-0 p-4 sm:p-6 lg:p-8 shadow-2xl">
           {/* Card Header */}
-          <div className="mb-4 text-center">
-            <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
+          <div className="mb-6 text-center">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mb-2">
               {step === "email" 
-                ? "Get Started With Front Office"
+                ? "Get Started"
                 : step === "code"
-                  ? "Enter Verification Code"
+                  ? "Verification Code"
                   : isLogin 
                     ? "Welcome Back" 
-                    : "Set Up Your Account"}
+                    : "Set Up Account"}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground px-2">
               {step === "email" 
-                ? "Step 1 of 3: Create your personal login. You'll set up your business details after signing in."
+                ? "Step 1 of 3: Create your login"
                 : step === "code"
-                  ? "Step 2 of 3: Check your inbox and enter the 6-digit code we sent you"
+                  ? "Step 2 of 3: Enter the 6-digit code from your email"
                   : isLogin 
-                    ? "Enter your credentials to access your Front Office dashboard" 
-                    : "Step 2 of 3: Choose a secure password for your account"}
+                    ? "Sign in to access your dashboard" 
+                    : "Step 2 of 3: Choose a secure password"}
             </p>
           </div>
 
           {/* Email Step */}
           {step === "email" && (
-            <form onSubmit={handleEmailContinue} className="space-y-4">
+            <form onSubmit={handleEmailContinue} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">Your Email Address</Label>
+                <Label htmlFor="email" className="text-sm sm:text-base">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
@@ -339,12 +339,13 @@ const Auth = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                   autoFocus
+                  className="h-11 sm:h-10 text-base"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
+                className="w-full h-11 sm:h-10 text-base bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
                 disabled={loading}
               >
                 Continue
@@ -371,9 +372,9 @@ const Auth = () => {
 
           {/* Auth Step - Login or Signup */}
           {step === "auth" && (
-            <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4">
+            <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email-auth">Your Email (Admin Account)</Label>
+                <Label htmlFor="email-auth" className="text-sm sm:text-base">Email Address</Label>
                 <Input
                   id="email-auth"
                   type="email"
@@ -381,12 +382,13 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
+                  className="h-11 sm:h-10 text-base"
                 />
               </div>
 
               {!isLogin && (
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Your Full Name</Label>
+                  <Label htmlFor="fullName" className="text-sm sm:text-base">Full Name</Label>
                   <Input
                     id="fullName"
                     type="text"
@@ -395,12 +397,13 @@ const Auth = () => {
                     onChange={(e) => setFullName(e.target.value)}
                     disabled={loading}
                     autoFocus
+                    className="h-11 sm:h-10 text-base"
                   />
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-sm sm:text-base">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -409,12 +412,13 @@ const Auth = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                   autoFocus={isLogin}
+                  className="h-11 sm:h-10 text-base"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
+                className="w-full h-11 sm:h-10 text-base bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
                 disabled={loading}
               >
                 {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
@@ -424,9 +428,9 @@ const Auth = () => {
 
           {/* Code Verification Step */}
           {step === "code" && (
-            <form onSubmit={handleVerifyCode} className="space-y-4">
+            <form onSubmit={handleVerifyCode} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="code">Verification Code</Label>
+                <Label htmlFor="code" className="text-sm sm:text-base">Verification Code</Label>
                 <Input
                   id="code"
                   type="text"
@@ -436,12 +440,13 @@ const Auth = () => {
                   disabled={loading}
                   autoFocus
                   maxLength={6}
+                  className="h-11 sm:h-10 text-base text-center tracking-widest"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
+                className="w-full h-11 sm:h-10 text-base bg-primary hover:bg-primary/90 hover:ring-2 hover:ring-yellow-accent hover:ring-offset-2 transition-all"
                 disabled={loading}
               >
                 {loading ? "Verifying..." : "Verify Code"}
