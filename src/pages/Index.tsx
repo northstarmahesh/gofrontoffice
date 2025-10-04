@@ -134,7 +134,7 @@ const Index = () => {
             <img 
               src={frontOfficeLogo} 
               alt="Front Office Logo" 
-              className="h-16 w-auto"
+              className="h-20 w-auto"
             />
           </div>
           <Button
