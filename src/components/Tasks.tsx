@@ -1,22 +1,27 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ActivityLogs from "./ActivityLogs";
 import TaskDetailDialog from "./TaskDetailDialog";
 import ContactDetailDialog from "./ContactDetailDialog";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
 
 interface TasksProps {
   onNavigateToContact?: (contactName: string) => void;
 }
 
 const Tasks = ({ onNavigateToContact }: TasksProps) => {
+  const { greeting, weather, backgroundGradient, emoji } = useGreetingAndWeather();
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [humanTasks, setHumanTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedContactForHistory, setSelectedContactForHistory] = useState<{
     name: string;
     info: string;
@@ -26,8 +31,44 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
   useEffect(() => {
-    loadTasks();
-  }, [refreshKey]);
+    loadLocations();
+  }, []);
+
+  useEffect(() => {
+    if (selectedLocation) {
+      loadTasks();
+    }
+  }, [refreshKey, selectedLocation]);
+
+  const loadLocations = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: clinicUsers } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (clinicUsers?.clinic_id) {
+        const { data: locations } = await supabase
+          .from("clinic_locations")
+          .select("*")
+          .eq("clinic_id", clinicUsers.clinic_id)
+          .order("created_at", { ascending: true });
+
+        if (locations && locations.length > 0) {
+          setLocations(locations);
+          setSelectedLocation(locations[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading locations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadTasks = async () => {
     try {
@@ -340,14 +381,62 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const humanTasksByDate = groupTasksByDate(todayHumanTasks);
   const assistantTasksByDate = groupTasksByDate(assistantTasks);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (locations.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-lg font-semibold text-foreground mb-2">No Locations Found</p>
+        <p className="text-sm text-muted-foreground">Please add a location in Clinic Settings to get started.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="mb-2 text-2xl font-bold text-foreground">Tasks for Today</h2>
-        <p className="text-sm text-muted-foreground">
-          Actions you need to take based on AI drafts and your own tasks
+      {/* Welcome Banner */}
+      <div className={`rounded-2xl ${backgroundGradient} p-6 text-white shadow-lg transition-all duration-1000 border-2 border-yellow-accent/20`}>
+        <div className="flex items-center gap-3 mb-2">
+          <Bot className="h-8 w-8" />
+          <h2 className="text-2xl font-bold">{greeting}! {emoji}</h2>
+        </div>
+        <p className="text-base opacity-90">
+          Your assistant is working on your behalf. Review tasks that need your attention below.
         </p>
+        {weather && (
+          <p className="mt-2 text-sm opacity-75">
+            Currently {Math.round(weather.temp)}°C
+          </p>
+        )}
       </div>
+
+      {/* Location Tabs */}
+      {locations.length > 0 && (
+        <Tabs value={selectedLocation} onValueChange={setSelectedLocation} className="w-full">
+          <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${locations.length}, 1fr)` }}>
+            {locations.map((location) => (
+              <TabsTrigger key={location.id} value={location.id} className="gap-2">
+                <MapPin className="h-4 w-4" />
+                {location.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {locations.map((location) => (
+            <TabsContent key={location.id} value={location.id} className="space-y-6 mt-6">
+              <div>
+                <h2 className="mb-2 text-2xl font-bold text-foreground">Tasks for Today</h2>
+                <p className="text-sm text-muted-foreground">
+                  Actions you need to take based on AI drafts and your own tasks
+                </p>
+              </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2">
@@ -397,10 +486,14 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         ))}
       </div>
 
-      {/* Activity Logs Section */}
-      <div className="mt-8">
-        <ActivityLogs onNavigateToContact={onNavigateToContact} />
-      </div>
+              {/* Activity Logs Section */}
+              <div className="mt-8">
+                <ActivityLogs onNavigateToContact={onNavigateToContact} />
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
 
       {/* Contact Detail Dialog for contact tasks */}
       {selectedContactForHistory && (

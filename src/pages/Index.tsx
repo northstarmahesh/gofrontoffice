@@ -15,7 +15,7 @@ type View = "status" | "contacts" | "tasks" | "clinic";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [currentView, setCurrentView] = useState<View>("status");
+  const [currentView, setCurrentView] = useState<View>("tasks");
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
