@@ -1,12 +1,15 @@
 project_id = "bzaqtvjereyqrymupapp"
 
-[functions.twilio-sms-webhook]
+[functions.vonage-sms-webhook]
 verify_jwt = false
 
-[functions.twilio-voice-webhook]
+[functions.vonage-voice-webhook]
 verify_jwt = false
 
-[functions.twilio-voice-gather]
+[functions.vonage-voice-input]
+verify_jwt = false
+
+[functions.vonage-whatsapp-webhook]
 verify_jwt = false
 
 [functions.send-email-verification]
