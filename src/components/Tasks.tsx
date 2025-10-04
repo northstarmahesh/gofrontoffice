@@ -683,17 +683,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                   <Badge className="bg-yellow-accent text-yellow-accent-foreground text-xs font-semibold">
                     ⚡ AI Draft - Action Required
                   </Badge>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTaskClick(task);
-                    }}
-                    className="h-8 w-8 p-0 hover:bg-yellow-accent/20"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
                 </div>
                 <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap font-medium">
                   {task.draftMessage}
@@ -707,14 +696,28 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             <span className="text-sm text-muted-foreground">{task.time}</span>
             <div className="flex items-center gap-2">
               {hasDraft ? (
-                <Button
-                  size="sm"
-                  onClick={(e) => handleQuickSend(task, e)}
-                  className="text-sm flex items-center gap-1.5"
-                >
-                  <Send className="h-4 w-4" />
-                  Send
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTaskClick(task);
+                    }}
+                    className="text-sm flex items-center gap-1.5"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Edit and Send
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={(e) => handleQuickSend(task, e)}
+                    className="text-sm flex items-center gap-1.5"
+                  >
+                    <Send className="h-4 w-4" />
+                    Send
+                  </Button>
+                </>
               ) : (
                 <div className="flex items-center gap-2 text-primary font-medium text-sm cursor-pointer" onClick={() => handleTaskClick(task)}>
                   {task.callSummary ? "Review & Complete" : task.draftMessage ? "Review & Send" : "Take Action"}
