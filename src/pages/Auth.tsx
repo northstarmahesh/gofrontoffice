@@ -67,7 +67,7 @@ const Auth = () => {
     setAwaitingVerification(true);
     
     try {
-      // Sign up the user without auto-confirming
+      // Sign up the user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -91,19 +91,22 @@ const Auth = () => {
         throw error;
       }
 
-      // Send verification code after signup
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        },
-      });
+      // Send 6-digit verification code using edge function
+      const { data: codeData, error: codeError } = await supabase.functions.invoke(
+        'send-email-verification',
+        {
+          body: { email }
+        }
+      );
 
-      if (otpError) {
-        console.error("OTP error:", otpError);
+      if (codeError) {
+        console.error("Failed to send verification code:", codeError);
+        toast.error("Account created but failed to send verification code");
+      } else {
+        console.log("Verification code sent:", codeData);
+        toast.success("Check your email for the 6-digit verification code!");
       }
 
-      toast.success("Check your email for the verification code!");
       setStep("code");
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -147,16 +150,17 @@ const Auth = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-        },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        'send-email-verification',
+        {
+          body: { email }
+        }
+      );
 
       if (error) throw error;
 
-      toast.success("Check your email for the verification code!");
+      console.log("Verification code sent:", data);
+      toast.success("Check your email for the 6-digit verification code!");
       setStep("code");
     } catch (error: any) {
       toast.error(error.message || "Failed to send code");
@@ -174,17 +178,34 @@ const Auth = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: verificationCode,
-        type: 'email',
-      });
+      // Verify the code using edge function
+      const { data, error } = await supabase.functions.invoke(
+        'verify-email-otp',
+        {
+          body: { email, code: verificationCode }
+        }
+      );
 
       if (error) throw error;
 
+      if (!data.verified) {
+        throw new Error(data.error || "Invalid verification code");
+      }
+
       setAwaitingVerification(false);
       toast.success("Successfully verified! Redirecting...");
-      navigate("/");
+      
+      // Sign in the user after verification
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        toast.error("Verification successful but sign-in failed. Please try logging in.");
+      } else {
+        navigate("/");
+      }
     } catch (error: any) {
       toast.error(error.message || "Invalid verification code");
     } finally {
