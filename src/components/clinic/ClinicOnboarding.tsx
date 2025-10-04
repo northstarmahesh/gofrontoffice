@@ -23,7 +23,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   const [hasPhoneConnection, setHasPhoneConnection] = useState(false);
 
   const steps = [
-    { id: "info" as OnboardingStep, label: "Clinic Info", icon: Building2, description: "Basic details" },
+    { id: "info" as OnboardingStep, label: "Business Info", icon: Building2, description: "Basic details" },
     { id: "channels" as OnboardingStep, label: "Connect Channels", icon: Plug, description: "2+ channels" },
     { id: "ai-setup" as OnboardingStep, label: "AI Assistant", icon: Users, description: "Configure AI" },
     { id: "complete" as OnboardingStep, label: "Complete", icon: Rocket, description: "All set!" },
@@ -36,7 +36,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
     setClinicId(newClinicId);
     setClinicName(name);
     setClinicType(type);
-    toast.success("Clinic profile created! Now connect at least 2 channels.");
+    toast.success("Business profile created! Now connect at least 2 channels.");
     setCurrentStep("channels");
   };
 
@@ -54,7 +54,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   const handleSkipOnboarding = () => {
     if (clinicId) {
       onComplete(clinicId);
-      toast.info("You can complete setup anytime from Clinic Management");
+      toast.info("You can complete setup anytime from Business Management");
     }
   };
 
@@ -74,7 +74,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm sm:text-base">
                 1
               </div>
-              <h2 className="text-lg sm:text-xl font-semibold">Clinic Information</h2>
+              <h2 className="text-lg sm:text-xl font-semibold">Business Information</h2>
             </div>
             <OnboardingBasicInfo onComplete={handleClinicCreated} />
           </div>
@@ -112,7 +112,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
                 </div>
               </>
             ) : (
-              <p className="text-center text-muted-foreground">Please complete clinic info first</p>
+              <p className="text-center text-muted-foreground">Please complete business info first</p>
             )}
           </div>
         );

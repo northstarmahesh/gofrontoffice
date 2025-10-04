@@ -172,7 +172,7 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
 
       if (locationError) console.error("Error creating location:", locationError);
 
-      toast.success("Clinic profile created!");
+      toast.success("Business profile created!");
       onComplete(clinic.id, formData.name, formData.clinic_type);
     } catch (error: any) {
       console.error("Error creating clinic:", error);
@@ -202,7 +202,7 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Clinic Name *</Label>
+          <Label htmlFor="name">Business Name *</Label>
           <Input
             id="name"
             value={formData.name}
@@ -214,7 +214,7 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="clinicType">Clinic Type *</Label>
+          <Label htmlFor="clinicType">Business Type *</Label>
           <select
             id="clinicType"
             className="w-full h-12 sm:h-10 px-4 py-3 sm:px-3 sm:py-2 rounded-md border border-input bg-background text-base sm:text-sm"
@@ -226,7 +226,14 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
             <option value="dental">Dental Office</option>
             <option value="veterinary">Veterinary Clinic</option>
             <option value="therapy">Therapy/Counseling Practice</option>
-            <option value="default">Other Healthcare</option>
+            <option value="spa">Spa & Wellness</option>
+            <option value="salon">Hair & Beauty Salon</option>
+            <option value="fitness">Fitness & Gym</option>
+            <option value="restaurant">Restaurant & Cafe</option>
+            <option value="retail">Retail Store</option>
+            <option value="professional">Professional Services</option>
+            <option value="automotive">Automotive Services</option>
+            <option value="other">Other</option>
           </select>
           <p className="text-xs text-muted-foreground">
             This helps us customize your AI assistant's responses
@@ -290,7 +297,7 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
             </Button>
           )}
           <p className="text-xs text-muted-foreground">
-            Full address helps patients find your clinic
+            Full address helps customers find your business
           </p>
         </div>
 
@@ -360,7 +367,7 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
 
           <p className="text-xs text-muted-foreground">
             {isEmailVerified 
-              ? "Email verified. This will be the primary admin contact for your clinic." 
+              ? "Email verified. This will be the primary admin contact for your business." 
               : "We'll send a verification code to confirm this email. You can change this later in settings."}
           </p>
         </div>

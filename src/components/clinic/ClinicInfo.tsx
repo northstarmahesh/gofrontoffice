@@ -68,7 +68,7 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
           .eq("id", clinicId);
 
         if (error) throw error;
-        toast.success("Clinic information updated!");
+        toast.success("Business information updated!");
       } else {
         // Create new clinic (trigger automatically adds user as owner)
         const { data: clinic, error: clinicError } = await supabase
@@ -110,7 +110,7 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-primary" />
-                  <CardTitle>Clinic Information</CardTitle>
+                  <CardTitle>Business Information</CardTitle>
                 </div>
                 <div className="flex items-center gap-2">
                   {isLocked && (
@@ -120,7 +120,7 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
                 </div>
               </div>
               <CardDescription>
-                {isLocked ? "Main information about your clinic (click to view)" : "Main information about your clinic organization"}
+                {isLocked ? "Main information about your business (click to view)" : "Main information about your business organization"}
               </CardDescription>
             </CardHeader>
           </CollapsibleTrigger>
@@ -131,7 +131,7 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
                   <div className="flex items-center gap-2">
                     <Lock className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      Clinic information is locked to prevent accidental changes
+                      Business information is locked to prevent accidental changes
                     </p>
                   </div>
                   <Button
@@ -148,7 +148,7 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Clinic Name *</Label>
+                  <Label htmlFor="name">Business Name *</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -156,7 +156,7 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
                     onBlur={generateSlug}
                     required
                     disabled={isLocked}
-                    placeholder="Main Street Health Clinic"
+                    placeholder="Main Street Health"
                   />
                 </div>
 
@@ -171,7 +171,7 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
                     placeholder="main-street-health"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Used for your clinic's unique URL
+                    Used for your business's unique URL
                   </p>
                 </div>
 
