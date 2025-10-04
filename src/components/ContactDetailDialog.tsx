@@ -67,6 +67,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
 
   useEffect(() => {
     if (open && (contactId || contactName)) {
+      console.log("ContactDetailDialog opened", { draftMessage, contactName, contactId });
       loadContactData();
       
       // Use mock history if provided, otherwise load from database
@@ -81,7 +82,10 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       
       // Pre-fill message with draft if provided
       if (draftMessage) {
+        console.log("Setting draft message:", draftMessage);
         setMessage(draftMessage);
+      } else {
+        console.log("No draft message provided");
       }
     } else {
       // Clear message when dialog closes
