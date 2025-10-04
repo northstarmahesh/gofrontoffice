@@ -52,8 +52,7 @@ const Auth = () => {
       return;
     }
 
-    // Always default to signup - if user exists, they can toggle to login
-    setIsLogin(false);
+    // Keep the current isLogin state
     setStep("auth");
   };
 
@@ -288,7 +287,7 @@ const Auth = () => {
           <div className="mb-4 text-center">
             <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
               {step === "email" 
-                ? "Get Started With Front Office" 
+                ? (isLogin ? "Welcome Back" : "Get Started With Front Office")
                 : step === "code"
                   ? "Enter Verification Code"
                   : isLogin 
@@ -297,7 +296,7 @@ const Auth = () => {
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === "email" 
-                ? "Enter your email to get started." 
+                ? (isLogin ? "Sign in to your account" : "Enter your email to get started.")
                 : step === "code"
                   ? "Check your email for the 6-digit code"
                   : isLogin 
@@ -329,6 +328,20 @@ const Auth = () => {
               >
                 Continue
               </Button>
+
+              <div className="text-center text-sm">
+                <span className="text-muted-foreground">
+                  {isLogin ? "New to Front Office? " : "Already have an account? "}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="font-medium text-primary hover:underline"
+                  disabled={loading}
+                >
+                  {isLogin ? "Create an account" : "Sign in"}
+                </button>
+              </div>
             </form>
           )}
 
