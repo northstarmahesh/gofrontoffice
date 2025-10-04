@@ -22,11 +22,17 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Normalize phone numbers - remove whatsapp: prefix and add + if missing
+    const cleanTo = to?.replace('whatsapp:', '');
+    const cleanFrom = from?.replace('whatsapp:', '');
+    const normalizedTo = cleanTo?.startsWith('+') ? cleanTo : `+${cleanTo}`;
+    const normalizedFrom = cleanFrom?.startsWith('+') ? cleanFrom : `+${cleanFrom}`;
+
     // Find clinic by phone number
     const { data: phoneData, error: phoneError } = await supabase
       .from('clinic_phone_numbers')
       .select('clinic_id, location_id')
-      .eq('phone_number', to.replace('whatsapp:', ''))
+      .eq('phone_number', normalizedTo)
       .maybeSingle();
 
     if (phoneError || !phoneData) {
@@ -53,11 +59,11 @@ serve(async (req) => {
       .insert({
         clinic_id: phoneData.clinic_id,
         type: 'whatsapp',
-        title: `WhatsApp from ${from}`,
+        title: `WhatsApp from ${normalizedFrom}`,
         summary: messageText,
         status: 'pending',
-        contact_name: from,
-        contact_info: from,
+        contact_name: normalizedFrom,
+        contact_info: normalizedFrom,
         direction: 'inbound',
       });
 
@@ -162,11 +168,11 @@ Important: Keep your response clear and concise. Use emojis appropriately to mai
         .insert({
           clinic_id: phoneData.clinic_id,
           type: 'whatsapp',
-          title: `WhatsApp to ${from}`,
+          title: `WhatsApp to ${normalizedFrom}`,
           summary: responseText,
           status: 'completed',
-          contact_name: from,
-          contact_info: from,
+          contact_name: normalizedFrom,
+          contact_info: normalizedFrom,
           direction: 'outbound',
         });
     } else {

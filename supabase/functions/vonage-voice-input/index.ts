@@ -22,11 +22,15 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Normalize phone number - add + if missing
+    const normalizedTo = to?.startsWith('+') ? to : `+${to}`;
+    const normalizedFrom = from?.startsWith('+') ? from : `+${from}`;
+
     // Find clinic
     const { data: phoneData } = await supabase
       .from('clinic_phone_numbers')
       .select('clinic_id, location_id')
-      .eq('phone_number', to)
+      .eq('phone_number', normalizedTo)
       .maybeSingle();
 
     if (!phoneData) {
@@ -111,11 +115,11 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
       .insert({
         clinic_id: phoneData.clinic_id,
         type: 'call',
-        title: `Call with ${from}`,
+        title: `Call with ${normalizedFrom}`,
         summary: `Caller: "${userInput}"\n\nResponse: "${responseText}"`,
         status: autoPilotEnabled ? 'completed' : 'pending',
-        contact_name: from,
-        contact_info: from,
+        contact_name: normalizedFrom,
+        contact_info: normalizedFrom,
         direction: 'inbound',
       });
 

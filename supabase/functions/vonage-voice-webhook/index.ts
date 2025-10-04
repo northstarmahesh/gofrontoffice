@@ -21,11 +21,15 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Normalize phone number - add + if missing
+    const normalizedTo = to?.startsWith('+') ? to : `+${to}`;
+    const normalizedFrom = from?.startsWith('+') ? from : `+${from}`;
+
     // Find clinic by phone number
     const { data: phoneData, error: phoneError } = await supabase
       .from('clinic_phone_numbers')
       .select('clinic_id, location_id')
-      .eq('phone_number', to)
+      .eq('phone_number', normalizedTo)
       .maybeSingle();
 
     if (phoneError || !phoneData) {
@@ -92,11 +96,11 @@ serve(async (req) => {
       .insert({
         clinic_id: phoneData.clinic_id,
         type: 'call',
-        title: `Incoming Call from ${from}`,
+        title: `Incoming Call from ${normalizedFrom}`,
         summary: `Call received - UUID: ${conversation_uuid}`,
         status: 'pending',
-        contact_name: from,
-        contact_info: from,
+        contact_name: normalizedFrom,
+        contact_info: normalizedFrom,
         direction: 'inbound',
       });
 
