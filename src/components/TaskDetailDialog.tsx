@@ -278,7 +278,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[95vh]">
+      <DialogContent className="max-w-full sm:max-w-2xl lg:max-w-3xl max-h-[95vh] p-3 sm:p-6">
         <DialogHeader>
           <div className="space-y-2">
             <DialogTitle className="text-2xl">{task.title}</DialogTitle>

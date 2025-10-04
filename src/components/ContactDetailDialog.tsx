@@ -426,7 +426,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[95vh]">
+      <DialogContent className="max-w-full sm:max-w-3xl lg:max-w-4xl max-h-[95vh] p-3 sm:p-6">
         <DialogHeader>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
