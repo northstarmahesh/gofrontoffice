@@ -186,53 +186,66 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--auth-bg))] flex flex-col lg:flex-row">
+      {/* Mobile Header - Visible only on mobile */}
+      <div className="lg:hidden bg-[hsl(var(--auth-bg))] text-white p-6 text-center">
+        <img 
+          src={logo} 
+          alt="Front Office" 
+          className="mx-auto mb-4 h-10 w-auto brightness-0 invert"
+        />
+        <h1 className="text-xl font-bold mb-2">
+          Double your efficiency with <span className="text-yellow-300">Front Office</span>
+        </h1>
+        <p className="text-xs text-white/80">Save 20+ hours weekly • All channels in one place • Co-pilot mode</p>
+      </div>
+
       {/* Left Column - Value Proposition */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center p-12 text-white">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center p-8 xl:p-12 text-white">
         <div className="max-w-xl">
           {/* Logo */}
-          <div className="mb-8">
+          <div className="mb-6">
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-16 w-auto mb-12 brightness-0 invert"
+              className="h-12 w-auto mb-6 brightness-0 invert"
             />
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl lg:text-5xl font-bold mb-12 leading-tight">
+          <h1 className="text-3xl xl:text-4xl font-bold mb-6 leading-tight">
             Double your efficiency with{" "}
             <span className="text-yellow-300">Front Office</span>
           </h1>
 
           {/* Benefits */}
-          <div className="space-y-6 mb-12">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
+          <div className="space-y-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-xl flex-shrink-0">
                 ⏰
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-1">Save 20+ Hours Weekly</h3>
-                <p className="text-sm text-white/80">Your AI assistant handles scheduling, inquiries, and follow-ups automatically - freeing your team to focus on patient care.</p>
+                <h3 className="text-base font-semibold mb-0.5">Save 20+ Hours Weekly</h3>
+                <p className="text-xs text-white/80">AI handles scheduling, inquiries, and follow-ups automatically.</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-xl flex-shrink-0">
                 💬
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-1">All Channels, One Place</h3>
-                <p className="text-sm text-white/80">Manage phone, SMS, WhatsApp, Instagram, and Facebook Messenger conversations from a single dashboard.</p>
+                <h3 className="text-base font-semibold mb-0.5">All Channels, One Place</h3>
+                <p className="text-xs text-white/80">Phone, SMS, WhatsApp, Instagram, and Facebook in one dashboard.</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-xl flex-shrink-0">
                 🎯
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-1">Co-Pilot or Auto-Pilot Mode</h3>
-                <p className="text-sm text-white/80">Choose AI assistance for your team or full automation. Switch between modes anytime based on your needs.</p>
+                <h3 className="text-base font-semibold mb-0.5">Co-Pilot or Auto-Pilot Mode</h3>
+                <p className="text-xs text-white/80">AI assistance or full automation - switch anytime based on your needs.</p>
               </div>
             </div>
           </div>
@@ -241,110 +254,110 @@ const Auth = () => {
           <Carousel className="w-full">
             <CarouselContent>
               <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                  <div className="flex gap-1 mb-3">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300">⭐</span>
+                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
                     ))}
                   </div>
-                  <p className="text-sm lg:text-base italic mb-4">
+                  <p className="text-xs italic mb-3 leading-relaxed">
                     "We've saved over 25 hours per week since implementing Front Office. Our AI assistant handles appointment bookings flawlessly, and patients love the instant responses on WhatsApp."
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
                       🦷
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">Dr. Anna Bergström</p>
-                      <p className="text-xs text-white/80">Solna Dental Clinic</p>
+                      <p className="font-semibold text-xs">Dr. Anna Bergström</p>
+                      <p className="text-[10px] text-white/80">Solna Dental Clinic</p>
                     </div>
                   </div>
                 </div>
               </CarouselItem>
 
               <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                  <div className="flex gap-1 mb-3">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300">⭐</span>
+                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
                     ))}
                   </div>
-                  <p className="text-sm lg:text-base italic mb-4">
+                  <p className="text-xs italic mb-3 leading-relaxed">
                     "Our booking rate increased by 60% after switching to Front Office. The AI handles Instagram DMs and Facebook messages perfectly, and we never miss a consultation request."
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
                       💉
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">Lisa Andersson</p>
-                      <p className="text-xs text-white/80">Stockholm Botox Clinic</p>
+                      <p className="font-semibold text-xs">Lisa Andersson</p>
+                      <p className="text-[10px] text-white/80">Stockholm Botox Clinic</p>
                     </div>
                   </div>
                 </div>
               </CarouselItem>
 
               <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                  <div className="flex gap-1 mb-3">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300">⭐</span>
+                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
                     ))}
                   </div>
-                  <p className="text-sm lg:text-base italic mb-4">
+                  <p className="text-xs italic mb-3 leading-relaxed">
                     "The co-pilot mode is brilliant. Our team gets AI suggestions for complex cases, and the system handles routine inquiries automatically. Best investment we've made this year."
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
                       🏥
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">Dr. Erik Johansson</p>
-                      <p className="text-xs text-white/80">HealthCare Plus, Gothenburg</p>
+                      <p className="font-semibold text-xs">Dr. Erik Johansson</p>
+                      <p className="text-[10px] text-white/80">HealthCare Plus, Gothenburg</p>
                     </div>
                   </div>
                 </div>
               </CarouselItem>
 
               <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                  <div className="flex gap-1 mb-3">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300">⭐</span>
+                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
                     ))}
                   </div>
-                  <p className="text-sm lg:text-base italic mb-4">
+                  <p className="text-xs italic mb-3 leading-relaxed">
                     "We can finally focus on our patients instead of answering the phone all day. The multi-channel support means we're available 24/7 without hiring night staff."
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
                       💆
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">Maria Svensson</p>
-                      <p className="text-xs text-white/80">Wellness Spa, Malmö</p>
+                      <p className="font-semibold text-xs">Maria Svensson</p>
+                      <p className="text-[10px] text-white/80">Wellness Spa, Malmö</p>
                     </div>
                   </div>
                 </div>
               </CarouselItem>
 
               <CarouselItem>
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                  <div className="flex gap-1 mb-3">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-300">⭐</span>
+                      <span key={i} className="text-yellow-300 text-sm">⭐</span>
                     ))}
                   </div>
-                  <p className="text-sm lg:text-base italic mb-4">
+                  <p className="text-xs italic mb-3 leading-relaxed">
                     "Front Office transformed our practice. No more missed calls, automatic reminders reduced no-shows by 40%, and patients appreciate the instant communication on their preferred channels."
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-base">
                       👁️
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">Dr. Johan Lindgren</p>
-                      <p className="text-xs text-white/80">Vision Care Clinic, Uppsala</p>
+                      <p className="font-semibold text-xs">Dr. Johan Lindgren</p>
+                      <p className="text-[10px] text-white/80">Vision Care Clinic, Uppsala</p>
                     </div>
                   </div>
                 </div>
@@ -357,20 +370,13 @@ const Auth = () => {
       </div>
 
       {/* Right Column - Auth Card */}
-      <div className="flex-1 flex items-center justify-center p-4 lg:p-12 bg-background/95 backdrop-blur-sm">
-        <Card className="w-full max-w-md border-0 p-8 shadow-2xl">
-          {/* Mobile Logo */}
-          <div className="lg:hidden mb-6 text-center">
-            <img 
-              src={logo} 
-              alt="Front Office" 
-              className="mx-auto mb-4 h-12 w-auto"
-            />
-          </div>
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-8 bg-background/95 backdrop-blur-sm min-h-[calc(100vh-200px)] lg:min-h-screen">
+        <Card className="w-full max-w-md border-0 p-6 lg:p-8 shadow-2xl">
+          {/* Mobile Logo - Removed as it's now in mobile header */}
 
           {/* Card Header */}
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl font-bold text-foreground mb-2">
+          <div className="mb-4 text-center">
+            <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
               {step === "email" 
                 ? "Get Started" 
                 : step === "code"
