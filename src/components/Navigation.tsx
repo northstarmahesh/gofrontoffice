@@ -13,7 +13,7 @@ const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
     { id: "tasks" as View, icon: CheckSquare, label: "TASKS", color: "text-primary" },
     { id: "status" as View, icon: Activity, label: "STATUS", color: "text-primary" },
     { id: "contacts" as View, icon: Users, label: "CONTACTS", color: "text-primary" },
-    { id: "clinic" as View, icon: Building2, label: "CLINIC", color: "text-primary" },
+    { id: "clinic" as View, icon: Building2, label: "YOU", color: "text-primary" },
   ];
 
   return (

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { User, Phone, Clock, MessageSquare, Mail, Instagram, Facebook, PhoneIncoming, PhoneOutgoing, X, Edit, Save } from "lucide-react";
+import { User, Phone, Clock, MessageSquare, Mail, Instagram, Facebook, PhoneIncoming, PhoneOutgoing, X, Edit, Save, Bot } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -542,14 +542,16 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                       Complete Conversation History ({activityHistory.length} interactions)
                     </h3>
                     
-                    {/* Chat-style messages - chronological order, excluding drafts */}
+                    {/* Chat-style messages - chronological order */}
                     <div className="space-y-4">
-                      {activityHistory
-                        .filter(log => !isFromAI(log.title, log.type)) // Exclude draft messages
-                        .map((log) => {
+                      {activityHistory.map((log) => {
                         const fromAI = isFromAI(log.title, log.type);
                         const phoneCall = isPhoneCall(log.type);
+                        const isCallSummary = log.type.toLowerCase() === 'call_summary';
                         const channelColor = getChannelColor(log.type);
+                        
+                        // Skip AI drafts but show call summaries
+                        if (fromAI && !isCallSummary) return null;
                         
                         // Extract contact name from summary if present
                         let displayName = contactName;
@@ -562,7 +564,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                           }
                         }
                         
-                        // Render phone call summary card
+                        // Render phone call card
                         if (phoneCall) {
                           return (
                             <div key={log.id} className="flex justify-center">
@@ -594,6 +596,37 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                                       <p className="text-xs font-medium text-muted-foreground">Summary:</p>
                                       <p className="text-sm text-foreground leading-relaxed">{log.summary}</p>
                                     </div>
+                                  )}
+                                  
+                                  {/* Timestamp */}
+                                  <div className="text-xs text-muted-foreground pt-1 border-t border-border/50">
+                                    {formatDateTime(log.created_at)}
+                                  </div>
+                                </div>
+                              </Card>
+                            </div>
+                          );
+                        }
+                        
+                        // Render AI call summary card
+                        if (isCallSummary) {
+                          return (
+                            <div key={log.id} className="flex justify-center">
+                              <Card className="w-[90%] border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20">
+                                <div className="p-4 space-y-3">
+                                  {/* AI Summary header */}
+                                  <div className="flex items-center gap-2">
+                                    <Bot className="h-5 w-5 text-blue-500" />
+                                    <span className="font-semibold text-sm text-blue-700 dark:text-blue-400">
+                                      AI Call Summary
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Summary content */}
+                                  {log.summary && (
+                                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                                      {log.summary}
+                                    </p>
                                   )}
                                   
                                   {/* Timestamp */}
