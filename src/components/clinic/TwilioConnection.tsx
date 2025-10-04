@@ -273,14 +273,27 @@ export const TwilioConnection = ({ clinicId, onConnectionSuccess }: TwilioConnec
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            <p className="font-medium mb-2">After connecting, configure your Twilio webhook:</p>
-            <div className="space-y-1 text-muted-foreground">
-              <p>1. Go to your Twilio phone number settings</p>
-              <p>2. Set the SMS webhook URL to:</p>
-              <code className="block bg-muted px-2 py-1 rounded text-xs mt-1 break-all">
-                https://bzaqtvjereyqrymupapp.supabase.co/functions/v1/twilio-sms-webhook
-              </code>
-              <p className="mt-2">3. Set HTTP Method to: POST</p>
+            <p className="font-medium mb-3">After connecting, configure your Twilio webhooks:</p>
+            <div className="space-y-3 text-muted-foreground">
+              <div>
+                <p className="font-medium text-foreground mb-1">📱 For SMS Messages:</p>
+                <p className="text-xs">1. Go to your Twilio phone number settings</p>
+                <p className="text-xs">2. Under "Messaging", set "A MESSAGE COMES IN" webhook to:</p>
+                <code className="block bg-muted px-2 py-1 rounded text-xs mt-1 break-all">
+                  https://bzaqtvjereyqrymupapp.supabase.co/functions/v1/twilio-sms-webhook
+                </code>
+                <p className="text-xs mt-1">3. Set HTTP Method to: POST</p>
+              </div>
+              
+              <div className="border-t pt-3">
+                <p className="font-medium text-foreground mb-1">📞 For Voice Calls:</p>
+                <p className="text-xs">1. In the same phone number settings</p>
+                <p className="text-xs">2. Under "Voice & Fax", set "A CALL COMES IN" webhook to:</p>
+                <code className="block bg-muted px-2 py-1 rounded text-xs mt-1 break-all">
+                  https://bzaqtvjereyqrymupapp.supabase.co/functions/v1/twilio-voice-webhook
+                </code>
+                <p className="text-xs mt-1">3. Set HTTP Method to: POST</p>
+              </div>
             </div>
           </AlertDescription>
         </Alert>
