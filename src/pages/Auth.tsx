@@ -11,12 +11,13 @@ import logo from "@/assets/front-office-logo.png";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<"email" | "auth">("email");
+  const [step, setStep] = useState<"email" | "auth" | "code">("email");
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -124,7 +125,7 @@ const Auth = () => {
     }
   };
 
-  const handleSendMagicLink = async () => {
+  const handleSendCode = async () => {
     if (!email) {
       toast.error("Please enter your email");
       return;
@@ -135,15 +136,42 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          shouldCreateUser: true,
         },
       });
 
       if (error) throw error;
 
-      toast.success("Check your email for the magic link!");
+      toast.success("Check your email for the verification code!");
+      setStep("code");
     } catch (error: any) {
-      toast.error(error.message || "Failed to send magic link");
+      toast.error(error.message || "Failed to send code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !verificationCode) {
+      toast.error("Please enter the verification code");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: verificationCode,
+        type: 'email',
+      });
+
+      if (error) throw error;
+
+      toast.success("Successfully verified! Redirecting...");
+      navigate("/");
+    } catch (error: any) {
+      toast.error(error.message || "Invalid verification code");
     } finally {
       setLoading(false);
     }
@@ -235,16 +263,20 @@ const Auth = () => {
             <h2 className="text-2xl font-bold text-foreground mb-2">
               {step === "email" 
                 ? "Get Started" 
-                : isLogin 
-                  ? "Welcome Back" 
-                  : "Create Account"}
+                : step === "code"
+                  ? "Enter Verification Code"
+                  : isLogin 
+                    ? "Welcome Back" 
+                    : "Create Account"}
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === "email" 
                 ? "Start your journey to better patient engagement" 
-                : isLogin 
-                  ? "Sign in to your account" 
-                  : "Join thousands of healthcare providers"}
+                : step === "code"
+                  ? "Check your email for the 6-digit code"
+                  : isLogin 
+                    ? "Sign in to your account" 
+                    : "Join thousands of healthcare providers"}
             </p>
           </div>
 
@@ -328,14 +360,64 @@ const Auth = () => {
                 <div className="text-center">
                   <button
                     type="button"
-                    onClick={handleSendMagicLink}
+                    onClick={handleSendCode}
                     className="text-sm text-primary hover:underline"
                     disabled={loading}
                   >
-                    Or send me a magic link
+                    Or send me a code
                   </button>
                 </div>
               )}
+            </form>
+          )}
+
+          {/* Code Verification Step */}
+          {step === "code" && (
+            <form onSubmit={handleVerifyCode} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="code">Verification Code</Label>
+                <Input
+                  id="code"
+                  type="text"
+                  placeholder="Enter 6-digit code"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  disabled={loading}
+                  autoFocus
+                  maxLength={6}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? "Verifying..." : "Verify Code"}
+              </Button>
+
+              <div className="text-center space-y-2">
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                  disabled={loading}
+                >
+                  Resend code
+                </button>
+                <div>
+                  <button
+                    onClick={() => {
+                      setStep("auth");
+                      setVerificationCode("");
+                    }}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                    disabled={loading}
+                  >
+                    ← Use password instead
+                  </button>
+                </div>
+              </div>
             </form>
           )}
 
