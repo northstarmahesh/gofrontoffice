@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Mail, Lock, User } from "lucide-react";
+
 import { toast } from "sonner";
 import logo from "@/assets/front-office-logo.png";
 
@@ -126,161 +126,225 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-0 p-8 shadow-lg">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <img 
-            src={logo} 
-            alt="Front Office" 
-            className="mx-auto mb-4 h-16 w-auto"
-          />
-          <h1 className="text-2xl font-bold text-foreground">Front Office</h1>
-          <p className="text-sm text-muted-foreground">
-            {step === "email" 
-              ? "Enter your email to get started" 
-              : isLogin 
-                ? "Welcome back! Enter your password" 
-                : "Create your account"}
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary via-primary to-primary-light flex flex-col lg:flex-row">
+      {/* Left Column - Value Proposition */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center p-12 text-white">
+        <div className="max-w-xl">
+          {/* Logo and Badge */}
+          <div className="mb-8">
+            <img 
+              src={logo} 
+              alt="Front Office" 
+              className="h-16 w-auto mb-6 brightness-0 invert"
+            />
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium">
+              <span className="text-lg">🏆</span>
+              <span>Trusted by 1,000+ healthcare businesses</span>
+            </div>
+          </div>
 
-        {/* Email Step */}
-        {step === "email" && (
-          <form onSubmit={handleEmailContinue} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          {/* Main Headline */}
+          <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+            Double your efficiency with{" "}
+            <span className="text-yellow-300">Front Office</span>
+          </h1>
+
+          {/* Testimonials */}
+          <div className="space-y-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+              <div className="flex gap-1 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-300">⭐</span>
+                ))}
+              </div>
+              <p className="text-sm lg:text-base italic mb-4">
+                "Our AI receptionist has been a game-changer. We used to miss calls when we were under the hood, but now every customer gets immediate attention. Bookings are up 40%!"
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  👤
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Sarah Johnson</p>
+                  <p className="text-xs text-white/80">Johnson's Auto Repair</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+              <div className="flex gap-1 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-300">⭐</span>
+                ))}
+              </div>
+              <p className="text-sm lg:text-base italic mb-4">
+                "The appointment scheduling feature is incredible. Patients can book 24/7 and the AI handles rescheduling perfectly. It's like having a full-time receptionist at a fraction of the cost."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  👨‍⚕️
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Dr. Mike Chen</p>
+                  <p className="text-xs text-white/80">Smile Dental</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column - Auth Card */}
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-12 bg-background/95 backdrop-blur-sm">
+        <Card className="w-full max-w-md border-0 p-8 shadow-2xl">
+          {/* Mobile Logo */}
+          <div className="lg:hidden mb-6 text-center">
+            <img 
+              src={logo} 
+              alt="Front Office" 
+              className="mx-auto mb-4 h-12 w-auto"
+            />
+          </div>
+
+          {/* Card Header */}
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              {step === "email" 
+                ? "Get Started" 
+                : isLogin 
+                  ? "Welcome Back" 
+                  : "Create Account"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {step === "email" 
+                ? "Start your journey to better patient engagement" 
+                : isLogin 
+                  ? "Sign in to your account" 
+                  : "Join thousands of healthcare providers"}
+            </p>
+          </div>
+
+          {/* Email Step */}
+          {step === "email" && (
+            <form onSubmit={handleEmailContinue} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@clinic.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-9"
                   disabled={loading}
                   autoFocus
                 />
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-primary to-primary-light"
-              disabled={loading}
-            >
-              Continue
-            </Button>
-          </form>
-        )}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                Continue
+              </Button>
+            </form>
+          )}
 
-        {/* Auth Step - Login or Signup */}
-        {step === "auth" && (
-          <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          {/* Auth Step - Login or Signup */}
+          {step === "auth" && (
+            <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4">
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
                   <Input
                     id="fullName"
                     type="text"
                     placeholder="Dr. Jane Smith"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="pl-9"
                     disabled={loading}
                   />
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <div className="space-y-2">
+                <Label htmlFor="email-auth">Email</Label>
                 <Input
-                  id="email"
+                  id="email-auth"
                   type="email"
                   placeholder="you@clinic.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-9"
                   disabled={loading}
                 />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-9"
                   disabled={loading}
                   autoFocus
                 />
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-primary to-primary-light"
-              disabled={loading}
-            >
-              {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
-            </Button>
-
-            {isLogin && (
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleSendMagicLink}
-                  className="text-sm text-primary hover:underline"
-                  disabled={loading}
-                >
-                  Or send me a magic link
-                </button>
-              </div>
-            )}
-          </form>
-        )}
-
-        {/* Toggle between login/signup */}
-        {step === "auth" && (
-          <div className="mt-6 text-center text-sm">
-            <button
-              onClick={() => setStep("email")}
-              className="text-muted-foreground hover:text-foreground mb-2 block w-full"
-              disabled={loading}
-            >
-              ← Change email
-            </button>
-            <div>
-              <span className="text-muted-foreground">
-                {isLogin ? "New here? " : "Already have an account? "}
-              </span>
-              <button
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setPassword("");
-                  setFullName("");
-                }}
-                className="font-medium text-primary hover:underline"
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={loading}
               >
-                {isLogin ? "Create an account" : "Sign in"}
+                {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
+              </Button>
+
+              {isLogin && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleSendMagicLink}
+                    className="text-sm text-primary hover:underline"
+                    disabled={loading}
+                  >
+                    Or send me a magic link
+                  </button>
+                </div>
+              )}
+            </form>
+          )}
+
+          {/* Toggle between login/signup */}
+          {step === "auth" && (
+            <div className="mt-6 text-center text-sm space-y-2">
+              <button
+                onClick={() => setStep("email")}
+                className="text-muted-foreground hover:text-foreground"
+                disabled={loading}
+              >
+                ← Change email
               </button>
+              <div>
+                <span className="text-muted-foreground">
+                  {isLogin ? "Already have an account? " : "New here? "}
+                </span>
+                <button
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setPassword("");
+                    setFullName("");
+                  }}
+                  className="font-medium text-primary hover:underline"
+                  disabled={loading}
+                >
+                  {isLogin ? "Sign in" : "Create an account"}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </Card>
+          )}
+        </Card>
+      </div>
     </div>
   );
 };
