@@ -25,23 +25,25 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
+  const [awaitingVerification, setAwaitingVerification] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      if (session && !awaitingVerification) {
         navigate("/");
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      // Only redirect if we're not waiting for email verification
+      if (session && !awaitingVerification) {
         navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, awaitingVerification]);
 
   const handleEmailContinue = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,9 +65,11 @@ const Auth = () => {
     }
 
     setLoading(true);
+    setAwaitingVerification(true);
+    
     try {
-      // Send OTP for email verification during signup
-      const { error } = await supabase.auth.signUp({
+      // Sign up the user without auto-confirming
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -81,7 +85,8 @@ const Auth = () => {
         if (error.message.includes('already registered') || 
             error.message.includes('already exists')) {
           toast.error("This email is already registered. Please sign in instead.");
-          setIsLogin(true); // Switch to login view
+          setIsLogin(true);
+          setAwaitingVerification(false);
           return;
         }
         throw error;
@@ -95,12 +100,16 @@ const Auth = () => {
         },
       });
 
-      if (otpError) throw otpError;
+      if (otpError) {
+        console.error("OTP error:", otpError);
+      }
 
       toast.success("Check your email for the verification code!");
       setStep("code");
     } catch (error: any) {
+      console.error("Signup error:", error);
       toast.error(error.message || "Failed to sign up");
+      setAwaitingVerification(false);
     } finally {
       setLoading(false);
     }
@@ -174,6 +183,7 @@ const Auth = () => {
 
       if (error) throw error;
 
+      setAwaitingVerification(false);
       toast.success("Successfully verified! Redirecting...");
       navigate("/");
     } catch (error: any) {
