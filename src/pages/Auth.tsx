@@ -335,7 +335,10 @@ const Auth = () => {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setIsLogin(true)}
+                  onClick={() => {
+                    setIsLogin(true);
+                    setStep("auth");
+                  }}
                   className="font-medium text-primary hover:underline"
                   disabled={loading}
                 >
