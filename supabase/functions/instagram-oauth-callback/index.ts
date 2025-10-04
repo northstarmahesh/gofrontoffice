@@ -63,41 +63,85 @@ serve(async (req) => {
     // Initialize Supabase
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+    // Check if we got any pages
+    if (!pagesData.data || pagesData.data.length === 0) {
+      console.error('No Facebook Pages found for this user');
+      return new Response(
+        `<html>
+          <body>
+            <h1>No Facebook Pages Found</h1>
+            <p>To connect Instagram, you need a Facebook Page with a linked Instagram Business account.</p>
+            <p>Please ensure you:</p>
+            <ul>
+              <li>Have a Facebook Page</li>
+              <li>Have an Instagram Business account linked to that Page</li>
+              <li>Are an admin of that Page</li>
+            </ul>
+            <p><a href="https://business.facebook.com/settings/instagram-accounts" target="_blank">Link Instagram to Facebook Page</a></p>
+            <script>
+              setTimeout(() => {
+                window.close();
+              }, 10000);
+            </script>
+          </body>
+        </html>`,
+        { headers: { 'Content-Type': 'text/html' }, status: 400 }
+      );
+    }
+
     // Store integration for each page with Instagram account
-    if (pagesData.data && pagesData.data.length > 0) {
-      for (const page of pagesData.data) {
-        // Get Instagram account connected to this page
-        const igResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
-        );
-        const igData = await igResponse.json();
+    let connectedCount = 0;
+    for (const page of pagesData.data) {
+      // Get Instagram account connected to this page
+      const igResponse = await fetch(
+        `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
+      );
+      const igData = await igResponse.json();
 
-        if (igData.instagram_business_account) {
-          const igAccountId = igData.instagram_business_account.id;
-          
-          // Store in clinic_integrations
-          const { error: dbError } = await supabase
-            .from('clinic_integrations')
-            .upsert({
-              clinic_id: clinicId,
-              location_id: locationId || null,
-              integration_type: 'instagram',
-              is_connected: true,
-              access_token: page.access_token,
-              token_expiry: null, // Page tokens don't expire if properly configured
-              updated_at: new Date().toISOString(),
-            }, {
-              onConflict: 'clinic_id,integration_type',
-            });
+      if (igData.instagram_business_account) {
+        const igAccountId = igData.instagram_business_account.id;
+        
+        // Store in clinic_integrations
+        const { error: dbError } = await supabase
+          .from('clinic_integrations')
+          .upsert({
+            clinic_id: clinicId,
+            location_id: locationId || null,
+            integration_type: 'instagram',
+            is_connected: true,
+            access_token: page.access_token,
+            token_expiry: null,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'clinic_id,integration_type',
+          });
 
-          if (dbError) {
-            console.error('Database error:', dbError);
-            throw dbError;
-          }
-
-          console.log('Instagram integration saved for page:', page.name, 'IG Account:', igAccountId);
+        if (dbError) {
+          console.error('Database error:', dbError);
+          throw dbError;
         }
+
+        console.log('Instagram integration saved for page:', page.name, 'IG Account:', igAccountId);
+        connectedCount++;
       }
+    }
+
+    if (connectedCount === 0) {
+      return new Response(
+        `<html>
+          <body>
+            <h1>No Instagram Business Accounts Found</h1>
+            <p>We found your Facebook Pages, but none have Instagram Business accounts linked.</p>
+            <p><a href="https://business.facebook.com/settings/instagram-accounts" target="_blank">Link Instagram Business to your Facebook Page</a></p>
+            <script>
+              setTimeout(() => {
+                window.close();
+              }, 10000);
+            </script>
+          </body>
+        </html>`,
+        { headers: { 'Content-Type': 'text/html' }, status: 400 }
+      );
     }
 
     // Redirect back to app with success
