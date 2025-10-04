@@ -13,7 +13,7 @@ import {
 import Autoplay from "embla-carousel-autoplay";
 
 import { toast } from "sonner";
-import logo from "@/assets/front-office-logo-transparent.png";
+import logo from "@/assets/front-office-logo-new.png";
 import { Phone, MessageSquare, Calendar, AlarmClock, MessageCircle, Target } from "lucide-react";
 
 const Auth = () => {
@@ -223,7 +223,7 @@ const Auth = () => {
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-16 lg:h-20 w-auto [mix-blend-mode:lighten]"
+              className="h-16 lg:h-20 w-auto"
             />
           </div>
 

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import frontOfficeLogo from "@/assets/front-office-logo-full.png";
+import frontOfficeLogo from "@/assets/front-office-logo-new.png";
 import Status from "@/components/Status";
 import ClinicManagement from "@/components/ClinicManagement";
 import Contacts from "@/components/Contacts";
