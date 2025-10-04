@@ -242,6 +242,9 @@ const Auth = () => {
           <div className="hidden lg:block">
             <p className="text-sm text-white/60 mb-4">Integrates seamlessly with</p>
             <div className="flex items-center gap-3 flex-wrap">
+              <div className="px-4 py-2 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-purple-400/50 shadow-lg">
+                <span className="text-sm text-white font-medium">Instagram</span>
+              </div>
               <div className="px-4 py-2 rounded-full bg-blue-500/20 border border-blue-500/30">
                 <span className="text-sm text-white font-medium">Facebook</span>
               </div>
