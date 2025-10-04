@@ -191,13 +191,6 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         />
       )}
 
-      <div>
-        <h2 className="mb-2 text-xl font-bold text-foreground">Activity Logs</h2>
-        <p className="text-xs text-muted-foreground">
-          Complete history of all assistant interactions
-        </p>
-      </div>
-
       {/* Filters */}
       <div className="space-y-2">
         <div className="relative">
