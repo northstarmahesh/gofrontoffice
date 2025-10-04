@@ -24,8 +24,8 @@ const Dashboard = () => {
       value: "24",
       change: "+8%",
       icon: MessageSquare,
-      color: "text-yellow-accent",
-      bgColor: "bg-yellow-accent/10",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
     },
     {
       label: "Completed",
@@ -40,8 +40,8 @@ const Dashboard = () => {
       value: "8",
       change: "-5%",
       icon: Clock,
-      color: "text-yellow-accent",
-      bgColor: "bg-yellow-accent/10",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
     },
   ];
 
@@ -79,10 +79,10 @@ const Dashboard = () => {
       {/* ROI Metrics */}
       <div className="grid grid-cols-3 gap-2">
         {roiMetrics.map((metric) => (
-          <Card key={metric.label} className="border-0 p-3 text-center shadow-sm bg-gradient-to-br from-yellow-accent/10 to-yellow-accent/5 hover:from-yellow-accent/15 hover:to-yellow-accent/10 transition-all">
-            <div className="flex items-center justify-center gap-1 text-yellow-accent">
-              <TrendingUp className="h-3 w-3" />
-              <p className="text-lg font-bold">{metric.value}</p>
+          <Card key={metric.label} className="border-2 border-primary/20 p-3 text-center shadow-sm bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/15 transition-all">
+            <div className="flex items-center justify-center gap-1">
+              <TrendingUp className="h-3 w-3 text-primary" />
+              <p className="text-lg font-bold text-primary">{metric.value}</p>
             </div>
             <p className="text-xs font-medium text-foreground">{metric.label}</p>
             <p className="text-xs text-muted-foreground">{metric.subtext}</p>
@@ -118,11 +118,11 @@ const Dashboard = () => {
       </div>
 
       {/* Pending Tasks Snapshot */}
-      <Card className="border-0 p-4 shadow-sm bg-gradient-to-br from-primary/5 to-primary/10">
+      <Card className="border-2 border-primary/20 p-4 shadow-sm bg-gradient-to-br from-primary/5 to-primary/10">
         <div className="mb-3 flex items-center gap-2">
           <ListTodo className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Your Pending Tasks</h3>
-          <Badge variant="outline" className="ml-auto text-xs bg-yellow-accent/20 border-yellow-accent text-yellow-accent">
+          <Badge variant="outline" className="ml-auto text-xs bg-primary/20 border-primary text-primary">
             {pendingTasks.length}
           </Badge>
         </div>

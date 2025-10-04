@@ -402,8 +402,8 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       value: "24",
       change: "+8%",
       icon: MessageSquare,
-      color: "text-yellow-accent",
-      bgColor: "bg-yellow-accent/10",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
     },
     {
       label: "Time Saved",
@@ -418,8 +418,8 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       value: "$180",
       change: "This week",
       icon: DollarSign,
-      color: "text-yellow-accent",
-      bgColor: "bg-yellow-accent/10",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
     },
   ];
 
@@ -470,7 +470,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <TabsContent key={location.id} value={location.id} className="space-y-6 mt-6">
       {/* Needs Attention Section - TOP */}
       {pendingTasks.length > 0 && (
-        <Card className="border-2 border-yellow-accent/30 p-6 shadow-lg bg-gradient-to-br from-yellow-accent/15 to-yellow-accent/5">
+        <Card className="border-2 border-yellow-accent p-6 shadow-lg bg-gradient-to-br from-yellow-accent/10 to-yellow-accent/5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-xl font-bold text-foreground">Needs Your Attention</h3>
@@ -536,8 +536,8 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
           <CollapsibleTrigger className="w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-yellow-accent/20 p-3 border-2 border-yellow-accent/30">
-                  <Bot className="h-6 w-6 text-yellow-accent" />
+                <div className="rounded-xl bg-primary/20 p-3 border-2 border-primary/30">
+                  <Bot className="h-6 w-6 text-primary" />
                 </div>
                 <div className="text-left">
                   <h3 className="text-xl font-bold text-foreground">AI Response System</h3>
@@ -633,7 +633,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <MessageSquare className="h-5 w-5 text-yellow-accent" />
+                  <MessageSquare className="h-5 w-5 text-primary" />
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="sms" className="text-sm font-semibold cursor-pointer">SMS</Label>
@@ -781,7 +781,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Instagram className="h-5 w-5 text-yellow-accent" />
+                  <Instagram className="h-5 w-5 text-primary" />
                   <div className="flex items-center gap-2">
                     <Label htmlFor="instagram" className="text-sm font-semibold cursor-pointer">Instagram</Label>
                     {!connectionStatus.instagram && (
@@ -921,13 +921,13 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       </Card>
 
       {/* Assistant Schedule - Collapsible */}
-      <Card className="border-2 border-yellow-accent/20 p-6 shadow-lg bg-gradient-to-br from-yellow-accent/5 to-yellow-accent/10">
+      <Card className="border-2 border-primary/20 p-6 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
         <Collapsible open={scheduleOpen} onOpenChange={setScheduleOpen}>
           <CollapsibleTrigger className="w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-yellow-accent/20 p-3 border-2 border-yellow-accent/30">
-                  <Calendar className="h-6 w-6 text-yellow-accent" />
+                <div className="rounded-xl bg-primary/20 p-3 border-2 border-primary/30">
+                  <Calendar className="h-6 w-6 text-primary" />
                 </div>
                 <div className="text-left">
                   <h3 className="text-xl font-bold text-foreground">Assistant Schedule</h3>

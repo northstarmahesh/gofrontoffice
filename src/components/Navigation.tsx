@@ -29,8 +29,8 @@ const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
               className={cn(
                 "flex flex-col items-center gap-1.5 rounded-xl px-5 py-2 transition-all",
                 isActive
-                  ? `${item.color} scale-110 font-bold bg-yellow-accent/10 border-2 border-yellow-accent/30`
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  ? `text-primary scale-110 font-bold bg-yellow-accent/20 border-2 border-yellow-accent shadow-lg`
+                  : "text-muted-foreground hover:text-primary hover:bg-primary/5"
               )}
             >
               <Icon className={cn("h-6 w-6", isActive && "drop-shadow-lg")} />

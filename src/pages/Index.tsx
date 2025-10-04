@@ -126,7 +126,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/30 pb-20">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b-2 border-yellow-accent/20 bg-card/95 backdrop-blur-md shadow-sm">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
