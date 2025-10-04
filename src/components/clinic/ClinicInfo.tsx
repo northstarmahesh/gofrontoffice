@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { toast } from "sonner";
 import { Building2, Globe as GlobeIcon, Mail, ChevronDown, Lock, Unlock } from "lucide-react";
 import { LocationManager } from "./LocationManager";
+import { PhoneNumbers } from "./PhoneNumbers";
 
 
 interface ClinicInfoProps {
@@ -218,6 +219,9 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
 
       {/* Locations Section */}
       {clinicId && <LocationManager clinicId={clinicId} onNavigateToTools={onNavigateToTools} />}
+
+      {/* Phone & SMS Section */}
+      {clinicId && <PhoneNumbers clinicId={clinicId} />}
     </div>
   );
 };

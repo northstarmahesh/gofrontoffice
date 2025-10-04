@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PhoneNumbers } from "./PhoneNumbers";
 import { Calendar, Mail, Users, Clock, DollarSign, ExternalLink, Instagram, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -215,9 +214,6 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
           );
         })}
       </div>
-
-      {/* Phone Numbers Section - Coming Soon */}
-      <PhoneNumbers clinicId={clinicId} />
     </div>
   );
 };
