@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import logo from "@/assets/front-office-logo-yellow-full.png";
-import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, CheckCircle, Instagram, Chrome, Send } from "lucide-react";
+import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, CheckCircle, Instagram, Chrome, Send, CreditCard } from "lucide-react";
 import { z } from "zod";
 
 const leadSchema = z.object({
@@ -33,7 +33,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [step, setStep] = useState<'form' | 'otp' | 'booking' | 'success'>('form');
-  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone' | 'bankid'>('email');
   const [contactInfo, setContactInfo] = useState('');
   const [countryCode, setCountryCode] = useState('+46');
   const [otp, setOtp] = useState('');
@@ -69,6 +69,13 @@ const Auth = () => {
     setIsSubmitting(true);
 
     try {
+      if (loginMethod === 'bankid') {
+        // TODO: Implement BankID authentication flow
+        toast.info("BankID-integration kommer snart. Kontakta support för att aktivera denna funktion.");
+        setIsSubmitting(false);
+        return;
+      }
+
       loginSchema.parse({ contact: contactInfo });
       
       if (loginMethod === 'email') {
@@ -626,10 +633,11 @@ const Auth = () => {
                     </p>
                   </div>
                   <form onSubmit={handleLogin} className="space-y-4">
-                    <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone')}>
-                      <TabsList className="grid w-full grid-cols-2">
+                    <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone' | 'bankid')}>
+                      <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="email">E-post</TabsTrigger>
                         <TabsTrigger value="phone">Telefon</TabsTrigger>
+                        <TabsTrigger value="bankid">BankID</TabsTrigger>
                       </TabsList>
                       
                       <TabsContent value="email" className="space-y-4 mt-4">
@@ -680,6 +688,22 @@ const Auth = () => {
                           </div>
                         </div>
                       </TabsContent>
+                      
+                      <TabsContent value="bankid" className="space-y-4 mt-4">
+                        <div className="space-y-4">
+                          <div className="flex flex-col items-center gap-4 py-8">
+                            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                              <CreditCard className="h-10 w-10 text-primary" />
+                            </div>
+                            <div className="text-center space-y-2">
+                              <h4 className="font-semibold">Logga in med BankID</h4>
+                              <p className="text-sm text-muted-foreground">
+                                Säker och smidig inloggning med ditt svenska BankID
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </TabsContent>
                     </Tabs>
                     
                     <Button 
@@ -687,7 +711,7 @@ const Auth = () => {
                       className="w-full h-11"
                       disabled={isSubmitting}
                     >
-                      {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
+                      {isSubmitting ? "Skickar..." : loginMethod === 'bankid' ? "Öppna BankID" : "Skicka verifieringskod"}
                     </Button>
                     <div className="text-center pt-4">
                       <button
@@ -844,10 +868,11 @@ const Auth = () => {
             <CardContent className="p-0">
               {mode === 'login' ? (
                 <form onSubmit={handleLogin} className="space-y-4">
-                  <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone')}>
-                    <TabsList className="grid w-full grid-cols-2">
+                  <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone' | 'bankid')}>
+                    <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="email">E-post</TabsTrigger>
                       <TabsTrigger value="phone">Telefon</TabsTrigger>
+                      <TabsTrigger value="bankid">BankID</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="email" className="space-y-4 mt-4">
@@ -892,6 +917,22 @@ const Auth = () => {
                         </div>
                       </div>
                     </TabsContent>
+                    
+                    <TabsContent value="bankid" className="space-y-4 mt-4">
+                      <div className="space-y-4">
+                        <div className="flex flex-col items-center gap-4 py-8">
+                          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                            <CreditCard className="h-10 w-10 text-primary" />
+                          </div>
+                          <div className="text-center space-y-2">
+                            <h4 className="font-semibold">Logga in med BankID</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Säker och smidig inloggning med ditt svenska BankID
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
                   </Tabs>
                   
                   <Button 
@@ -899,7 +940,7 @@ const Auth = () => {
                     className="w-full h-11"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
+                    {isSubmitting ? "Skickar..." : loginMethod === 'bankid' ? "Öppna BankID" : "Skicka verifieringskod"}
                   </Button>
                   <div className="text-center pt-4">
                     <button
