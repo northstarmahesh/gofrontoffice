@@ -163,7 +163,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get clinic_id from the task
+      // Get clinic_id and default location from the task
       const { data: clinicData } = await supabase
         .from("clinic_users")
         .select("clinic_id")
@@ -172,12 +172,21 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
 
       if (!clinicData?.clinic_id) throw new Error("No clinic found");
 
+      // Get the first location for this clinic (or use task's location if available)
+      const { data: locationData } = await supabase
+        .from("clinic_locations")
+        .select("id")
+        .eq("clinic_id", clinicData.clinic_id)
+        .limit(1)
+        .maybeSingle();
+
       // Create activity log for sent message
       const { error: logError } = await supabase
         .from("activity_logs")
         .insert({
           user_id: user.id,
           clinic_id: clinicData.clinic_id,
+          location_id: locationData?.id || null,
           type: task.source || "message",
           title: `Sent ${task.source || "message"}`,
           summary: message,
@@ -187,25 +196,36 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
           direction: "outbound"
         });
 
-      if (logError) throw logError;
+      if (logError) {
+        console.error("Activity log error:", logError);
+        throw logError;
+      }
 
       // Ensure contact exists
-      if (relatedLog?.contact_name && relatedLog?.contact_info) {
+      if ((task.contact_name || relatedLog?.contact_name) && (task.contact_info || relatedLog?.contact_info)) {
+        const contactName = task.contact_name || relatedLog?.contact_name;
+        const contactInfo = task.contact_info || relatedLog?.contact_info;
+        
         const { data: existingContact } = await supabase
           .from("contacts")
           .select("id")
           .eq("clinic_id", clinicData.clinic_id)
-          .eq("phone", relatedLog.contact_info)
+          .eq("phone", contactInfo)
           .maybeSingle();
 
-        if (!existingContact) {
-          await supabase
+        if (!existingContact && contactName && contactInfo) {
+          const { error: contactError } = await supabase
             .from("contacts")
             .insert({
               clinic_id: clinicData.clinic_id,
-              name: relatedLog.contact_name,
-              phone: relatedLog.contact_info
+              location_id: locationData?.id || null,
+              name: contactName,
+              phone: contactInfo
             });
+          
+          if (contactError) {
+            console.error("Contact creation error:", contactError);
+          }
         }
       }
       
@@ -215,7 +235,8 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
       await handleMarkAsDone();
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message");
+      const errorMessage = error instanceof Error ? error.message : "Failed to send message";
+      toast.error(errorMessage);
     } finally {
       setIsSending(false);
     }
