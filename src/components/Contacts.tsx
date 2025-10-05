@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Users, Plus, Edit, Mail, Phone, MessageSquare, Eye } from "lucide-react";
+import { Users, Plus, Edit, Mail, Phone, MessageSquare, Eye, MapPin } from "lucide-react";
 import ContactDetailDialog from "./ContactDetailDialog";
 
 interface Contact {
@@ -21,6 +22,12 @@ interface Contact {
   created_at: string;
 }
 
+interface Location {
+  id: string;
+  name: string;
+  address: string | null;
+}
+
 interface ContactsProps {
   selectedContactName?: string;
   onNavigateToTools?: () => void;
@@ -28,6 +35,8 @@ interface ContactsProps {
 
 export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsProps) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
@@ -42,6 +51,7 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
   });
 
   useEffect(() => {
+    loadLocations();
     loadContacts();
   }, []);
 
@@ -55,6 +65,31 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
       }
     }
   }, [selectedContactName, contacts]);
+
+  const loadLocations = async () => {
+    try {
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .single();
+
+      if (clinicData?.clinic_id) {
+        const { data, error } = await supabase
+          .from("clinic_locations")
+          .select("id, name, address")
+          .eq("clinic_id", clinicData.clinic_id)
+          .order("name");
+
+        if (error) {
+          console.error("Error loading locations:", error);
+        } else {
+          setLocations(data || []);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading locations:", error);
+    }
+  };
 
   const loadContacts = async () => {
     setLoading(true);
@@ -334,6 +369,21 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {locations.length > 0 ? (
+            <Tabs value={selectedLocation} onValueChange={setSelectedLocation} className="w-full">
+              <TabsList className="grid w-full mb-4" style={{ gridTemplateColumns: `repeat(${locations.length + 1}, minmax(0, 1fr))` }}>
+                <TabsTrigger value="all">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  All Locations
+                </TabsTrigger>
+                {locations.map((location) => (
+                  <TabsTrigger key={location.id} value={location.id}>
+                    <MapPin className="h-4 w-4 mr-2" />
+                    {location.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              <TabsContent value="all" className="mt-0">
           {loading ? (
             <p className="text-muted-foreground">Loading contacts...</p>
           ) : filteredContacts.length === 0 ? (
@@ -411,6 +461,172 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
                 </div>
               ))}
             </div>
+          )}
+              </TabsContent>
+              {locations.map((location) => (
+                <TabsContent key={location.id} value={location.id} className="mt-0">
+                  {loading ? (
+                    <p className="text-muted-foreground">Loading contacts...</p>
+                  ) : filteredContacts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                      <p className="text-muted-foreground">
+                        {searchQuery ? "No contacts found matching your search" : `No contacts yet for ${location.name}. They'll appear here from your activity logs.`}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredContacts.map((contact) => (
+                        <div
+                          key={contact.id}
+                          id={`contact-${contact.name}`}
+                          className={`flex items-start justify-between p-4 border rounded-lg transition-colors cursor-pointer ${
+                            selectedContactName === contact.name
+                              ? "bg-primary/10 border-primary"
+                              : "hover:bg-muted/50"
+                          }`}
+                          onClick={() => openContactDetail(contact)}
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold">{contact.name}</h3>
+                            </div>
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              {contact.phone && (
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-3 w-3" />
+                                  <span>{contact.phone}</span>
+                                </div>
+                              )}
+                              {contact.email && (
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-3 w-3" />
+                                  <span>{contact.email}</span>
+                                </div>
+                              )}
+                              {contact.notes && (
+                                <div className="flex items-start gap-2 mt-2">
+                                  <MessageSquare className="h-3 w-3 mt-0.5" />
+                                  <span className="text-xs line-clamp-1">{contact.notes}</span>
+                                </div>
+                              )}
+                              {contact.last_contacted && (
+                                <p className="text-xs mt-2">
+                                  Last contacted: {new Date(contact.last_contacted).toLocaleDateString()}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openContactDetail(contact);
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditDialog(contact);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
+          ) : (
+            <>
+          {loading ? (
+            <p className="text-muted-foreground">Loading contacts...</p>
+          ) : filteredContacts.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">
+                {searchQuery ? "No contacts found matching your search" : "No contacts yet. They'll appear here from your activity logs."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredContacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  id={`contact-${contact.name}`}
+                  className={`flex items-start justify-between p-4 border rounded-lg transition-colors cursor-pointer ${
+                    selectedContactName === contact.name
+                      ? "bg-primary/10 border-primary"
+                      : "hover:bg-muted/50"
+                  }`}
+                  onClick={() => openContactDetail(contact)}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold">{contact.name}</h3>
+                    </div>
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      {contact.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-3 w-3" />
+                          <span>{contact.phone}</span>
+                        </div>
+                      )}
+                      {contact.email && (
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-3 w-3" />
+                          <span>{contact.email}</span>
+                        </div>
+                      )}
+                      {contact.notes && (
+                        <div className="flex items-start gap-2 mt-2">
+                          <MessageSquare className="h-3 w-3 mt-0.5" />
+                          <span className="text-xs line-clamp-1">{contact.notes}</span>
+                        </div>
+                      )}
+                      {contact.last_contacted && (
+                        <p className="text-xs mt-2">
+                          Last contacted: {new Date(contact.last_contacted).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openContactDetail(contact);
+                      }}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditDialog(contact);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+            </>
           )}
         </CardContent>
       </Card>
