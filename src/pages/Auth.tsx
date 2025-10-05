@@ -263,24 +263,24 @@ const Auth = () => {
   };
 
   const TestimonialSection = () => (
-    <div className="mt-8 space-y-6">
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-full bg-yellow-accent/20 flex items-center justify-center flex-shrink-0 text-yellow-accent font-bold text-lg">
+    <div className="mt-6 space-y-4">
+      <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-bold">
             SB
           </div>
           <div className="flex-1">
-            <p className="text-white/90 mb-3 italic">
+            <p className="text-sm mb-2 italic text-muted-foreground">
               "Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på medan AI hanterar kundkommunikationen. Otroligt värdefullt!"
             </p>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-white">Sara Bergström</p>
-                <p className="text-sm text-white/60">VD, Bella Clinic Stockholm</p>
+                <p className="font-semibold text-sm">Sara Bergström</p>
+                <p className="text-xs text-muted-foreground">VD, Bella Clinic Stockholm</p>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-0.5">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <svg key={star} className="w-4 h-4 fill-yellow-accent" viewBox="0 0 20 20">
+                  <svg key={star} className="w-3 h-3 fill-primary" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                   </svg>
                 ))}
@@ -289,23 +289,23 @@ const Auth = () => {
           </div>
         </div>
       </div>
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold text-lg">
+      <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-bold">
             ME
           </div>
           <div className="flex-1">
-            <p className="text-white/90 mb-3 italic">
+            <p className="text-sm mb-2 italic text-muted-foreground">
               "Implementeringen var super smidig. Personlig support hela vägen och vi såg resultat redan första veckan!"
             </p>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-white">Marcus Eriksson</p>
-                <p className="text-sm text-white/60">Grundare, Nordic Wellness</p>
+                <p className="font-semibold text-sm">Marcus Eriksson</p>
+                <p className="text-xs text-muted-foreground">Grundare, Nordic Wellness</p>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-0.5">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <svg key={star} className="w-4 h-4 fill-yellow-accent" viewBox="0 0 20 20">
+                  <svg key={star} className="w-3 h-3 fill-primary" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                   </svg>
                 ))}
@@ -609,10 +609,9 @@ const Auth = () => {
           </div>
 
             <PartnerLogos />
-            <TestimonialSection />
           </div>
 
-          <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background/50 to-primary/5">
+          <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background/50 to-primary/5 flex-col gap-6">
             <Card className="w-full max-w-md shadow-2xl border-2 border-primary/10">
             <CardHeader className="space-y-4 text-center">
               <div className="flex justify-center mb-2">
@@ -829,6 +828,9 @@ const Auth = () => {
               </Tabs>
             </CardContent>
           </Card>
+          <div className="w-full max-w-md">
+            <TestimonialSection />
+          </div>
         </div>
       </div>
 
