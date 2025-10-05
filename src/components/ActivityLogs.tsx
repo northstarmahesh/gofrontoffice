@@ -45,16 +45,33 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
   const loadActivityLogs = async () => {
     setLoading(true);
     try {
-      const { data: clinicData } = await supabase
+      console.log("Loading activity logs...");
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Current user:", user?.email);
+
+      const { data: clinicData, error: clinicError } = await supabase
         .from("clinic_users")
         .select("clinic_id")
-        .single();
+        .eq("user_id", user?.id)
+        .maybeSingle();
 
-      if (!clinicData?.clinic_id) {
-        toast.error("No business found");
+      console.log("Clinic data:", clinicData, "Error:", clinicError);
+
+      if (clinicError) {
+        console.error("Error fetching clinic:", clinicError);
+        toast.error("Failed to load clinic information");
         return;
       }
 
+      if (!clinicData?.clinic_id) {
+        console.log("No clinic found for user");
+        toast.error("No business found for your account");
+        return;
+      }
+
+      console.log("Fetching logs for clinic:", clinicData.clinic_id);
       const { data, error } = await supabase
         .from("activity_logs")
         .select("*")
@@ -62,6 +79,7 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         .order("created_at", { ascending: false })
         .limit(50);
 
+      console.log("Activity logs fetched:", data?.length, "logs", "Error:", error);
       if (error) throw error;
       setLogs(data || []);
     } catch (error) {
