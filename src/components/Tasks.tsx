@@ -38,6 +38,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [compactView, setCompactView] = useState(true);
 
   useEffect(() => {
     loadLocations();
@@ -191,30 +192,30 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const dummyHumanTasks = [
     {
       id: "dummy1",
-      title: "Appointment booking request",
-      description: "AI drafted response with available time slots",
+      title: "Tidbokning förfrågan",
+      description: "AI har skapat ett svar med tillgängliga tider",
       status: "pending",
       date: "Today",
-      time: "1:30 PM",
+      time: "13:30",
       source: "whatsapp",
       isInternal: false,
       contact_name: "Emma Anderson",
       contact_info: "+46 70 987 6543",
-      draftMessage: "Hi Emma! Thanks for reaching out. I have these slots available this week:\n\n• Tuesday 2:00 PM\n• Wednesday 10:30 AM\n• Friday 3:00 PM\n\nWhich works best for you?",
+      draftMessage: "Hej Emma! Tack för att du hörde av dig. Jag har dessa tider tillgängliga denna vecka:\n\n• Tisdag 14:00\n• Onsdag 10:30\n• Fredag 15:00\n\nVilken tid passar dig bäst?",
       message_history: [
         {
           id: "msg1",
-          title: "WhatsApp message",
+          title: "WhatsApp meddelande",
           type: "whatsapp",
-          summary: "Emma Anderson: Hi! I need to reschedule my appointment. Do you have any availability this week?",
-          created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 mins ago
+          summary: "Emma Anderson: Hej! Jag behöver omboka min tid. Har ni någon ledig tid denna vecka?",
+          created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
         },
         {
           id: "msg2",
-          title: "AI Draft Response",
+          title: "AI Utkast",
           type: "draft",
-          summary: "Hi Emma! Thanks for reaching out. I have these slots available this week:\n\n• Tuesday 2:00 PM\n• Wednesday 10:30 AM\n• Friday 3:00 PM\n\nWhich works best for you?",
-          created_at: new Date(Date.now() - 1000 * 60 * 2).toISOString(), // 2 mins ago
+          summary: "Hej Emma! Tack för att du hörde av dig. Jag har dessa tider tillgängliga denna vecka:\n\n• Tisdag 14:00\n• Onsdag 10:30\n• Fredag 15:00\n\nVilken tid passar dig bäst?",
+          created_at: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
         },
       ],
     },
@@ -243,7 +244,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           title: "Incoming call",
           type: "phone",
           summary: "Call from Sarah Martinez - Duration: 4m 32s",
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
           duration: "4m 32s",
           direction: "inbound",
         },
@@ -252,43 +253,43 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           title: "AI Call Summary",
           type: "call_summary",
           summary: "Sarah called inquiring about teeth whitening services. She's interested in booking a consultation and asked about pricing. She mentioned she has sensitive teeth and wants to know if that's an issue.\n\nAction Items:\n• Send pricing information via SMS\n• Schedule consultation appointment\n• Add note about teeth sensitivity to patient file",
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3 + 1000 * 60).toISOString(), // Just after call
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3 + 1000 * 60).toISOString(),
         },
         {
           id: "draft2",
           title: "AI Draft Response",
           type: "draft",
           summary: "Hi Sarah! Thanks for calling about our teeth whitening services. I'm happy to help!\n\nFor sensitive teeth, we offer a gentle whitening treatment that's specifically designed for this. Our consultation is 500 SEK (deducted from treatment if you proceed).\n\nFull treatment pricing:\n• In-office whitening: 3,500 SEK\n• Take-home kit: 2,200 SEK\n• Sensitivity treatment (if needed): 800 SEK\n\nWould you like to book a consultation? I have availability:\n• Tomorrow 2:00 PM\n• Thursday 10:30 AM\n• Friday 1:00 PM\n\nLet me know what works best for you!",
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3 + 1000 * 120).toISOString(), // 2 mins after call
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3 + 1000 * 120).toISOString(),
         },
       ],
     },
     {
       id: "dummy3",
-      title: "Follow up on prescription inquiry",
-      description: "Draft message ready: Information about prescription refill process",
+      title: "Uppföljning receptförfrågan",
+      description: "Utkast klart: Information om receptförnyelse",
       status: "pending",
       date: "Today",
-      time: "2:15 PM",
+      time: "14:15",
       source: "sms",
       isInternal: false,
       contact_name: "Mike Johnson",
       contact_info: "+46 70 123 4567",
-      draftMessage: "Hello Mike! For your prescription refill, please call us at least 48 hours before you run out. We'll need to check with your doctor for authorization. You can also use our online refill request form on our website.",
+      draftMessage: "Hej Mike! För receptförnyelse, vänligen ring oss minst 48 timmar innan ditt recept tar slut. Vi behöver kontrollera med din läkare för godkännande. Du kan även använda vårt onlineformulär på vår hemsida.",
       message_history: [
         {
           id: "msg5",
-          title: "SMS message",
+          title: "SMS meddelande",
           type: "sms",
-          summary: "Mike Johnson: Hi, I need to refill my prescription. What's the process?",
-          created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
+          summary: "Mike Johnson: Hej, jag behöver förnya mitt recept. Vad är processen?",
+          created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
         },
         {
           id: "msg6",
-          title: "AI Draft Response",
+          title: "AI Utkast",
           type: "draft",
-          summary: "Hello Mike! For your prescription refill, please call us at least 48 hours before you run out. We'll need to check with your doctor for authorization. You can also use our online refill request form on our website.",
-          created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(), // 25 mins ago
+          summary: "Hej Mike! För receptförnyelse, vänligen ring oss minst 48 timmar innan ditt recept tar slut. Vi behöver kontrollera med din läkare för godkännande. Du kan även använda vårt onlineformulär på vår hemsida.",
+          created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
         },
       ],
     },
@@ -588,12 +589,15 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     return (
       <Card
         key={task.id}
-        className="border-2 border-yellow-accent/20 p-6 shadow-lg transition-all hover:shadow-xl hover:border-yellow-accent/40 bg-card"
+        className={cn(
+          "border-2 border-yellow-accent/20 shadow-lg transition-all hover:shadow-xl hover:border-yellow-accent/40 bg-card",
+          compactView ? "p-4" : "p-6"
+        )}
       >
-        <div className="space-y-4">
+        <div className={cn("space-y-3", !compactView && "space-y-4")}>
           {/* Header: Type badge */}
           <div className="flex items-start justify-between gap-3">
-            <Badge className={`text-sm px-3 py-1 border ${taskType.color}`}>
+            <Badge className={cn("px-3 py-1 border", taskType.color, compactView ? "text-xs" : "text-sm")}>
               {taskType.label}
             </Badge>
           </div>
@@ -607,10 +611,10 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             {isContactTask && task.contact_name && (
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-2xl font-bold text-foreground mb-1">
+                  <h3 className={cn("font-bold text-foreground mb-1", compactView ? "text-lg" : "text-2xl")}>
                     {task.contact_name}
                   </h3>
-                  {task.contact_info && (
+                  {task.contact_info && !compactView && (
                     <p className="text-sm text-muted-foreground">{task.contact_info}</p>
                   )}
                 </div>
@@ -625,7 +629,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     className="text-sm flex items-center gap-1.5 flex-shrink-0"
                   >
                     <History className="h-4 w-4" />
-                    View Conversation
+                    {!compactView && "View Conversation"}
                   </Button>
                 )}
               </div>
@@ -866,6 +870,24 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                         {todayHumanTasks.length} {todayHumanTasks.length === 1 ? 'task' : 'tasks'} need your attention
                       </p>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCompactView(!compactView)}
+                      className="gap-2"
+                    >
+                      {compactView ? (
+                        <>
+                          <ChevronDown className="h-4 w-4" />
+                          Expand
+                        </>
+                      ) : (
+                        <>
+                          <ChevronUp className="h-4 w-4" />
+                          Compact
+                        </>
+                      )}
+                    </Button>
                   </div>
 
                   {/* Your Tasks */}
