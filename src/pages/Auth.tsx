@@ -725,7 +725,7 @@ const Auth = () => {
                         onClick={() => setMode('signup')}
                         className="text-sm text-muted-foreground hover:text-primary transition-colors"
                       >
-                        Ny användare? <span className="font-semibold">Kom igång här</span>
+                        Ny användare? <span className="font-semibold">Boka gratis konsultation här</span>
                       </button>
                     </div>
                   </form>
@@ -1012,7 +1012,7 @@ const Auth = () => {
                     onClick={() => setMode('signup')}
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
-                    Ny användare? <span className="font-semibold">Kom igång här</span>
+                    Ny användare? <span className="font-semibold">Boka gratis konsultation här</span>
                   </button>
                 </div>
               </form>
