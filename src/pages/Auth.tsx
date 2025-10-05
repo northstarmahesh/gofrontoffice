@@ -13,23 +13,19 @@ import logo from "@/assets/front-office-logo-yellow-full.png";
 import logoWhite from "@/assets/front-office-logo-white-full.png";
 import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, CheckCircle, Instagram, Chrome, Send, CreditCard } from "lucide-react";
 import { z } from "zod";
-
 const leadSchema = z.object({
   email: z.string().email("Ogiltig e-postadress"),
   businessName: z.string().min(2, "Företagsnamn måste vara minst 2 tecken"),
   businessType: z.string().min(1, "Vänligen välj verksamhetstyp"),
   phone: z.string().optional(),
-  additionalInfo: z.string().optional(),
+  additionalInfo: z.string().optional()
 });
-
 const loginSchema = z.object({
-  contact: z.string().min(1, "Vänligen ange e-post eller telefonnummer"),
+  contact: z.string().min(1, "Vänligen ange e-post eller telefonnummer")
 });
-
 const otpSchema = z.object({
-  otp: z.string().length(6, "OTP måste vara 6 siffror"),
+  otp: z.string().length(6, "OTP måste vara 6 siffror")
 });
-
 const Auth = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -43,67 +39,72 @@ const Auth = () => {
     businessName: '',
     businessType: '',
     phone: '',
-    additionalInfo: '',
+    additionalInfo: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       if (session) {
         navigate("/");
       }
     });
-
     const {
-      data: { subscription },
+      data: {
+        subscription
+      }
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         navigate("/");
       }
     });
-
     return () => subscription.unsubscribe();
   }, [navigate]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       if (loginMethod === 'bankid') {
         toast.info("BankID-integration kommer snart. Kontakta support för att aktivera denna funktion.");
         setIsSubmitting(false);
         return;
       }
-
-      loginSchema.parse({ contact: contactInfo });
-      
+      loginSchema.parse({
+        contact: contactInfo
+      });
       if (loginMethod === 'email') {
         // Use custom edge function to send 6-digit code via Resend
-        const { error } = await supabase.functions.invoke('send-email-verification', {
-          body: { email: contactInfo }
+        const {
+          error
+        } = await supabase.functions.invoke('send-email-verification', {
+          body: {
+            email: contactInfo
+          }
         });
-
         if (error) {
           console.error('Error sending verification code:', error);
           throw new Error('Kunde inte skicka verifieringskod');
         }
-
         toast.success("Verifieringskod skickad till din e-post");
         setStep('otp');
       } else {
         const fullPhone = `${countryCode}${contactInfo}`;
-        
-        // Use custom edge function to send SMS verification code via Twilio
-        const { error } = await supabase.functions.invoke('send-phone-verification', {
-          body: { phone: fullPhone }
-        });
 
+        // Use custom edge function to send SMS verification code via Twilio
+        const {
+          error
+        } = await supabase.functions.invoke('send-phone-verification', {
+          body: {
+            phone: fullPhone
+          }
+        });
         if (error) {
           console.error('Error sending verification code:', error);
           throw new Error('Kunde inte skicka verifieringskod');
         }
-
         toast.success("Verifieringskod skickad till ditt telefonnummer");
         setStep('otp');
       }
@@ -118,22 +119,25 @@ const Auth = () => {
       setIsSubmitting(false);
     }
   };
-
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
-      otpSchema.parse({ otp });
-      
+      otpSchema.parse({
+        otp
+      });
       if (loginMethod === 'email') {
         // Verify custom 6-digit code
-        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('verify-email-otp', {
-          body: { email: contactInfo, code: otp }
+        const {
+          data: verifyResult,
+          error: verifyError
+        } = await supabase.functions.invoke('verify-email-otp', {
+          body: {
+            email: contactInfo,
+            code: otp
+          }
         });
-
         console.log('Email verification result:', verifyResult, 'Error:', verifyError);
-
         if (verifyError || !verifyResult?.verified) {
           toast.error("Ogiltig verifieringskod");
           setIsSubmitting(false);
@@ -145,9 +149,13 @@ const Auth = () => {
           // The magic link will handle the session establishment
           // Just wait a moment for it to be set up
           await new Promise(resolve => setTimeout(resolve, 1000));
-          
+
           // Check if session is established
-          const { data: { session } } = await supabase.auth.getSession();
+          const {
+            data: {
+              session
+            }
+          } = await supabase.auth.getSession();
           if (session) {
             toast.success("Inloggning lyckades!");
             navigate("/");
@@ -165,12 +173,16 @@ const Auth = () => {
       } else {
         // Phone verification using custom edge function
         const fullPhone = `${countryCode}${contactInfo}`;
-        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('auth-verify-phone-otp', {
-          body: { phone: fullPhone, code: otp }
+        const {
+          data: verifyResult,
+          error: verifyError
+        } = await supabase.functions.invoke('auth-verify-phone-otp', {
+          body: {
+            phone: fullPhone,
+            code: otp
+          }
         });
-
         console.log('Phone verification result:', verifyResult, 'Error:', verifyError);
-
         if (verifyError || !verifyResult?.verified) {
           toast.error("Ogiltig verifieringskod");
           setIsSubmitting(false);
@@ -179,11 +191,12 @@ const Auth = () => {
 
         // Sign in with the access and refresh tokens
         if (verifyResult.access_token && verifyResult.refresh_token) {
-          const { error: signInError } = await supabase.auth.setSession({
+          const {
+            error: signInError
+          } = await supabase.auth.setSession({
             access_token: verifyResult.access_token,
             refresh_token: verifyResult.refresh_token
           });
-
           if (signInError) {
             console.error("Sign in error:", signInError);
             toast.error("Kunde inte logga in");
@@ -193,7 +206,6 @@ const Auth = () => {
 
           // Wait for session to be properly established
           await new Promise(resolve => setTimeout(resolve, 500));
-          
           toast.success("Inloggning lyckades!");
           navigate("/");
         } else {
@@ -212,30 +224,26 @@ const Auth = () => {
       setIsSubmitting(false);
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       const validatedData = leadSchema.parse({
         email: formData.email,
         businessName: formData.businessName,
         businessType: formData.businessType,
         phone: formData.phone || undefined,
-        additionalInfo: formData.additionalInfo || undefined,
+        additionalInfo: formData.additionalInfo || undefined
       });
-
-      const { error } = await supabase
-        .from('onboarding_leads')
-        .insert({
-          email: validatedData.email,
-          business_name: validatedData.businessName,
-          business_type: validatedData.businessType,
-          phone: validatedData.phone,
-          additional_info: validatedData.additionalInfo,
-        });
-
+      const {
+        error
+      } = await supabase.from('onboarding_leads').insert({
+        email: validatedData.email,
+        business_name: validatedData.businessName,
+        business_type: validatedData.businessType,
+        phone: validatedData.phone,
+        additional_info: validatedData.additionalInfo
+      });
       if (error) {
         if (error.code === '23505') {
           toast.error("Denna e-postadress är redan registrerad");
@@ -244,7 +252,6 @@ const Auth = () => {
         }
         return;
       }
-
       toast.success("Tack! Boka nu ditt onboarding-samtal");
       setStep('booking');
     } catch (error) {
@@ -259,68 +266,76 @@ const Auth = () => {
       setIsSubmitting(false);
     }
   };
-
   const PartnerLogos = () => {
-    const partners = [
-      { name: "Instagram", icon: Instagram, color: "pink" },
-      { name: "WhatsApp", icon: MessageSquare, color: "green" },
-      { name: "Telefon", icon: PhoneIcon, color: "blue" },
-      { name: "SMS", icon: Send, color: "indigo" },
-      { name: "Messenger", icon: MessageSquare, color: "blue-600" },
-      { name: "Google", icon: Chrome, color: "yellow" },
-      { name: "Microsoft", icon: Building2, color: "blue-400" },
-      { name: "Bokadirekt", icon: Calendar, color: "purple" },
-      { name: "Fortnox", icon: Building2, color: "orange" },
-      { name: "Björn Lundén", icon: Building2, color: "teal" },
-    ];
-
+    const partners = [{
+      name: "Instagram",
+      icon: Instagram,
+      color: "pink"
+    }, {
+      name: "WhatsApp",
+      icon: MessageSquare,
+      color: "green"
+    }, {
+      name: "Telefon",
+      icon: PhoneIcon,
+      color: "blue"
+    }, {
+      name: "SMS",
+      icon: Send,
+      color: "indigo"
+    }, {
+      name: "Messenger",
+      icon: MessageSquare,
+      color: "blue-600"
+    }, {
+      name: "Google",
+      icon: Chrome,
+      color: "yellow"
+    }, {
+      name: "Microsoft",
+      icon: Building2,
+      color: "blue-400"
+    }, {
+      name: "Bokadirekt",
+      icon: Calendar,
+      color: "purple"
+    }, {
+      name: "Fortnox",
+      icon: Building2,
+      color: "orange"
+    }, {
+      name: "Björn Lundén",
+      icon: Building2,
+      color: "teal"
+    }];
     const [currentIndex, setCurrentIndex] = useState(0);
-
     useEffect(() => {
       const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % partners.length);
+        setCurrentIndex(prev => (prev + 1) % partners.length);
       }, 2000);
       return () => clearInterval(interval);
     }, [partners.length]);
-
-    const visiblePartners = [
-      partners[currentIndex],
-      partners[(currentIndex + 1) % partners.length],
-      partners[(currentIndex + 2) % partners.length],
-      partners[(currentIndex + 3) % partners.length],
-      partners[(currentIndex + 4) % partners.length],
-    ];
-
-    return (
-      <div className="mt-8 pt-8 border-t border-white/20">
+    const visiblePartners = [partners[currentIndex], partners[(currentIndex + 1) % partners.length], partners[(currentIndex + 2) % partners.length], partners[(currentIndex + 3) % partners.length], partners[(currentIndex + 4) % partners.length]];
+    return <div className="mt-8 pt-8 border-t border-white/20">
         <h3 className="text-center text-sm font-semibold text-white/60 mb-6">
           FrontOffice samarbetar med:
         </h3>
         <div className="flex gap-8 items-center justify-center overflow-hidden">
           {visiblePartners.map((partner, idx) => {
-            const Icon = partner.icon;
-            return (
-              <div
-                key={`${partner.name}-${idx}`}
-                className="flex flex-col items-center gap-2 transition-all duration-500 ease-in-out"
-                style={{
-                  animation: "fadeInOut 2s ease-in-out infinite",
-                }}
-              >
+          const Icon = partner.icon;
+          return <div key={`${partner.name}-${idx}`} className="flex flex-col items-center gap-2 transition-all duration-500 ease-in-out" style={{
+            animation: "fadeInOut 2s ease-in-out infinite"
+          }}>
                 <div className={`w-12 h-12 rounded-lg bg-${partner.color}-500/20 flex items-center justify-center`}>
                   <Icon className={`text-${partner.color}-400`} size={24} />
                 </div>
                 <span className="text-xs text-white/70">{partner.name}</span>
-              </div>
-            );
-          })}
+              </div>;
+        })}
         </div>
-      </div>
-    );
+      </div>;
   };
-
-  const TestimonialSection = () => (
-    <div className="mt-6 space-y-4">
+  const TestimonialSection = () => <div className="mt-6 space-y-4">
       <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50 shadow-sm">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-bold">
@@ -336,11 +351,9 @@ const Auth = () => {
                 <p className="text-xs text-muted-foreground">VD, Bella Clinic Stockholm</p>
               </div>
               <div className="flex gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <svg key={star} className="w-3 h-3 fill-primary" viewBox="0 0 20 20">
+                {[1, 2, 3, 4, 5].map(star => <svg key={star} className="w-3 h-3 fill-primary" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                  </svg>
-                ))}
+                  </svg>)}
               </div>
             </div>
           </div>
@@ -361,22 +374,17 @@ const Auth = () => {
                 <p className="text-xs text-muted-foreground">Grundare, Nordic Wellness</p>
               </div>
               <div className="flex gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <svg key={star} className="w-3 h-3 fill-primary" viewBox="0 0 20 20">
+                {[1, 2, 3, 4, 5].map(star => <svg key={star} className="w-3 h-3 fill-primary" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                  </svg>
-                ))}
+                  </svg>)}
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-
+    </div>;
   if (step === 'otp' && mode === 'login') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+    return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-xl border-2">
           <CardHeader className="text-center space-y-4 px-6 pt-10 pb-6">
             <CardTitle className="text-2xl sm:text-3xl font-bold">Ange verifieringskod</CardTitle>
@@ -388,45 +396,24 @@ const Auth = () => {
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="otp" className="text-base">Verifieringskod</Label>
-                <Input
-                  id="otp"
-                  type="text"
-                  placeholder="123456"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  required
-                  className="h-12 sm:h-14 text-center text-2xl sm:text-3xl tracking-widest"
-                  maxLength={6}
-                />
+                <Input id="otp" type="text" placeholder="123456" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} required className="h-12 sm:h-14 text-center text-2xl sm:text-3xl tracking-widest" maxLength={6} />
               </div>
-              <Button 
-                type="submit" 
-                className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold"
-                disabled={isSubmitting || otp.length !== 6}
-              >
+              <Button type="submit" className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold" disabled={isSubmitting || otp.length !== 6}>
                 {isSubmitting ? "Verifierar..." : "Verifiera"}
               </Button>
-              <Button 
-                type="button" 
-                variant="ghost"
-                className="w-full h-12 text-base"
-                onClick={() => {
-                  setStep('form');
-                  setOtp('');
-                }}
-              >
+              <Button type="button" variant="ghost" className="w-full h-12 text-base" onClick={() => {
+              setStep('form');
+              setOtp('');
+            }}>
                 Tillbaka
               </Button>
             </form>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
   if (step === 'success') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
+    return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-2xl border-2 border-green-500/20">
           <CardHeader className="text-center space-y-4 pb-6 sm:pb-8 px-4 pt-8">
             <div className="flex justify-center">
@@ -447,13 +434,10 @@ const Auth = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
   if (step === 'booking') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <div className="hidden lg:grid lg:grid-cols-2 min-h-screen">
         <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-12 flex flex-col justify-center">
           <h1 className="text-5xl font-bold mb-4 leading-tight">
@@ -510,21 +494,12 @@ const Auth = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <iframe 
-                  src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln?gv=true" 
-                  style={{ border: 0 }} 
-                  width="100%" 
-                  height="600" 
-                  frameBorder="0"
-                  title="Book Onboarding Call"
-                />
+                <iframe src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln?gv=true" style={{
+                border: 0
+              }} width="100%" height="600" frameBorder="0" title="Book Onboarding Call" />
               </CardContent>
               <div className="p-6 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep('success')}
-                  className="w-full"
-                >
+                <Button variant="outline" onClick={() => setStep('success')} className="w-full">
                   Jag har bokat min tid
                 </Button>
               </div>
@@ -545,43 +520,27 @@ const Auth = () => {
           <div className="flex-1 bg-background rounded-t-3xl -mt-4 p-6">
             <Card className="w-full border-0 shadow-lg">
               <CardContent className="p-0">
-                <iframe 
-                  src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln?gv=true" 
-                  style={{ border: 0 }} 
-                  width="100%" 
-                  height="600" 
-                  frameBorder="0"
-                  title="Book Onboarding Call"
-                />
+                <iframe src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln?gv=true" style={{
+                border: 0
+              }} width="100%" height="600" frameBorder="0" title="Book Onboarding Call" />
               </CardContent>
               <div className="p-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep('success')}
-                  className="w-full"
-                >
+                <Button variant="outline" onClick={() => setStep('success')} className="w-full">
                   Jag har bokat min tid
                 </Button>
               </div>
             </Card>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+  return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="hidden lg:grid lg:grid-cols-2 min-h-screen relative">
         {/* Left Column - Content */}
         <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-8 lg:p-12 flex flex-col">
           {/* White logo at top left - bigger */}
           <div className="mb-12">
-            <img 
-              src={logoWhite} 
-              alt="Front Office" 
-              className="h-24 w-auto object-contain"
-            />
+            <img src={logoWhite} alt="Front Office" className="h-24 w-auto object-contain" />
           </div>
           
           <div className="flex-1 flex flex-col justify-center max-w-xl">
@@ -597,20 +556,16 @@ const Auth = () => {
                   SB
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm mb-2 italic text-white/90">
-                    "Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på medan AI hanterar kundkommunikationen."
-                  </p>
+                  <p className="text-sm mb-2 italic text-white/90">"Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på"</p>
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
                       <p className="font-semibold text-sm text-white">Sara Bergström</p>
                       <p className="text-xs text-white/75">VD, Bella Clinic Stockholm</p>
                     </div>
                     <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <svg key={star} className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20">
+                      {[1, 2, 3, 4, 5].map(star => <svg key={star} className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20">
                           <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                        </svg>
-                      ))}
+                        </svg>)}
                     </div>
                   </div>
                 </div>
@@ -632,11 +587,9 @@ const Auth = () => {
                       <p className="text-xs text-white/75">Grundare, Nordic Wellness</p>
                     </div>
                     <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <svg key={star} className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20">
+                      {[1, 2, 3, 4, 5].map(star => <svg key={star} className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20">
                           <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                        </svg>
-                      ))}
+                        </svg>)}
                     </div>
                   </div>
                 </div>
@@ -675,22 +628,17 @@ const Auth = () => {
           <div className="w-full max-w-md space-y-6">
             <Card className="w-full shadow-xl border-2">
             <CardHeader className="text-center space-y-2 pb-6">
-              {mode === 'login' ? (
-                <>
+              {mode === 'login' ? <>
                   <CardTitle className="text-2xl font-bold">Välkommen till Front Office</CardTitle>
                   <CardDescription className="text-base">
                     Logga in med E-post, Telefon eller BankID
                   </CardDescription>
-                </>
-              ) : (
-                <CardTitle className="text-2xl font-bold">Kom igång med Front Office</CardTitle>
-              )}
+                </> : <CardTitle className="text-2xl font-bold">Kom igång med Front Office</CardTitle>}
             </CardHeader>
             <CardContent>
-              {mode === 'login' ? (
-                <div className="space-y-4">
+              {mode === 'login' ? <div className="space-y-4">
                   <form onSubmit={handleLogin} className="space-y-4">
-                    <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone' | 'bankid')}>
+                    <Tabs value={loginMethod} onValueChange={v => setLoginMethod(v as 'email' | 'phone' | 'bankid')}>
                       <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="email">E-post</TabsTrigger>
                         <TabsTrigger value="phone">Telefon</TabsTrigger>
@@ -703,15 +651,7 @@ const Auth = () => {
                             <Mail className="h-4 w-4" />
                             E-postadress
                           </Label>
-                          <Input
-                            id="login-email"
-                            type="email"
-                            placeholder="din@email.se"
-                            value={contactInfo}
-                            onChange={(e) => setContactInfo(e.target.value)}
-                            required
-                            className="h-11"
-                          />
+                          <Input id="login-email" type="email" placeholder="din@email.se" value={contactInfo} onChange={e => setContactInfo(e.target.value)} required className="h-11" />
                         </div>
                       </TabsContent>
                       
@@ -733,15 +673,7 @@ const Auth = () => {
                                 <SelectItem value="+358">🇫🇮 +358</SelectItem>
                               </SelectContent>
                             </Select>
-                            <Input
-                              id="login-phone"
-                              type="tel"
-                              placeholder="701234567"
-                              value={contactInfo}
-                              onChange={(e) => setContactInfo(e.target.value.replace(/\D/g, ''))}
-                              required
-                              className="h-11 flex-1"
-                            />
+                            <Input id="login-phone" type="tel" placeholder="701234567" value={contactInfo} onChange={e => setContactInfo(e.target.value.replace(/\D/g, ''))} required className="h-11 flex-1" />
                           </div>
                         </div>
                       </TabsContent>
@@ -763,26 +695,16 @@ const Auth = () => {
                       </TabsContent>
                     </Tabs>
                     
-                    <Button 
-                      type="submit" 
-                      className="w-full h-11"
-                      disabled={isSubmitting}
-                    >
+                    <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
                       {isSubmitting ? "Skickar..." : loginMethod === 'bankid' ? "Öppna BankID" : "Skicka verifieringskod"}
                     </Button>
                     <div className="text-center pt-4">
-                  <a
-                    href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <a href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     Ny användare? <span className="font-semibold text-primary">Boka gratis konsultation här</span>
                   </a>
                     </div>
                   </form>
-                </div>
-              ) : null}
+                </div> : null}
             </CardContent>
           </Card>
           
@@ -977,11 +899,7 @@ const Auth = () => {
           <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white px-4 pt-6 pb-6">
           {/* White logo at top for mobile - bigger */}
           <div className="mb-4">
-            <img 
-              src={logoWhite} 
-              alt="Front Office" 
-              className="h-16 w-auto object-contain"
-            />
+            <img src={logoWhite} alt="Front Office" className="h-16 w-auto object-contain" />
           </div>
           
           <h1 className="text-3xl font-bold mb-4 leading-tight text-center">
@@ -1015,9 +933,8 @@ const Auth = () => {
 
         <div className="flex-1 bg-background rounded-t-[2rem] -mt-6 p-4 pt-6">
           <div className="max-w-lg mx-auto">
-            {mode === 'login' ? (
-              <form onSubmit={handleLogin} className="space-y-5">
-                <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone' | 'bankid')}>
+            {mode === 'login' ? <form onSubmit={handleLogin} className="space-y-5">
+                <Tabs value={loginMethod} onValueChange={v => setLoginMethod(v as 'email' | 'phone' | 'bankid')}>
                   <TabsList className="grid w-full grid-cols-3 h-12">
                     <TabsTrigger value="email" className="text-sm">E-post</TabsTrigger>
                     <TabsTrigger value="phone" className="text-sm">Telefon</TabsTrigger>
@@ -1027,15 +944,7 @@ const Auth = () => {
                   <TabsContent value="email" className="space-y-4 mt-5">
                     <div className="space-y-2">
                       <Label htmlFor="mobile-login-email" className="text-base">E-postadress</Label>
-                      <Input
-                        id="mobile-login-email"
-                        type="email"
-                        placeholder="din@email.se"
-                        value={contactInfo}
-                        onChange={(e) => setContactInfo(e.target.value)}
-                        required
-                        className="h-12 text-base"
-                      />
+                      <Input id="mobile-login-email" type="email" placeholder="din@email.se" value={contactInfo} onChange={e => setContactInfo(e.target.value)} required className="h-12 text-base" />
                     </div>
                   </TabsContent>
                   
@@ -1054,15 +963,7 @@ const Auth = () => {
                             <SelectItem value="+358">🇫🇮 +358</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Input
-                          id="mobile-login-phone"
-                          type="tel"
-                          placeholder="701234567"
-                          value={contactInfo}
-                          onChange={(e) => setContactInfo(e.target.value.replace(/\D/g, ''))}
-                          required
-                          className="h-12 flex-1 text-base"
-                        />
+                        <Input id="mobile-login-phone" type="tel" placeholder="701234567" value={contactInfo} onChange={e => setContactInfo(e.target.value.replace(/\D/g, ''))} required className="h-12 flex-1 text-base" />
                       </div>
                     </div>
                   </TabsContent>
@@ -1084,29 +985,18 @@ const Auth = () => {
                   </TabsContent>
                 </Tabs>
                 
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 text-base font-semibold"
-                  disabled={isSubmitting}
-                >
+                <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={isSubmitting}>
                   {isSubmitting ? "Skickar..." : loginMethod === 'bankid' ? "Öppna BankID" : "Skicka verifieringskod"}
                 </Button>
                 <div className="text-center pt-4">
-                  <a
-                    href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+                  <a href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     Ny användare? <span className="font-semibold">Boka gratis konsultation här</span>
                   </a>
                 </div>
-              </form>
-            ) : null}
+              </form> : null}
             
             {/* Partner logos for mobile */}
-            {mode === 'login' && (
-              <div className="mt-8 overflow-hidden">
+            {mode === 'login' && <div className="mt-8 overflow-hidden">
                 <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4">
                   Front Office samarbetar med
                 </h3>
@@ -1304,23 +1194,18 @@ const Auth = () => {
                         <p className="text-xs text-muted-foreground">VD, Bella Clinic</p>
                       </div>
                       <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <svg key={star} className="w-3 h-3 fill-primary" viewBox="0 0 20 20">
+                        {[1, 2, 3, 4, 5].map(star => <svg key={star} className="w-3 h-3 fill-primary" viewBox="0 0 20 20">
                             <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                          </svg>
-                        ))}
+                          </svg>)}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            </div>}
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Auth;
