@@ -41,6 +41,11 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [compactView, setCompactView] = useState(true);
   const [inlineExpandedTasks, setInlineExpandedTasks] = useState<Set<string>>(new Set());
   const [tasksSectionCollapsed, setTasksSectionCollapsed] = useState(false);
+  const [dateFilter, setDateFilter] = useState<Date | undefined>(new Date());
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
+    from: undefined,
+    to: undefined,
+  });
 
   useEffect(() => {
     loadLocations();
@@ -934,68 +939,131 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                 </>
               ) : (
                 <>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
                       <h2 className="text-2xl font-bold text-foreground">Your Tasks</h2>
                       <p className="text-sm text-muted-foreground mt-1">
                         {todayHumanTasks.length} {todayHumanTasks.length === 1 ? 'task' : 'tasks'} need your attention
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTasksSectionCollapsed(!tasksSectionCollapsed)}
-                      className="gap-2"
-                    >
-                      {tasksSectionCollapsed ? (
-                        <>
-                          <ChevronDown className="h-4 w-4" />
-                          Expand
-                        </>
-                      ) : (
-                        <>
-                          <ChevronUp className="h-4 w-4" />
-                          Collapse
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {/* Single Date Picker */}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "justify-start text-left font-normal",
+                              !dateFilter && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateFilter ? format(dateFilter, "PPP") : <span>Pick date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={dateFilter}
+                            onSelect={setDateFilter}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      {/* Date Range Picker */}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "justify-start text-left font-normal",
+                              !dateRange?.from && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateRange?.from ? (
+                              dateRange.to ? (
+                                <>
+                                  {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
+                                </>
+                              ) : (
+                                format(dateRange.from, "LLL dd")
+                              )
+                            ) : (
+                              <span>Pick range</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="range"
+                            selected={dateRange.from ? dateRange as any : undefined}
+                            onSelect={(range) => setDateRange(range || { from: undefined, to: undefined })}
+                            initialFocus
+                            numberOfMonths={2}
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTasksSectionCollapsed(!tasksSectionCollapsed)}
+                        className="gap-2"
+                      >
+                        {tasksSectionCollapsed ? (
+                          <>
+                            <ChevronDown className="h-4 w-4" />
+                            Expand
+                          </>
+                        ) : (
+                          <>
+                            <ChevronUp className="h-4 w-4" />
+                            Collapse
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Your Tasks */}
                   {!tasksSectionCollapsed && (
-                    <>
-                      <div className="space-y-4">
-                        {todayHumanTasks.map((task) => renderTaskCard(task, false))}
-                      </div>
-
-                      {/* Analytics below tasks */}
-                      <div className="pt-6 border-t">
-                        <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          {stats.map((stat) => {
-                            const Icon = stat.icon;
-                            return (
-                              <Card
-                                key={stat.label}
-                                className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                              >
-                                <div className="flex flex-col items-center text-center">
-                                  <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
-                                    <Icon className={`h-8 w-8 ${stat.color}`} />
-                                  </div>
-                                  <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
-                                  <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
-                                  <p className={`text-xs font-medium ${stat.change.startsWith('+') || stat.change.startsWith('-') ? 'text-success' : 'text-muted-foreground'}`}>
-                                    {stat.change}
-                                  </p>
-                                </div>
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </>
+                    <div className="space-y-4 mb-6">
+                      {todayHumanTasks.map((task) => renderTaskCard(task, false))}
+                    </div>
                   )}
+
+                  {/* Analytics - Always Visible */}
+                  <div className="pt-6 border-t">
+                    <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {stats.map((stat) => {
+                        const Icon = stat.icon;
+                        return (
+                          <Card
+                            key={stat.label}
+                            className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                          >
+                            <div className="flex flex-col items-center text-center">
+                              <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
+                                <Icon className={`h-8 w-8 ${stat.color}`} />
+                              </div>
+                              <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
+                              <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
+                              <p className={`text-xs font-medium ${stat.change.startsWith('+') || stat.change.startsWith('-') ? 'text-success' : 'text-muted-foreground'}`}>
+                                {stat.change}
+                              </p>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </>
               )}
 
