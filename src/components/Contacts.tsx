@@ -106,8 +106,8 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
 
       const { data: clinicData, error: clinicError } = await supabase
         .from("clinic_users")
-        .eq("user_id", user.id)
         .select("clinic_id")
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (clinicError) {
@@ -144,81 +144,6 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
     } finally {
       setLoading(false);
     }
-  };
-      const { data: clinicData } = await supabase
-        .from("clinic_users")
-        .select("clinic_id")
-        .single();
-
-      if (!clinicData?.clinic_id) {
-        // If no clinic, fall back to extracting from activity_logs
-        const { data: logs, error } = await supabase
-          .from("activity_logs")
-          .select("*")
-          .not("contact_name", "is", null)
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Error loading contacts:", error);
-          toast.error("Failed to load contacts");
-        } else {
-          const contactMap = new Map<string, Contact>();
-          
-          logs?.forEach((log) => {
-            const key = log.contact_info || log.contact_name;
-            if (key && !contactMap.has(key)) {
-              contactMap.set(key, {
-                id: log.id,
-                name: log.contact_name || "Unknown",
-                phone: log.contact_info || "",
-                email: undefined,
-                notes: log.summary || "",
-                last_contacted: log.created_at,
-                created_at: log.created_at,
-              });
-            }
-          });
-
-          setContacts(Array.from(contactMap.values()));
-        }
-      } else {
-        // Load from contacts table
-        const { data, error } = await supabase
-          .from("contacts")
-          .select("*")
-          .eq("clinic_id", clinicData.clinic_id)
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Error loading contacts:", error);
-          toast.error("Failed to load contacts");
-        } else {
-          // Also check for last_contacted from activity_logs
-          const contactsWithActivity = await Promise.all(
-            (data || []).map(async (contact) => {
-              const { data: logs } = await supabase
-                .from("activity_logs")
-                .select("created_at")
-                .eq("contact_info", contact.phone)
-                .order("created_at", { ascending: false })
-                .limit(1);
-
-              return {
-                ...contact,
-                last_contacted: logs?.[0]?.created_at || contact.created_at
-              };
-            })
-          );
-
-          setContacts(contactsWithActivity);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading contacts:", error);
-      toast.error("Failed to load contacts");
-    }
-    
-    setLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
