@@ -548,9 +548,9 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="hidden lg:grid lg:grid-cols-2 min-h-screen relative">
         {/* Left Column - Content */}
-        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-8 lg:p-12 flex flex-col justify-start">
+        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-8 lg:p-12 flex flex-col">
           {/* White logo at top left - bigger */}
-          <div className="mb-8">
+          <div className="mb-12">
             <img 
               src={logoWhite} 
               alt="Front Office" 
@@ -558,7 +558,7 @@ const Auth = () => {
             />
           </div>
           
-          <div className="flex-1 flex flex-col justify-center">
+          <div className="flex-1 flex flex-col justify-center max-w-xl">
             <h1 className="text-3xl lg:text-4xl font-bold mb-6 leading-tight">
             Din digitala assistent — tillgänglig dygnet runt
           </h1>
@@ -645,8 +645,8 @@ const Auth = () => {
         </div>
         
         {/* Right Column - Login Card and Partner Logos */}
-        <div className="flex flex-col items-center justify-center p-8">
-          <div className="w-full max-w-md space-y-8">
+        <div className="flex flex-col items-center justify-center p-8 lg:p-12">
+          <div className="w-full max-w-md space-y-6">
             <Card className="w-full shadow-xl border-2">
             <CardHeader className="text-center space-y-2 pb-6">
               {mode === 'login' ? (
@@ -762,57 +762,92 @@ const Auth = () => {
           
           {/* Partner logos below login card */}
           <div className="w-full">
-            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4">
+            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-6">
               Front Office samarbetar med
             </h3>
-            <div className="flex flex-wrap gap-4 items-center justify-center">
-              <div className="flex flex-col items-center gap-1 hover-scale">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <div className="grid grid-cols-4 gap-4 max-w-md mx-auto">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
                   <Instagram className="text-white" size={24} />
                 </div>
-                <span className="text-xs font-medium">Instagram</span>
+                <span className="text-xs font-medium text-center">Instagram</span>
               </div>
               
-              <div className="flex flex-col items-center gap-1 hover-scale">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
                   <MessageSquare className="text-white" size={24} />
                 </div>
-                <span className="text-xs font-medium">WhatsApp</span>
+                <span className="text-xs font-medium text-center">WhatsApp</span>
               </div>
               
-              <div className="flex flex-col items-center gap-1 hover-scale">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
                   <PhoneIcon className="text-white" size={24} />
                 </div>
-                <span className="text-xs font-medium">Telefon</span>
+                <span className="text-xs font-medium text-center">Telefon</span>
               </div>
               
-              <div className="flex flex-col items-center gap-1 hover-scale">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
                   <Send className="text-white" size={24} />
                 </div>
-                <span className="text-xs font-medium">SMS</span>
+                <span className="text-xs font-medium text-center">SMS</span>
               </div>
               
-              <div className="flex flex-col items-center gap-1 hover-scale">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
                   <MessageSquare className="text-white" size={24} />
                 </div>
-                <span className="text-xs font-medium">Messenger</span>
+                <span className="text-xs font-medium text-center">Messenger</span>
               </div>
               
-              <div className="flex flex-col items-center gap-1 hover-scale">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
                   <Chrome className="text-white" size={24} />
                 </div>
-                <span className="text-xs font-medium">Google</span>
+                <span className="text-xs font-medium text-center">Google</span>
               </div>
               
-              <div className="flex flex-col items-center gap-1 hover-scale">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
                   <Calendar className="text-white" size={24} />
                 </div>
-                <span className="text-xs font-medium">Bokadirekt</span>
+                <span className="text-xs font-medium text-center">Bokadirekt</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+                  <Building2 className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium text-center">Björn Lundén</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+                  <Building2 className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium text-center">PipeDrive</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-lime-500 to-lime-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+                  <Building2 className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium text-center">Lime</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+                  <Building2 className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium text-center">HubSpot</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+                  <Building2 className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium text-center">Salesforce</span>
               </div>
             </div>
           </div>
@@ -954,57 +989,92 @@ const Auth = () => {
             {/* Partner logos for mobile */}
             {mode === 'login' && (
               <div className="mt-8">
-                <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4">
+                <h3 className="text-center text-sm font-semibold text-muted-foreground mb-6">
                   Front Office samarbetar med
                 </h3>
-                <div className="flex flex-wrap gap-4 items-center justify-center">
-                  <div className="flex flex-col items-center gap-1">
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="flex flex-col items-center gap-1.5">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg">
-                      <Instagram className="text-white" size={24} />
+                      <Instagram className="text-white" size={20} />
                     </div>
-                    <span className="text-xs font-medium">Instagram</span>
+                    <span className="text-[10px] font-medium text-center">Instagram</span>
                   </div>
                   
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1.5">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-                      <MessageSquare className="text-white" size={24} />
+                      <MessageSquare className="text-white" size={20} />
                     </div>
-                    <span className="text-xs font-medium">WhatsApp</span>
+                    <span className="text-[10px] font-medium text-center">WhatsApp</span>
                   </div>
                   
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1.5">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                      <PhoneIcon className="text-white" size={24} />
+                      <PhoneIcon className="text-white" size={20} />
                     </div>
-                    <span className="text-xs font-medium">Telefon</span>
+                    <span className="text-[10px] font-medium text-center">Telefon</span>
                   </div>
                   
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1.5">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                      <Send className="text-white" size={24} />
+                      <Send className="text-white" size={20} />
                     </div>
-                    <span className="text-xs font-medium">SMS</span>
+                    <span className="text-[10px] font-medium text-center">SMS</span>
                   </div>
                   
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1.5">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
-                      <MessageSquare className="text-white" size={24} />
+                      <MessageSquare className="text-white" size={20} />
                     </div>
-                    <span className="text-xs font-medium">Messenger</span>
+                    <span className="text-[10px] font-medium text-center">Messenger</span>
                   </div>
                   
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1.5">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg">
-                      <Chrome className="text-white" size={24} />
+                      <Chrome className="text-white" size={20} />
                     </div>
-                    <span className="text-xs font-medium">Google</span>
+                    <span className="text-[10px] font-medium text-center">Google</span>
                   </div>
                   
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1.5">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg">
-                      <Calendar className="text-white" size={24} />
+                      <Calendar className="text-white" size={20} />
                     </div>
-                    <span className="text-xs font-medium">Bokadirekt</span>
+                    <span className="text-[10px] font-medium text-center">Bokadirekt</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg">
+                      <Building2 className="text-white" size={20} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center">Björn Lundén</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
+                      <Building2 className="text-white" size={20} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center">PipeDrive</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-lime-500 to-lime-600 flex items-center justify-center shadow-lg">
+                      <Building2 className="text-white" size={20} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center">Lime</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center shadow-lg">
+                      <Building2 className="text-white" size={20} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center">HubSpot</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg">
+                      <Building2 className="text-white" size={20} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center">Salesforce</span>
                   </div>
                 </div>
               </div>
