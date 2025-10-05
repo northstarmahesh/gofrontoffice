@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Phone, MessageSquare, Instagram, MessageCircle, CheckCircle2, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MessengerConnection } from "./MessengerConnection";
 
 interface ChannelConnectionHubProps {
   clinicId: string;
@@ -23,6 +25,7 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
   });
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [messengerDialogOpen, setMessengerDialogOpen] = useState(false);
 
   useEffect(() => {
     checkConnections();
@@ -96,9 +99,7 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
           description: "Gmail and Outlook integrations will be available soon.",
         });
       } else if (channelId === "messenger") {
-        toast.info("Messenger integration coming soon", {
-          description: "Facebook Messenger will be available soon.",
-        });
+        setMessengerDialogOpen(true);
       }
     } catch (error) {
       console.error(`Error connecting ${channelId}:`, error);
@@ -163,20 +164,39 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
   const connectedCount = Object.values(connectionStatus).filter(Boolean).length;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Communication Channels</CardTitle>
-            <CardDescription>
-              Connect all your channels to get maximum assistant coverage
-            </CardDescription>
+    <>
+      <Dialog open={messengerDialogOpen} onOpenChange={setMessengerDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Connect Facebook Messenger</DialogTitle>
+          </DialogHeader>
+          <MessengerConnection
+            clinicId={clinicId}
+            locationId={locationId || ""}
+            isConnected={connectionStatus.messenger}
+            onConnectionChange={() => {
+              checkConnections();
+              setMessengerDialogOpen(false);
+              if (onChannelsUpdated) onChannelsUpdated();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Communication Channels</CardTitle>
+              <CardDescription>
+                Connect all your channels to get maximum assistant coverage
+              </CardDescription>
+            </div>
+            <Badge variant={connectedCount >= 2 ? "default" : "secondary"} className="text-lg px-4 py-2">
+              {connectedCount}/6 Connected
+            </Badge>
           </div>
-          <Badge variant={connectedCount >= 2 ? "default" : "secondary"} className="text-lg px-4 py-2">
-            {connectedCount}/6 Connected
-          </Badge>
-        </div>
-      </CardHeader>
+        </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {channels.map((channel) => {
@@ -218,5 +238,6 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
         )}
       </CardContent>
     </Card>
+    </>
   );
 };
