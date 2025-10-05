@@ -23,9 +23,9 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   const [hasPhoneConnection, setHasPhoneConnection] = useState(false);
 
   const steps = [
-    { id: "info" as OnboardingStep, label: "Business Info", icon: Building2, description: "Basic details" },
-    { id: "channels" as OnboardingStep, label: "Connect Channels", icon: Plug, description: "2+ channels" },
-    { id: "ai-setup" as OnboardingStep, label: "AI Assistant", icon: Users, description: "Configure AI" },
+    { id: "info" as OnboardingStep, label: "Info", icon: Building2, description: "Basic details" },
+    { id: "channels" as OnboardingStep, label: "Tools", icon: Plug, description: "Connect 2+ channels" },
+    { id: "ai-setup" as OnboardingStep, label: "Assistant Intelligence", icon: Users, description: "Configure AI" },
     { id: "complete" as OnboardingStep, label: "Complete", icon: Rocket, description: "All set!" },
   ];
 

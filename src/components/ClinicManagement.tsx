@@ -93,8 +93,8 @@ export const ClinicManagement = () => {
       <Tabs value={defaultTab} onValueChange={setDefaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="intelligence">Assistant Intelligence</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
+          <TabsTrigger value="intelligence">Assistant Intelligence</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-6 space-y-6">

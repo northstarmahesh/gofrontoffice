@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings, CreditCard, Users as UsersIcon, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import frontOfficeLogo from "@/assets/front-office-logo-yellow-full.png";
 import Status from "@/components/Status";
 import ClinicManagement from "@/components/ClinicManagement";
@@ -137,15 +145,42 @@ const Index = () => {
               className="h-20 w-auto"
             />
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="gap-2 hover:bg-accent"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Logout</span>
-          </Button>
+          
+          {/* Account Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 hover:bg-accent"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Account</span>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-background z-[100]">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => toast.info("Password management coming soon")}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Password & Login</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Billing management coming soon")}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Billing</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCurrentView("clinic")}>
+                <UsersIcon className="mr-2 h-4 w-4" />
+                <span>Team Mates</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
