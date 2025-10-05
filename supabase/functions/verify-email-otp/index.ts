@@ -61,12 +61,10 @@ serve(async (req: Request) => {
       .eq("id", verification.id);
 
     // Check if user exists
-    const { data: existingUser } = await supabase.auth.admin.listUsers();
-    const userExists = existingUser?.users?.some(u => u.email === email);
+    const { data: { users } } = await supabase.auth.admin.listUsers();
+    const existingUserData = users?.find(u => u.email === email);
 
-    let userId: string;
-
-    if (!userExists) {
+    if (!existingUserData) {
       // Create new user with email confirmed
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email,
@@ -81,37 +79,86 @@ serve(async (req: Request) => {
         throw new Error("Failed to create user");
       }
 
-      userId = newUser.user.id;
-      console.log("Created new user:", userId);
+      console.log("Created new user:", newUser.user.id);
     } else {
-      // Get existing user
-      const existingUserData = existingUser.users.find(u => u.email === email);
-      userId = existingUserData!.id;
-      console.log("User already exists:", userId);
+      console.log("User already exists:", existingUserData.id);
     }
 
-    // Generate an access token for immediate sign-in
-    const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateLink({
+    // Generate magic link for sign-in
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email,
     });
 
-    if (tokenError) {
-      console.error("Token error:", tokenError);
-      throw new Error("Failed to generate authentication token");
+    if (linkError) {
+      console.error("Link generation error:", linkError);
+      throw new Error("Failed to generate authentication link");
     }
 
-    // Extract the token from the URL
-    const url = new URL(tokenData.properties.action_link);
-    const accessToken = url.searchParams.get('access_token');
-    const refreshToken = url.searchParams.get('refresh_token');
+    // Extract tokens from the action link
+    const actionLink = linkData.properties.action_link;
+    console.log("Generated action link");
+    
+    // Parse the verification URL to get tokens
+    const linkUrl = new URL(actionLink);
+    const accessToken = linkUrl.searchParams.get('access_token');
+    const refreshToken = linkUrl.searchParams.get('refresh_token');
+    const tokenHash = linkUrl.searchParams.get('token_hash');
+    const typeParam = linkUrl.searchParams.get('type');
 
+    console.log("Token info - has access_token:", !!accessToken, "has refresh_token:", !!refreshToken, "has token_hash:", !!tokenHash);
+
+    // If we got direct tokens from the link, return them
+    if (accessToken && refreshToken) {
+      return new Response(
+        JSON.stringify({ 
+          verified: true,
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          user: linkData.user
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Otherwise, if we have a token hash, verify it to get session
+    if (tokenHash) {
+      const { data: sessionData, error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: (typeParam as any) || 'magiclink',
+      });
+
+      if (verifyError) {
+        console.error("Verify OTP error:", verifyError);
+        throw new Error("Failed to create session");
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          verified: true,
+          access_token: sessionData.session?.access_token || null,
+          refresh_token: sessionData.session?.refresh_token || null,
+          user: sessionData.user
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Fallback - return user info without tokens (client will need to sign in)
+    console.warn("No tokens available, returning user info only");
     return new Response(
       JSON.stringify({ 
         verified: true,
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        user: tokenData.user
+        access_token: null,
+        refresh_token: null,
+        user: linkData.user,
+        requires_signin: true
       }),
       {
         status: 200,
