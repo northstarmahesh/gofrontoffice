@@ -494,7 +494,9 @@ export type Database = {
           logo_url: string | null
           name: string
           phone: string | null
+          prepared_by_admin_id: string | null
           slug: string
+          status: string | null
           timezone: string | null
           updated_at: string | null
           website: string | null
@@ -511,7 +513,9 @@ export type Database = {
           logo_url?: string | null
           name: string
           phone?: string | null
+          prepared_by_admin_id?: string | null
           slug: string
+          status?: string | null
           timezone?: string | null
           updated_at?: string | null
           website?: string | null
@@ -528,12 +532,22 @@ export type Database = {
           logo_url?: string | null
           name?: string
           phone?: string | null
+          prepared_by_admin_id?: string | null
           slug?: string
+          status?: string | null
           timezone?: string | null
           updated_at?: string | null
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clinics_prepared_by_admin_id_fkey"
+            columns: ["prepared_by_admin_id"]
+            isOneToOne: false
+            referencedRelation: "platform_admins"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contacts: {
         Row: {
@@ -686,6 +700,30 @@ export type Database = {
           meeting_booked_at?: string | null
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_admins: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -879,6 +917,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_platform_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       user_belongs_to_clinic: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
