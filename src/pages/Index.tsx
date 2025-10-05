@@ -31,31 +31,41 @@ const Index = () => {
   const [clinicTab, setClinicTab] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    checkAuthAndClinic();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Set up auth listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
+      
       if (!session) {
         navigate("/auth");
       } else {
         setUser(session.user);
-        checkClinicStatus(session.user.id);
+        await checkClinicStatus(session.user.id);
+        setLoading(false);
       }
     });
+
+    // Then check for existing session
+    checkAuthAndClinic();
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
   const checkAuthAndClinic = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      navigate("/auth");
-      return;
-    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
 
-    setUser(session.user);
-    await checkClinicStatus(session.user.id);
-    setLoading(false);
+      setUser(session.user);
+      await checkClinicStatus(session.user.id);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error checking auth:', error);
+      navigate("/auth");
+    }
   };
 
   const checkClinicStatus = async (userId: string) => {

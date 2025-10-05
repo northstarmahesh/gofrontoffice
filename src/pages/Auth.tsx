@@ -140,12 +140,26 @@ const Auth = () => {
           return;
         }
 
-        // Navigate to the sign-in link which will automatically log the user in
-        if (verifyResult.sign_in_link) {
-          console.log('Redirecting to sign-in link...');
-          window.location.href = verifyResult.sign_in_link;
+        // Sign in with the user object returned from verification
+        if (verifyResult.user) {
+          // The magic link will handle the session establishment
+          // Just wait a moment for it to be set up
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Check if session is established
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            toast.success("Inloggning lyckades!");
+            navigate("/");
+          } else if (verifyResult.sign_in_link) {
+            // Fallback: use the sign-in link
+            window.location.href = verifyResult.sign_in_link;
+          } else {
+            toast.error("Kunde inte etablera session");
+            setIsSubmitting(false);
+          }
         } else {
-          toast.error("Kunde inte generera inloggningslänk");
+          toast.error("Kunde inte verifiera användare");
           setIsSubmitting(false);
         }
       } else {
@@ -177,13 +191,11 @@ const Auth = () => {
             return;
           }
 
-          console.log('Session set successfully, redirecting...');
-          toast.success("Inloggning lyckades!");
+          // Wait for session to be properly established
+          await new Promise(resolve => setTimeout(resolve, 500));
           
-          // Explicit redirect after successful session establishment
-          setTimeout(() => {
-            navigate("/");
-          }, 500);
+          toast.success("Inloggning lyckades!");
+          navigate("/");
         } else {
           toast.error("Kunde inte hämta inloggningsuppgifter");
           setIsSubmitting(false);
