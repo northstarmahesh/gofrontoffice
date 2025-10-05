@@ -610,11 +610,17 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         )}
       >
         <div className={cn("space-y-3", !compactView && "space-y-4")}>
-          {/* Header: Type badge */}
+          {/* Header: Type badge and Channel */}
           <div className="flex items-start justify-between gap-3">
-            <Badge className={cn("px-3 py-1 border", taskType.color, compactView ? "text-xs" : "text-sm")}>
-              {taskType.label}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className={cn("px-3 py-1 border", taskType.color, compactView ? "text-xs" : "text-sm")}>
+                {taskType.label}
+              </Badge>
+              <Badge className={`flex items-center gap-1.5 border ${getChannelColor(task.source)}`}>
+                <ChannelIcon className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">{getChannelDisplay(task.source)}</span>
+              </Badge>
+            </div>
           </div>
 
           {/* Main content - clickable area for inline expand */}
