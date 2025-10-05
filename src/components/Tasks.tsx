@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight, TrendingUp, DollarSign, Calendar, CalendarIcon, ChevronDown, ChevronUp, Pencil, History } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight, TrendingUp, DollarSign, Calendar, CalendarIcon, ChevronDown, ChevronUp, Pencil, History, Download, FileText, FileSpreadsheet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TaskDetailDialog from "./TaskDetailDialog";
 import ContactDetailDialog from "./ContactDetailDialog";
@@ -9,10 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay, differenceInMilliseconds } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface TasksProps {
   onNavigateToContact?: (contactName: string) => void;
@@ -46,6 +47,16 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     from: undefined,
     to: undefined,
   });
+  const [analyticsData, setAnalyticsData] = useState({
+    callsCount: 0,
+    messagesCount: 0,
+    avgResponseTime: 0,
+    costSaved: 0,
+    prevCallsCount: 0,
+    prevMessagesCount: 0,
+    prevAvgResponseTime: 0,
+    prevCostSaved: 0,
+  });
 
   useEffect(() => {
     loadLocations();
@@ -55,6 +66,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     if (selectedLocation) {
       loadTasks();
       loadActivityLogs();
+      loadAnalytics();
     }
 
     // Set up realtime subscription for tasks
@@ -77,7 +89,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     return () => {
       supabase.removeChannel(tasksChannel);
     };
-  }, [refreshKey, selectedLocation, selectedDate]);
+  }, [refreshKey, selectedLocation, selectedDate, dateFilter, dateRange]);
 
   const loadLocations = async () => {
     try {
@@ -123,21 +135,105 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       if (!clinicUsers?.clinic_id) return;
 
       // Filter by selected date
-      const startOfDay = selectedDate ? new Date(selectedDate.setHours(0, 0, 0, 0)).toISOString() : new Date().toISOString();
-      const endOfDay = selectedDate ? new Date(selectedDate.setHours(23, 59, 59, 999)).toISOString() : new Date().toISOString();
+      const startDate = selectedDate ? new Date(selectedDate.setHours(0, 0, 0, 0)).toISOString() : new Date().toISOString();
+      const endDate = selectedDate ? new Date(selectedDate.setHours(23, 59, 59, 999)).toISOString() : new Date().toISOString();
 
       const { data, error } = await supabase
         .from("activity_logs")
         .select("*")
         .eq("clinic_id", clinicUsers.clinic_id)
-        .gte("created_at", startOfDay)
-        .lte("created_at", endOfDay)
+        .gte("created_at", startDate)
+        .lte("created_at", endDate)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       setActivityLogs(data || []);
     } catch (error) {
       console.error("Error loading activity logs:", error);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: clinicUsers } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicUsers?.clinic_id) return;
+
+      // Determine date range
+      let startDate: Date, endDate: Date, prevStartDate: Date, prevEndDate: Date;
+      
+      if (dateRange?.from && dateRange?.to) {
+        // Use date range
+        startDate = startOfDay(dateRange.from);
+        endDate = endOfDay(dateRange.to);
+        const rangeDiff = differenceInMilliseconds(endDate, startDate);
+        prevEndDate = new Date(startDate.getTime() - 1);
+        prevStartDate = new Date(prevEndDate.getTime() - rangeDiff);
+      } else if (dateFilter) {
+        // Use single date
+        startDate = startOfDay(dateFilter);
+        endDate = endOfDay(dateFilter);
+        prevStartDate = startOfDay(new Date(dateFilter.getTime() - 24 * 60 * 60 * 1000));
+        prevEndDate = endOfDay(new Date(dateFilter.getTime() - 24 * 60 * 60 * 1000));
+      } else {
+        // Default to today
+        startDate = startOfDay(new Date());
+        endDate = endOfDay(new Date());
+        prevStartDate = startOfDay(new Date(Date.now() - 24 * 60 * 60 * 1000));
+        prevEndDate = endOfDay(new Date(Date.now() - 24 * 60 * 60 * 1000));
+      }
+
+      // Fetch current period data
+      const { data: currentLogs } = await supabase
+        .from("activity_logs")
+        .select("*")
+        .eq("clinic_id", clinicUsers.clinic_id)
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
+      // Fetch previous period data for comparison
+      const { data: prevLogs } = await supabase
+        .from("activity_logs")
+        .select("*")
+        .eq("clinic_id", clinicUsers.clinic_id)
+        .gte("created_at", prevStartDate.toISOString())
+        .lte("created_at", prevEndDate.toISOString());
+
+      // Calculate metrics
+      const callsCount = currentLogs?.filter(log => log.type === 'phone').length || 0;
+      const messagesCount = currentLogs?.filter(log => ['sms', 'whatsapp', 'messenger', 'instagram'].includes(log.type)).length || 0;
+      
+      const prevCallsCount = prevLogs?.filter(log => log.type === 'phone').length || 0;
+      const prevMessagesCount = prevLogs?.filter(log => ['sms', 'whatsapp', 'messenger', 'instagram'].includes(log.type)).length || 0;
+
+      // Calculate average response time (mock calculation - would need actual response time data)
+      const avgResponseTime = 2.3; // Mock value in minutes
+      const prevAvgResponseTime = 2.6; // Mock previous value
+
+      // Calculate cost saved (estimate based on activity)
+      const totalActivities = callsCount + messagesCount;
+      const costSaved = totalActivities * 15; // $15 per handled activity
+      const prevCostSaved = (prevCallsCount + prevMessagesCount) * 15;
+
+      setAnalyticsData({
+        callsCount,
+        messagesCount,
+        avgResponseTime,
+        costSaved,
+        prevCallsCount,
+        prevMessagesCount,
+        prevAvgResponseTime,
+        prevCostSaved,
+      });
+    } catch (error) {
+      console.error("Error loading analytics:", error);
     }
   };
 
@@ -501,40 +597,122 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const inProgressTasks = allTasks.filter((t) => t.status === "in-progress").length;
   const completedTasks = allTasks.filter((t) => t.status === "completed").length;
 
+  // Calculate percentage changes
+  const calculateChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? "+100%" : "0%";
+    const change = ((current - previous) / previous) * 100;
+    return `${change > 0 ? '+' : ''}${change.toFixed(0)}%`;
+  };
+
   const stats = [
     {
-      label: "Calls Today",
-      value: "12",
-      change: "+15%",
+      label: dateRange?.from && dateRange?.to ? "Calls (Range)" : "Calls Today",
+      value: analyticsData.callsCount.toString(),
+      change: calculateChange(analyticsData.callsCount, analyticsData.prevCallsCount),
       icon: Phone,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
       label: "Messages",
-      value: "24",
-      change: "+8%",
+      value: analyticsData.messagesCount.toString(),
+      change: calculateChange(analyticsData.messagesCount, analyticsData.prevMessagesCount),
       icon: MessageSquare,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
-      label: "Time to Response",
-      value: "2.3m",
-      change: "-12%",
+      label: "Avg Response Time",
+      value: `${analyticsData.avgResponseTime.toFixed(1)}m`,
+      change: calculateChange(analyticsData.prevAvgResponseTime, analyticsData.avgResponseTime), // Inverted for response time
       icon: Clock,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
       label: "Cost Saved",
-      value: "$180",
-      change: "This week",
+      value: `$${analyticsData.costSaved}`,
+      change: calculateChange(analyticsData.costSaved, analyticsData.prevCostSaved),
       icon: DollarSign,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
   ];
+
+  const downloadCSV = () => {
+    const headers = ["Metric", "Value", "Change"];
+    const rows = stats.map(stat => [stat.label, stat.value, stat.change]);
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `analytics-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("Analytics exported as CSV");
+  };
+
+  const downloadPDF = () => {
+    // Create a print-friendly view
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const dateRangeText = dateRange?.from && dateRange?.to 
+      ? `${format(dateRange.from, "MMM dd, yyyy")} - ${format(dateRange.to, "MMM dd, yyyy")}`
+      : dateFilter 
+      ? format(dateFilter, "MMM dd, yyyy")
+      : format(new Date(), "MMM dd, yyyy");
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Analytics Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; }
+            h1 { color: #333; margin-bottom: 10px; }
+            .date { color: #666; margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+            .positive { color: #22c55e; }
+            .negative { color: #ef4444; }
+            .neutral { color: #666; }
+          </style>
+        </head>
+        <body>
+          <h1>Analytics Report</h1>
+          <p class="date">${dateRangeText}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${stats.map(stat => `
+                <tr>
+                  <td>${stat.label}</td>
+                  <td>${stat.value}</td>
+                  <td class="${stat.change.startsWith('+') ? 'positive' : stat.change.startsWith('-') ? 'negative' : 'neutral'}">${stat.change}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+    toast.success("Print dialog opened for PDF export");
+  };
 
   const getTaskTypeLabel = (task: any) => {
     if (task.callSummary) {
@@ -912,10 +1090,99 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
                   {/* Analytics when no tasks */}
                   <div>
-                    <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-foreground">Analytics</h3>
+                      <div className="flex items-center gap-2">
+                        {/* Single Date Picker */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                "justify-start text-left font-normal",
+                                !dateFilter && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {dateFilter ? format(dateFilter, "PPP") : <span>Pick date</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarComponent
+                              mode="single"
+                              selected={dateFilter}
+                              onSelect={setDateFilter}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+
+                        {/* Date Range Picker */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                "justify-start text-left font-normal",
+                                !dateRange?.from && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {dateRange?.from ? (
+                                dateRange.to ? (
+                                  <>
+                                    {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
+                                  </>
+                                ) : (
+                                  format(dateRange.from, "LLL dd")
+                                )
+                              ) : (
+                                <span>Pick range</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarComponent
+                              mode="range"
+                              selected={dateRange.from ? dateRange as any : undefined}
+                              onSelect={(range) => setDateRange(range || { from: undefined, to: undefined })}
+                              initialFocus
+                              numberOfMonths={2}
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+
+                        {/* Download Options */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2">
+                              <Download className="h-4 w-4" />
+                              Export
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={downloadCSV} className="gap-2">
+                              <FileSpreadsheet className="h-4 w-4" />
+                              Download CSV
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={downloadPDF} className="gap-2">
+                              <FileText className="h-4 w-4" />
+                              Download PDF
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       {stats.map((stat) => {
                         const Icon = stat.icon;
+                        const isPositive = stat.change.startsWith('+');
+                        const isNegative = stat.change.startsWith('-');
+                        
                         return (
                           <Card
                             key={stat.label}
@@ -927,9 +1194,16 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                               </div>
                               <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
                               <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
-                              <p className={`text-xs font-medium ${stat.change.startsWith('+') ? 'text-success' : 'text-muted-foreground'}`}>
+                              <Badge 
+                                className={cn(
+                                  "text-xs font-medium",
+                                  isPositive && "bg-green-500/10 text-green-600 border-green-500/30",
+                                  isNegative && "bg-red-500/10 text-red-600 border-red-500/30",
+                                  !isPositive && !isNegative && "bg-muted text-muted-foreground"
+                                )}
+                              >
                                 {stat.change}
-                              </p>
+                              </Badge>
                             </div>
                           </Card>
                         );
@@ -1042,11 +1316,34 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                             />
                           </PopoverContent>
                         </Popover>
+
+                        {/* Download Options */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2">
+                              <Download className="h-4 w-4" />
+                              Export
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={downloadCSV} className="gap-2">
+                              <FileSpreadsheet className="h-4 w-4" />
+                              Download CSV
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={downloadPDF} className="gap-2">
+                              <FileText className="h-4 w-4" />
+                              Download PDF
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       {stats.map((stat) => {
                         const Icon = stat.icon;
+                        const isPositive = stat.change.startsWith('+');
+                        const isNegative = stat.change.startsWith('-');
+                        
                         return (
                           <Card
                             key={stat.label}
@@ -1058,9 +1355,16 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                               </div>
                               <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
                               <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
-                              <p className={`text-xs font-medium ${stat.change.startsWith('+') || stat.change.startsWith('-') ? 'text-success' : 'text-muted-foreground'}`}>
+                              <Badge 
+                                className={cn(
+                                  "text-xs font-medium",
+                                  isPositive && "bg-green-500/10 text-green-600 border-green-500/30",
+                                  isNegative && "bg-red-500/10 text-red-600 border-red-500/30",
+                                  !isPositive && !isNegative && "bg-muted text-muted-foreground"
+                                )}
+                              >
                                 {stat.change}
-                              </p>
+                              </Badge>
                             </div>
                           </Card>
                         );
