@@ -78,15 +78,16 @@ const Auth = () => {
       loginSchema.parse({ contact: contactInfo });
       
       if (loginMethod === 'email') {
-        // Supabase will send a 6-digit code by default for email OTP
-        const { error } = await supabase.auth.signInWithOtp({
-          email: contactInfo,
-          options: {
-            shouldCreateUser: true, // Auto-create user if doesn't exist
-          },
+        // Use custom edge function to send 6-digit code via Resend
+        const { error } = await supabase.functions.invoke('send-email-verification', {
+          body: { email: contactInfo }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error sending verification code:', error);
+          throw new Error('Kunde inte skicka verifieringskod');
+        }
+
         toast.success("Verifieringskod skickad till din e-post");
         setStep('otp');
       } else {
@@ -122,15 +123,40 @@ const Auth = () => {
     try {
       otpSchema.parse({ otp });
       
-      const verifyData = loginMethod === 'email' 
-        ? { email: contactInfo, token: otp, type: 'email' as const }
-        : { phone: `${countryCode}${contactInfo}`, token: otp, type: 'sms' as const };
+      if (loginMethod === 'email') {
+        // Verify custom 6-digit code
+        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('verify-email-otp', {
+          body: { email: contactInfo, code: otp }
+        });
 
-      const { error } = await supabase.auth.verifyOtp(verifyData);
+        if (verifyError || !verifyResult?.verified) {
+          toast.error("Ogiltig verifieringskod");
+          setIsSubmitting(false);
+          return;
+        }
 
-      if (error) throw error;
-      
-      toast.success("Inloggning lyckades!");
+        // Now sign in the user with OTP (which will auto-create if needed due to auto-confirm)
+        const { error: signInError } = await supabase.auth.signInWithOtp({
+          email: contactInfo,
+          options: {
+            shouldCreateUser: true,
+          }
+        });
+
+        if (signInError) throw signInError;
+        
+        toast.success("Inloggning lyckades!");
+      } else {
+        // Phone verification using Supabase's built-in OTP
+        const { error } = await supabase.auth.verifyOtp({
+          phone: `${countryCode}${contactInfo}`,
+          token: otp,
+          type: 'sms'
+        });
+
+        if (error) throw error;
+        toast.success("Inloggning lyckades!");
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
