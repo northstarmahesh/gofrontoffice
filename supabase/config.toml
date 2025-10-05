@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.instagram-send-message]
 verify_jwt = true
+
+[functions.messenger-webhook]
+verify_jwt = false
