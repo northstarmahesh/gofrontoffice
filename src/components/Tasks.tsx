@@ -39,6 +39,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [compactView, setCompactView] = useState(true);
+  const [inlineExpandedTasks, setInlineExpandedTasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadLocations();
@@ -577,6 +578,19 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     return null;
   };
 
+  const toggleInlineExpand = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setInlineExpandedTasks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
+  };
+
   const renderTaskCard = (task: any, isAssistant: boolean) => {
     const isContactTask = task.contact_name || !task.isInternal;
     const ChannelIcon = getChannelIcon(task.source);
@@ -584,6 +598,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     const instruction = getTaskInstruction(task);
     const hasDraft = task.draftMessage;
     const isExpanded = expandedTasks.has(task.id);
+    const isInlineExpanded = inlineExpandedTasks.has(task.id);
     const originalMessage = getOriginalMessage(task);
     
     return (
@@ -602,23 +617,28 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             </Badge>
           </div>
 
-          {/* Main content - clickable area */}
+          {/* Main content - clickable area for inline expand */}
           <div 
             className="space-y-3 cursor-pointer" 
-            onClick={() => handleTaskClick(task)}
+            onClick={(e) => toggleInlineExpand(task.id, e)}
           >
             {/* Customer/Contact name with View Conversation button */}
             {isContactTask && task.contact_name && (
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className={cn("font-bold text-foreground mb-1", compactView ? "text-lg" : "text-2xl")}>
-                    {task.contact_name}
-                  </h3>
-                  {task.contact_info && !compactView && (
-                    <p className="text-sm text-muted-foreground">{task.contact_info}</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className={cn("font-bold text-foreground", compactView ? "text-lg" : "text-2xl")}>
+                      {task.contact_name}
+                    </h3>
+                    <Badge variant="outline" className="text-xs">
+                      {isInlineExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    </Badge>
+                  </div>
+                  {task.contact_info && (isInlineExpanded || !compactView) && (
+                    <p className="text-sm text-muted-foreground mt-1">{task.contact_info}</p>
                   )}
                 </div>
-                {hasDraft && (
+                {hasDraft && isInlineExpanded && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -629,7 +649,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     className="text-sm flex items-center gap-1.5 flex-shrink-0"
                   >
                     <History className="h-4 w-4" />
-                    {!compactView && "View Conversation"}
+                    Full Conversation
                   </Button>
                 )}
               </div>
@@ -642,7 +662,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
               )}
               
               {/* Call Summary */}
-              {task.callSummary && !compactView && (
+              {task.callSummary && isInlineExpanded && (
                 <div className="space-y-3 p-4 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Phone className="h-4 w-4" />
@@ -669,7 +689,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
               )}
               
               {/* Original Message - Show for draft tasks */}
-              {originalMessage && !task.callSummary && !compactView && (
+              {originalMessage && !task.callSummary && isInlineExpanded && (
                 <div className="space-y-2 p-4 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="outline" className="text-xs">Original Message</Badge>
@@ -719,7 +739,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                 </div>
                 <p className={cn(
                   "text-foreground leading-relaxed whitespace-pre-wrap font-medium",
-                  compactView ? "text-xs line-clamp-2" : "text-sm"
+                  !isInlineExpanded && compactView ? "text-xs line-clamp-2" : "text-sm"
                 )}>
                   {task.draftMessage}
                 </p>
@@ -728,10 +748,10 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           </div>
 
           {/* Footer: Time and Actions */}
-          <div className="flex items-center justify-between pt-2 border-t">
+          <div className="flex items-center justify-between pt-2 border-t" onClick={(e) => e.stopPropagation()}>
             <span className="text-sm text-muted-foreground">{task.time}</span>
             <div className="flex items-center gap-2">
-              {hasDraft ? (
+              {hasDraft && isInlineExpanded ? (
                 <>
                   <Button
                     size="sm"
@@ -743,7 +763,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     className="text-sm flex items-center gap-1.5"
                   >
                     <Pencil className="h-4 w-4" />
-                    Edit and Send
+                    Edit
                   </Button>
                   <Button
                     size="sm"
@@ -754,8 +774,13 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     Send
                   </Button>
                 </>
+              ) : !isInlineExpanded ? (
+                <div className="text-xs text-muted-foreground">Click to expand</div>
               ) : (
-                <div className="flex items-center gap-2 text-primary font-medium text-sm cursor-pointer" onClick={() => handleTaskClick(task)}>
+                <div className="flex items-center gap-2 text-primary font-medium text-sm cursor-pointer" onClick={(e) => {
+                  e.stopPropagation();
+                  handleTaskClick(task);
+                }}>
                   {task.callSummary ? "Review & Complete" : task.draftMessage ? "Review & Send" : "Take Action"}
                   <ArrowRight className="h-4 w-4" />
                 </div>
