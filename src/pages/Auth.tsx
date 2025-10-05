@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import logo from "@/assets/front-office-logo-yellow-full.png";
 import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, CheckCircle, Instagram, Chrome, Send, CreditCard } from "lucide-react";
 import { z } from "zod";
 
@@ -589,6 +590,15 @@ const Auth = () => {
           </div>
 
           <div className="flex items-center justify-center p-12 flex-col gap-6">
+            {/* Logo centered above card */}
+            <div className="bg-white rounded-2xl shadow-lg p-4 mb-2">
+              <img 
+                src={logo} 
+                alt="Front Office" 
+                className="h-10 w-auto object-contain"
+              />
+            </div>
+            
             <Card className="w-full max-w-md shadow-xl border-2">
             <CardHeader className="text-center space-y-3 pb-6">
               {mode === 'login' ? (
@@ -724,6 +734,17 @@ const Auth = () => {
 
         <div className="flex-1 bg-background rounded-t-[2rem] -mt-6 p-4 pt-6">
           <div className="max-w-lg mx-auto">
+            {/* Logo centered above form */}
+            <div className="flex justify-center mb-6">
+              <div className="bg-white rounded-2xl shadow-lg p-4">
+                <img 
+                  src={logo} 
+                  alt="Front Office" 
+                  className="h-10 w-auto object-contain"
+                />
+              </div>
+            </div>
+            
             {mode === 'login' ? (
               <form onSubmit={handleLogin} className="space-y-5">
                 <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone' | 'bankid')}>
