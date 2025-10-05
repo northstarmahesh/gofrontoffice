@@ -636,13 +636,13 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             )}
 
             {/* Task title/description */}
-            <div className="space-y-2">
+            <div className={cn("space-y-2", compactView && "space-y-1")}>
               {!isContactTask && (
-                <h4 className="text-xl font-bold text-foreground">{task.title}</h4>
+                <h4 className={cn("font-bold text-foreground", compactView ? "text-base" : "text-xl")}>{task.title}</h4>
               )}
               
               {/* Call Summary */}
-              {task.callSummary && (
+              {task.callSummary && !compactView && (
                 <div className="space-y-3 p-4 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Phone className="h-4 w-4" />
@@ -669,7 +669,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
               )}
               
               {/* Original Message - Show for draft tasks */}
-              {originalMessage && !task.callSummary && (
+              {originalMessage && !task.callSummary && !compactView && (
                 <div className="space-y-2 p-4 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="outline" className="text-xs">Original Message</Badge>
@@ -708,13 +708,19 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
             {/* Show draft message inline if available - prominent yellow box */}
             {hasDraft && (
-              <div className="space-y-3 p-5 rounded-lg bg-yellow-accent/10 border-2 border-yellow-accent/50 shadow-sm">
+              <div className={cn(
+                "space-y-3 rounded-lg bg-yellow-accent/10 border-2 border-yellow-accent/50 shadow-sm",
+                compactView ? "p-3" : "p-5"
+              )}>
                 <div className="flex items-center justify-between">
-                  <Badge className="bg-yellow-accent text-yellow-accent-foreground text-xs font-semibold">
+                  <Badge className={cn("bg-yellow-accent text-yellow-accent-foreground font-semibold", compactView ? "text-xs" : "text-xs")}>
                     ⚡ AI Draft - Action Required
                   </Badge>
                 </div>
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap font-medium">
+                <p className={cn(
+                  "text-foreground leading-relaxed whitespace-pre-wrap font-medium",
+                  compactView ? "text-xs line-clamp-2" : "text-sm"
+                )}>
                   {task.draftMessage}
                 </p>
               </div>
