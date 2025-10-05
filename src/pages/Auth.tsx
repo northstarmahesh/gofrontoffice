@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import logo from "@/assets/front-office-logo-yellow-full.png";
 import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, CheckCircle, Instagram, Chrome, Send, CreditCard } from "lucide-react";
 import { z } from "zod";
 
@@ -332,16 +331,11 @@ const Auth = () => {
 
   if (step === 'otp' && mode === 'login') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-2xl">
-          <CardHeader className="text-center space-y-4 px-4 pt-8">
-            <img 
-              src={logo} 
-              alt="Front Office" 
-              className="h-10 sm:h-12 w-auto object-contain mb-2 sm:mb-4 mx-auto"
-            />
-            <CardTitle className="text-xl sm:text-2xl font-bold">Ange verifieringskod</CardTitle>
-            <CardDescription className="text-sm sm:text-base">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-xl border-2">
+          <CardHeader className="text-center space-y-4 px-6 pt-10 pb-6">
+            <CardTitle className="text-2xl sm:text-3xl font-bold">Ange verifieringskod</CardTitle>
+            <CardDescription className="text-base">
               Vi har skickat en 6-siffrig kod till {loginMethod === 'email' ? contactInfo : `${countryCode}${contactInfo}`}
             </CardDescription>
           </CardHeader>
@@ -431,18 +425,13 @@ const Auth = () => {
 
   if (step === 'booking') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <div className="hidden lg:grid lg:grid-cols-2 min-h-screen">
-        <div className="bg-[hsl(var(--auth-bg))] text-white p-12 flex flex-col justify-center">
-          <img 
-            src={logo} 
-            alt="Front Office" 
-            className="h-16 w-auto object-contain mb-12"
-          />
+        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-12 flex flex-col justify-center">
           <h1 className="text-5xl font-bold mb-4 leading-tight">
             Välkommen till Front Office
           </h1>
-          <p className="text-2xl text-yellow-accent font-semibold mb-8">
+          <p className="text-2xl text-white/90 font-medium mb-12">
             Ditt nya digitala team
           </p>
 
@@ -482,24 +471,15 @@ const Auth = () => {
           </div>
 
           <div className="flex items-center justify-center p-12">
-            <Card className="w-full max-w-2xl shadow-2xl border-2 border-primary/10">
-              <CardHeader className="text-center space-y-4">
-                <div className="flex justify-center mb-2">
-                  <img 
-                    src={logo} 
-                    alt="Front Office Logo" 
-                    className="h-12 w-auto object-contain"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-                    <Calendar className="h-6 w-6" />
-                    Boka ditt onboarding-samtal
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    Välj en tid som passar dig, så guidar vi dig genom hur Front Office kan förenkla din vardag och öka dina bokningar
-                  </CardDescription>
-                </div>
+            <Card className="w-full max-w-2xl shadow-xl border-2">
+              <CardHeader className="text-center space-y-4 pb-6">
+                <CardTitle className="text-3xl font-bold flex items-center justify-center gap-2">
+                  <Calendar className="h-7 w-7" />
+                  Boka ditt onboarding-samtal
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Välj en tid som passar dig, så guidar vi dig genom hur Front Office kan förenkla din vardag och öka dina bokningar
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <iframe 
@@ -525,16 +505,11 @@ const Auth = () => {
         </div>
 
         <div className="lg:hidden min-h-screen flex flex-col">
-          <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-6 pb-8">
-            <img 
-              src={logo} 
-              alt="Front Office" 
-              className="h-12 w-auto object-contain mb-6"
-            />
-            <h1 className="text-3xl font-bold mb-2 leading-tight">
+          <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white px-6 pt-8 pb-8">
+            <h1 className="text-3xl font-bold mb-3 leading-tight">
               Boka ditt onboarding-samtal
             </h1>
-            <p className="text-lg text-yellow-accent font-semibold mb-2">
+            <p className="text-lg text-white/90 font-medium">
               Vi hjälper dig komma igång med Front Office
             </p>
           </div>
@@ -568,49 +543,44 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--auth-bg))]">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="hidden lg:grid lg:grid-cols-2 min-h-screen">
-        <div className="bg-[hsl(var(--auth-bg))] text-white p-12 flex flex-col justify-center">
-          <img 
-            src={logo} 
-            alt="Front Office" 
-            className="h-16 w-auto object-contain mb-12"
-          />
+        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-12 flex flex-col justify-center">
           <h1 className="text-5xl font-bold mb-4 leading-tight">
             Välkommen till Front Office
           </h1>
-          <p className="text-2xl text-yellow-accent font-semibold mb-8">
+          <p className="text-2xl text-white/90 font-medium mb-12">
             Din digitala assistent — tillgänglig dygnet runt, året runt
           </p>
 
           <div className="space-y-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-yellow-accent/20 flex items-center justify-center flex-shrink-0">
-                <Clock className="text-yellow-accent" size={24} />
+              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="text-white" size={24} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">Spara 5+ timmar per vecka</h3>
-                <p className="text-white/70">Låt AI hantera repetitiva kundsamtal och administrativa uppgifter automatiskt</p>
+                <h3 className="font-semibold text-lg mb-1 text-white">Spara 5+ timmar per vecka</h3>
+                <p className="text-white/80">Låt AI hantera repetitiva kundsamtal och administrativa uppgifter automatiskt</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center flex-shrink-0">
-                <MessageSquare className="text-blue-400" size={24} />
+              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <MessageSquare className="text-white" size={24} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">Alla kanaler på ett ställe</h3>
-                <p className="text-white/70">Hantera WhatsApp, SMS, Instagram, Messenger och mycket mer från en enda plattform</p>
+                <h3 className="font-semibold text-lg mb-1 text-white">Alla kanaler på ett ställe</h3>
+                <p className="text-white/80">Hantera WhatsApp, SMS, Instagram, Messenger och mycket mer från en enda plattform</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-purple-400/20 flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="text-purple-400" size={24} />
+              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="text-white" size={24} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">Du har full kontroll</h3>
-                <p className="text-white/70">Granska och godkänn alla AI-genererade svar innan de skickas till dina kunder</p>
+                <h3 className="font-semibold text-lg mb-1 text-white">Du har full kontroll</h3>
+                <p className="text-white/80">Granska och godkänn alla AI-genererade svar innan de skickas till dina kunder</p>
               </div>
             </div>
           </div>
@@ -618,26 +588,28 @@ const Auth = () => {
             <PartnerLogos />
           </div>
 
-          <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background/50 to-primary/5 flex-col gap-6">
-            <Card className="w-full max-w-md shadow-2xl border-2 border-primary/10">
-            <CardHeader className="space-y-4 text-center">
-              <div className="flex justify-center mb-2">
-                <img 
-                  src={logo} 
-                  alt="Front Office Logo" 
-                  className="h-12 w-auto object-contain"
-                />
-              </div>
+          <div className="flex items-center justify-center p-12 flex-col gap-6">
+            <Card className="w-full max-w-md shadow-xl border-2">
+            <CardHeader className="text-center space-y-3 pb-6">
+              {mode === 'login' ? (
+                <>
+                  <CardTitle className="text-2xl font-bold">Välkommen tillbaka</CardTitle>
+                  <CardDescription>
+                    Logga in med e-post eller telefonnummer
+                  </CardDescription>
+                </>
+              ) : (
+                <>
+                  <CardTitle className="text-2xl font-bold">Kom igång med Front Office</CardTitle>
+                  <CardDescription>
+                    Fyll i dina uppgifter så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
+                  </CardDescription>
+                </>
+              )}
             </CardHeader>
             <CardContent>
               {mode === 'login' ? (
                 <div className="space-y-4">
-                  <div className="text-center space-y-2 mb-6">
-                    <h3 className="text-xl font-bold">Välkommen tillbaka</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Logga in med e-post eller telefonnummer
-                    </p>
-                  </div>
                   <form onSubmit={handleLogin} className="space-y-4">
                     <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone' | 'bankid')}>
                       <TabsList className="grid w-full grid-cols-3">
@@ -723,21 +695,15 @@ const Auth = () => {
                       <button
                         type="button"
                         onClick={() => setMode('signup')}
-                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        Ny användare? <span className="font-semibold">Boka gratis konsultation här</span>
+                        Ny användare? <span className="font-semibold text-primary">Boka gratis konsultation här</span>
                       </button>
                     </div>
                   </form>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="text-center space-y-2 mb-6">
-                    <h3 className="text-xl font-bold">Kom igång med Front Office</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Fyll i dina uppgifter så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
-                    </p>
-                  </div>
                   <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="email" className="flex items-center gap-2">
@@ -914,16 +880,11 @@ const Auth = () => {
       </div>
 
       <div className="lg:hidden min-h-screen flex flex-col">
-          <div className="bg-[hsl(var(--auth-bg))] text-white px-4 pt-8 pb-10">
-            <img 
-              src={logo} 
-              alt="Front Office" 
-              className="h-10 w-auto object-contain mb-8"
-            />
+          <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white px-4 pt-8 pb-10">
           <h1 className="text-3xl font-bold mb-3 leading-tight">
             {mode === 'login' ? 'Välkommen tillbaka' : 'Kom igång med Front Office'}
           </h1>
-          <p className="text-lg text-yellow-accent font-semibold">
+          <p className="text-lg text-white/90 font-medium">
             {mode === 'login' ? 'Logga in för att fortsätta' : 'Din digitala assistent — tillgänglig dygnet runt'}
           </p>
         </div>
