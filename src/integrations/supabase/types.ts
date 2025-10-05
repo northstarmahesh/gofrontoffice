@@ -24,6 +24,7 @@ export type Database = {
           direction: string | null
           duration: string | null
           id: string
+          location_id: string | null
           status: string | null
           summary: string | null
           title: string
@@ -39,6 +40,7 @@ export type Database = {
           direction?: string | null
           duration?: string | null
           id?: string
+          location_id?: string | null
           status?: string | null
           summary?: string | null
           title: string
@@ -54,6 +56,7 @@ export type Database = {
           direction?: string | null
           duration?: string | null
           id?: string
+          location_id?: string | null
           status?: string | null
           summary?: string | null
           title?: string
@@ -66,6 +69,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_logs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_locations"
             referencedColumns: ["id"]
           },
           {
@@ -558,6 +568,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          location_id: string | null
           name: string
           notes: string | null
           phone: string
@@ -569,6 +580,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          location_id?: string | null
           name: string
           notes?: string | null
           phone: string
@@ -580,13 +592,22 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          location_id?: string | null
           name?: string
           notes?: string | null
           phone?: string
           tags?: string[] | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contacts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       draft_replies: {
         Row: {

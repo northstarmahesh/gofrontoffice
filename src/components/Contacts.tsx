@@ -96,6 +96,55 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
     
     try {
       // First get clinic_id for current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.error('No user found');
+        setLoading(false);
+        return;
+      }
+
+      const { data: clinicData, error: clinicError } = await supabase
+        .from("clinic_users")
+        .eq("user_id", user.id)
+        .select("clinic_id")
+        .maybeSingle();
+
+      if (clinicError) {
+        console.error("Error getting clinic:", clinicError);
+        setLoading(false);
+        return;
+      }
+
+      if (!clinicData) {
+        console.error("No business found for user");
+        toast.error("No business found for your account");
+        setLoading(false);
+        return;
+      }
+
+      // Load contacts for this clinic
+      let query = supabase
+        .from("contacts")
+        .select("*")
+        .eq("clinic_id", clinicData.clinic_id)
+        .order("created_at", { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error loading contacts:", error);
+        toast.error("Failed to load contacts");
+      } else {
+        setContacts(data || []);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Failed to load contacts");
+    } finally {
+      setLoading(false);
+    }
+  };
       const { data: clinicData } = await supabase
         .from("clinic_users")
         .select("clinic_id")
