@@ -562,7 +562,7 @@ const Auth = () => {
             Din digitala assistent — tillgänglig dygnet runt
           </h1>
 
-          <div className="space-y-4">
+          <div className="space-y-4 mb-8">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <Clock className="text-white" size={20} />
@@ -594,8 +594,61 @@ const Auth = () => {
             </div>
           </div>
 
-            <PartnerLogos />
+          {/* Testimonials on left side */}
+          <div className="space-y-3 max-w-lg">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-white font-bold">
+                  SB
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm mb-2 italic text-white/90">
+                    "Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på medan AI hanterar kundkommunikationen."
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-sm text-white">Sara Bergström</p>
+                      <p className="text-xs text-white/75">VD, Bella Clinic Stockholm</p>
+                    </div>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <svg key={star} className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20">
+                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                        </svg>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-white font-bold">
+                  ME
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm mb-2 italic text-white/90">
+                    "Implementeringen var super smidig. Personlig support hela vägen och vi såg resultat redan första veckan!"
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-sm text-white">Marcus Eriksson</p>
+                      <p className="text-xs text-white/75">Grundare, Nordic Wellness</p>
+                    </div>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <svg key={star} className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20">
+                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                        </svg>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
 
           <div className="flex items-center justify-center p-8 flex-col">
             <Card className="w-full max-w-md shadow-xl border-2">
@@ -710,8 +763,62 @@ const Auth = () => {
               ) : null}
             </CardContent>
           </Card>
-          <div className="w-full max-w-md mt-6">
-            <TestimonialSection />
+          
+          {/* Partner logos below login card */}
+          <div className="w-full max-w-md mt-8">
+            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4">
+              Front Office samarbetar med
+            </h3>
+            <div className="flex flex-wrap gap-4 items-center justify-center">
+              <div className="flex flex-col items-center gap-1 hover-scale">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <Instagram className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium">Instagram</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-1 hover-scale">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
+                  <MessageSquare className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium">WhatsApp</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-1 hover-scale">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                  <PhoneIcon className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium">Telefon</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-1 hover-scale">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                  <Send className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium">SMS</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-1 hover-scale">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
+                  <MessageSquare className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium">Messenger</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-1 hover-scale">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg">
+                  <Chrome className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium">Google</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-1 hover-scale">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg">
+                  <Calendar className="text-white" size={24} />
+                </div>
+                <span className="text-xs font-medium">Bokadirekt</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
