@@ -328,7 +328,7 @@ const Auth = () => {
           </div>
           <div className="flex-1">
             <p className="text-sm mb-2 italic text-muted-foreground">
-              "Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på medan AI hanterar kundkommunikationen. Otroligt värdefullt!"
+              "Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på - att ta hand om våra kunder - medan allt administrativt sköts automatiskt. Otroligt värdefullt!"
             </p>
             <div className="flex items-center justify-between">
               <div>
