@@ -746,7 +746,7 @@ const Auth = () => {
                     </Button>
                     <div className="text-center pt-4">
                   <a
-                    href="https://calendar.app.google/dgcAwtLRh75oRXDu8"
+                    href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
