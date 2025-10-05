@@ -64,16 +64,11 @@ serve(async (req: Request) => {
     const { data: { users } } = await supabase.auth.admin.listUsers();
     const existingUserData = users?.find(u => u.email === email);
 
-    // Get or create user ID
-    let userId: string;
-    
     if (!existingUserData) {
-      // Create new user with email confirmed and a temporary password
-      const tempPassword = crypto.randomUUID();
+      // Create new user with email confirmed
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email,
         email_confirm: true,
-        password: tempPassword,
         user_metadata: {
           email_verified: true
         }
@@ -84,69 +79,41 @@ serve(async (req: Request) => {
         throw new Error("Failed to create user");
       }
 
-      userId = newUser.user.id;
-      console.log("Created new user:", userId);
-      
-      // Sign in with the temporary password
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: tempPassword,
-      });
-
-      if (signInError) {
-        console.error("Sign in error:", signInError);
-        throw new Error("Failed to sign in new user");
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          verified: true,
-          access_token: signInData.session.access_token,
-          refresh_token: signInData.session.refresh_token,
-          user: signInData.user
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      console.log("Created new user:", newUser.user.id);
     } else {
-      userId = existingUserData.id;
-      console.log("User already exists:", userId);
+      console.log("User already exists:", existingUserData.id);
     }
 
-    // For existing users, generate a temporary password and sign in
-    const tempPassword = crypto.randomUUID();
-    
-    const { error: updateError } = await supabase.auth.admin.updateUserById(
-      userId,
-      { password: tempPassword }
-    );
-
-    if (updateError) {
-      console.error("Password update error:", updateError);
-      throw new Error("Failed to update user password");
-    }
-
-    // Sign in with the temporary password to get a session
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    // Generate a magic link
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
       email,
-      password: tempPassword,
     });
 
-    if (signInError) {
-      console.error("Sign in error:", signInError);
-      throw new Error("Failed to sign in user");
+    if (linkError) {
+      console.error("Link generation error:", linkError);
+      throw new Error("Failed to generate authentication link");
     }
 
-    console.log("User signed in successfully");
+    // Extract the token_hash from the URL
+    const actionLink = linkData.properties.action_link;
+    const linkUrl = new URL(actionLink);
+    const tokenHash = linkUrl.searchParams.get('token_hash');
+    const type = linkUrl.searchParams.get('type');
+
+    if (!tokenHash) {
+      console.error("No token_hash in link:", actionLink);
+      throw new Error("Failed to generate authentication token");
+    }
+
+    console.log("Generated token_hash successfully");
 
     return new Response(
       JSON.stringify({ 
         verified: true,
-        access_token: signInData.session.access_token,
-        refresh_token: signInData.session.refresh_token,
-        user: signInData.user
+        token_hash: tokenHash,
+        type: type || 'magiclink',
+        email: email
       }),
       {
         status: 200,

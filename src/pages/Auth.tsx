@@ -140,27 +140,45 @@ const Auth = () => {
           return;
         }
 
-        // Sign in with the access and refresh tokens
-        if (verifyResult.access_token && verifyResult.refresh_token) {
-          const { error: signInError } = await supabase.auth.setSession({
-            access_token: verifyResult.access_token,
-            refresh_token: verifyResult.refresh_token
+        // Verify the OTP token hash to create a session
+        if (verifyResult.token_hash) {
+          const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
+            token_hash: verifyResult.token_hash,
+            type: verifyResult.type || 'magiclink',
           });
 
-          if (signInError) {
-            console.error("Sign in error:", signInError);
-            toast.error("Kunde inte logga in");
+          if (sessionError) {
+            console.error('Session verification error:', sessionError);
+            toast.error("Kunde inte skapa session");
             setIsSubmitting(false);
             return;
           }
 
-          console.log('Session set successfully, redirecting...');
-          toast.success("Inloggning lyckades!");
-          
-          // Explicit redirect after successful session establishment
-          setTimeout(() => {
-            navigate("/");
-          }, 500);
+          if (sessionData.session) {
+            const { error: signInError } = await supabase.auth.setSession({
+              access_token: sessionData.session.access_token,
+              refresh_token: sessionData.session.refresh_token
+            });
+
+            if (signInError) {
+              console.error("Sign in error:", signInError);
+              toast.error("Kunde inte logga in");
+              setIsSubmitting(false);
+              return;
+            }
+
+            console.log('Session set successfully, redirecting...');
+            toast.success("Inloggning lyckades!");
+            
+            // Explicit redirect after successful session establishment
+            setTimeout(() => {
+              navigate("/");
+            }, 500);
+          } else {
+            toast.error("Kunde inte skapa session");
+            setIsSubmitting(false);
+            return;
+          }
         } else {
           toast.error("Kunde inte hämta inloggningsuppgifter");
           setIsSubmitting(false);
