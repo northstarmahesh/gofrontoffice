@@ -331,7 +331,7 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
                   </div>
                   <div>
                     <CardTitle className="text-base">Email</CardTitle>
-                    <CardDescription>Your clinic's email address</CardDescription>
+                    <CardDescription>Your business's email address</CardDescription>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

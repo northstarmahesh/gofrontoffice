@@ -263,7 +263,7 @@ export const OnboardingAISetup = ({
               placeholder="Enter instructions for your AI assistant..."
             />
             <p className="text-xs text-muted-foreground">
-              This prompt has been pre-filled based on your clinic type. Feel free to customize it!
+              This prompt has been pre-filled based on your business type. Feel free to customize it!
             </p>
           </div>
         </CardContent>
@@ -305,7 +305,7 @@ export const OnboardingAISetup = ({
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Want a custom voice?</p>
                     <p className="text-xs text-muted-foreground">
-                      We can clone your voice or create a custom voice for your clinic. Contact our support team to get started.
+                      We can clone your voice or create a custom voice for your business. Contact our support team to get started.
                     </p>
                     <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild>
                       <a href="mailto:support@frontoffice.com">Contact Support</a>

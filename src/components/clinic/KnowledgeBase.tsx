@@ -246,7 +246,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
           </Dialog>
         </div>
         <CardDescription>
-          Add website URLs or PDF documents to build your clinic's knowledge base
+          Add website URLs or PDF documents to build your business's knowledge base
         </CardDescription>
       </CardHeader>
       <CardContent>

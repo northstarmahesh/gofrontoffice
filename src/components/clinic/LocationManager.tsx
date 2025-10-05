@@ -726,7 +726,7 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
             </Dialog>
           </div>
           <CardDescription>
-            Manage multiple locations for your clinic
+            Manage multiple locations for your business
           </CardDescription>
         </CardHeader>
         <CardContent>

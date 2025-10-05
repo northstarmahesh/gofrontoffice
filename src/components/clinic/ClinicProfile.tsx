@@ -173,7 +173,7 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
                   placeholder="main-street-health"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Used for your clinic's unique URL
+                  Used for your business's unique URL
                 </p>
               </div>
 

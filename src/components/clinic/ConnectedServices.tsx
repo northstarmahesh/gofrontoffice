@@ -68,7 +68,7 @@ export const ConnectedServices = ({ clinicId }: ConnectedServicesProps) => {
 
   const handleConnect = async (integrationType: string) => {
     if (!clinicId) {
-      toast.error("Please complete clinic setup first");
+      toast.error("Please complete business setup first");
       return;
     }
 

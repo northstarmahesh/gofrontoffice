@@ -141,7 +141,7 @@ export const ScheduleManagement = ({ clinicId }: ScheduleManagementProps) => {
           <CardTitle>Operating Hours</CardTitle>
         </div>
         <CardDescription>
-          Set your clinic's availability for each day of the week
+          Set your business's availability for each day of the week
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

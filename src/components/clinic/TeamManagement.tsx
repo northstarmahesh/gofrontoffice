@@ -179,7 +179,7 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
             <CardTitle>Add Team Member</CardTitle>
           </div>
           <CardDescription>
-            Invite users who have already signed up to join your clinic
+            Invite users who have already signed up to join your business
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -232,7 +232,7 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
             <CardTitle>Team Members</CardTitle>
           </div>
           <CardDescription>
-            Current members of your clinic
+            Current members of your business
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -266,7 +266,7 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to remove {member.email} from your clinic?
+                              Are you sure you want to remove {member.email} from your business?
                               This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>

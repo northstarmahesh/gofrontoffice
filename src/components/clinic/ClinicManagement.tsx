@@ -112,7 +112,7 @@ const ClinicManagement = () => {
 
   const handleConnectInstagram = async () => {
     if (!clinicId) {
-      toast.error("Please set up your clinic first");
+      toast.error("Please set up your business first");
       return;
     }
 
