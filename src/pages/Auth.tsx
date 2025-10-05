@@ -545,7 +545,18 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="hidden lg:grid lg:grid-cols-2 min-h-screen">
+      <div className="hidden lg:grid lg:grid-cols-2 min-h-screen relative">
+        {/* Logo positioned at the division */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+          <div className="bg-white rounded-3xl shadow-2xl p-6">
+            <img 
+              src={logo} 
+              alt="Front Office" 
+              className="h-20 w-auto object-contain"
+            />
+          </div>
+        </div>
+        
         <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-12 flex flex-col justify-center">
           <h1 className="text-5xl font-bold mb-4 leading-tight">
             Välkommen till Front Office
@@ -590,15 +601,6 @@ const Auth = () => {
           </div>
 
           <div className="flex items-center justify-center p-12 flex-col gap-6">
-            {/* Logo centered above card */}
-            <div className="bg-white rounded-2xl shadow-lg p-4 mb-2">
-              <img 
-                src={logo} 
-                alt="Front Office" 
-                className="h-10 w-auto object-contain"
-              />
-            </div>
-            
             <Card className="w-full max-w-md shadow-xl border-2">
             <CardHeader className="text-center space-y-3 pb-6">
               {mode === 'login' ? (
@@ -702,14 +704,14 @@ const Auth = () => {
                       {isSubmitting ? "Skickar..." : loginMethod === 'bankid' ? "Öppna BankID" : "Skicka verifieringskod"}
                     </Button>
                     <div className="text-center pt-4">
-                      <a
-                        href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Ny användare? <span className="font-semibold text-primary">Boka gratis konsultation här</span>
-                      </a>
+                  <a
+                    href="https://calendar.app.google/dgcAwtLRh75oRXDu8"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Ny användare? <span className="font-semibold text-primary">Boka gratis konsultation här</span>
+                  </a>
                     </div>
                   </form>
                 </div>
