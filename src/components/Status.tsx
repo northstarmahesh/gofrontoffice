@@ -474,7 +474,44 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
 
           {locations.map((location) => (
             <TabsContent key={location.id} value={location.id} className="space-y-6 mt-6">
-      {/* Needs Attention Section - TOP */}
+              {/* Analytics Section - TOP */}
+              <div>
+                <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {stats.map((stat) => {
+                    const Icon = stat.icon;
+                    const isPositive = stat.change.startsWith('+');
+                    const isNegative = stat.change.startsWith('-');
+                    
+                    return (
+                      <Card
+                        key={stat.label}
+                        className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                      >
+                        <div className="flex flex-col items-center text-center">
+                          <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
+                            <Icon className={`h-8 w-8 ${stat.color}`} />
+                          </div>
+                          <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
+                          <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
+                          <Badge 
+                            className={cn(
+                              "text-xs font-medium",
+                              isPositive && "bg-green-500/10 text-green-600 border-green-500/30",
+                              isNegative && "bg-red-500/10 text-red-600 border-red-500/30",
+                              !isPositive && !isNegative && "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            {stat.change}
+                          </Badge>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+
+      {/* Needs Attention Section */}
       {pendingTasks.length > 0 && (
         <Card className="border-2 border-yellow-accent p-6 shadow-lg bg-gradient-to-br from-yellow-accent/10 to-yellow-accent/5">
           <div className="flex items-center justify-between mb-4">

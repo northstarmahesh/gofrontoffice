@@ -117,33 +117,25 @@ const Dashboard = () => {
         })}
       </div>
 
-      {/* Pending Tasks Snapshot */}
-      <Card className="border-2 border-primary/20 p-4 shadow-sm bg-gradient-to-br from-primary/5 to-primary/10">
-        <div className="mb-3 flex items-center gap-2">
-          <ListTodo className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Your Pending Tasks</h3>
-          <Badge variant="outline" className="ml-auto text-xs bg-primary/20 border-primary text-primary">
-            {pendingTasks.length}
-          </Badge>
-        </div>
-        <div className="space-y-2">
-          {pendingTasks.map((task) => (
-            <div key={task.id} className="flex items-center justify-between rounded-lg bg-muted/50 p-2">
-              <p className="text-xs text-foreground">{task.title}</p>
-              <Badge
-                variant="outline"
-                className={`text-xs ${
-                  task.priority === "high"
-                    ? "border-destructive/30 bg-destructive/10 text-destructive"
-                    : "border-warning/30 bg-warning/10 text-warning"
-                }`}
-              >
-                {task.priority}
-              </Badge>
+      {/* Pending Tasks Banner */}
+      {pendingTasks.length > 0 && (
+        <Card className="border-2 border-yellow-accent/30 p-4 shadow-lg bg-gradient-to-br from-yellow-accent/10 to-yellow-accent/5 hover:shadow-xl transition-all cursor-pointer">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-yellow-accent/20 flex items-center justify-center flex-shrink-0">
+                <ListTodo className="h-5 w-5 text-yellow-accent" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-foreground">Needs Your Attention</h3>
+                <p className="text-xs text-muted-foreground">Tasks requiring immediate action</p>
+              </div>
             </div>
-          ))}
-        </div>
-      </Card>
+            <Badge variant="outline" className="text-lg font-bold px-3 py-1 bg-yellow-accent border-yellow-accent text-secondary">
+              {pendingTasks.length}
+            </Badge>
+          </div>
+        </Card>
+      )}
 
       {/* Activity Logs */}
       <ActivityLogs />
