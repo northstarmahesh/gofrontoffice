@@ -60,8 +60,52 @@ serve(async (req: Request) => {
       .delete()
       .eq("id", verification.id);
 
+    // Check if user exists
+    const { data: existingUser } = await supabase.auth.admin.listUsers();
+    const userExists = existingUser?.users?.some(u => u.email === email);
+
+    let userId: string;
+
+    if (!userExists) {
+      // Create new user with email confirmed
+      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+        email,
+        email_confirm: true, // Auto-confirm email
+        user_metadata: {
+          email_verified: true
+        }
+      });
+
+      if (createError) {
+        console.error("Error creating user:", createError);
+        throw new Error("Failed to create user");
+      }
+
+      userId = newUser.user.id;
+      console.log("Created new user:", userId);
+    } else {
+      // Get existing user
+      const existingUserData = existingUser.users.find(u => u.email === email);
+      userId = existingUserData!.id;
+      console.log("User already exists:", userId);
+    }
+
+    // Generate a session token for the user
+    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+    });
+
+    if (sessionError) {
+      console.error("Session error:", sessionError);
+      throw new Error("Failed to generate session");
+    }
+
     return new Response(
-      JSON.stringify({ verified: true }),
+      JSON.stringify({ 
+        verified: true,
+        session: sessionData
+      }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

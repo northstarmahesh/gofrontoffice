@@ -136,15 +136,19 @@ const Auth = () => {
           return;
         }
 
-        // Now sign in the user with OTP (which will auto-create if needed due to auto-confirm)
-        const { error: signInError } = await supabase.auth.signInWithOtp({
-          email: contactInfo,
-          options: {
-            shouldCreateUser: true,
-          }
-        });
+        // Use the session from the verification response to sign in
+        if (verifyResult.session?.properties?.hashed_token) {
+          const { error: signInError } = await supabase.auth.verifyOtp({
+            email: contactInfo,
+            token: verifyResult.session.properties.hashed_token,
+            type: 'email'
+          });
 
-        if (signInError) throw signInError;
+          if (signInError) {
+            console.error("Sign in error:", signInError);
+            throw signInError;
+          }
+        }
         
         toast.success("Inloggning lyckades!");
       } else {
