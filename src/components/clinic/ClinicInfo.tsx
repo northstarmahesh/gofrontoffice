@@ -42,7 +42,7 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
       .single();
 
     if (error) {
-      toast.error("Failed to load clinic data");
+      toast.error("Failed to load business data");
       return;
     }
 
@@ -80,7 +80,7 @@ export const ClinicInfo = ({ clinicId, onSaved, onNavigateToTools }: ClinicInfoP
 
         if (clinicError) throw clinicError;
 
-        toast.success("Clinic created successfully!");
+        toast.success("Business created successfully!");
         setIsLocked(true); // Lock after creation
         setIsOpen(false); // Collapse after creation
         if (onSaved) onSaved(clinic.id);

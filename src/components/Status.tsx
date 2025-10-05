@@ -453,7 +453,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       <div className="flex flex-col items-center justify-center py-12">
         <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-lg font-semibold text-foreground mb-2">No Locations Found</p>
-        <p className="text-sm text-muted-foreground">Please add a location in Clinic Settings to get started.</p>
+        <p className="text-sm text-muted-foreground">Please add a location in Business Settings to get started.</p>
       </div>
     );
   }

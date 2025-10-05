@@ -214,7 +214,7 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Admins can manage clinic settings and team members
+                Admins can manage business settings and team members
               </p>
             </div>
 

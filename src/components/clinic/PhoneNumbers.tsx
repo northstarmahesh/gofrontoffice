@@ -20,7 +20,7 @@ export const PhoneNumbers = ({ clinicId }: PhoneNumbersProps) => {
           <Badge variant="secondary">Coming Soon</Badge>
         </div>
         <CardDescription>
-          Purchase phone numbers directly from our platform for your clinic locations.
+          Purchase phone numbers directly from our platform for your business locations.
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -122,7 +122,7 @@ const Settings = () => {
         </TabsTrigger>
         <TabsTrigger value="clinic" className="gap-2">
           <Building2 className="h-4 w-4" />
-          Clinic
+          Business
         </TabsTrigger>
       </TabsList>
 

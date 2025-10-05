@@ -75,10 +75,10 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // If user doesn't have a clinic, redirect to clinic for onboarding
+    // If user doesn't have a business, redirect to business setup for onboarding
     if (hasClinic === false && currentView !== "clinic") {
       setCurrentView("clinic");
-      toast.info("Welcome! Let's set up your clinic first.");
+      toast.info("Welcome! Let's set up your business first.");
     }
   }, [hasClinic]);
 

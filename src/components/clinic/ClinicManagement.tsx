@@ -170,9 +170,9 @@ const ClinicManagement = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>No Clinic Found</CardTitle>
+          <CardTitle>No Business Found</CardTitle>
           <CardDescription>
-            You need to create a clinic first before managing channels.
+            You need to create a business first before managing channels.
           </CardDescription>
         </CardHeader>
         <CardContent>

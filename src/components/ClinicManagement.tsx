@@ -34,8 +34,8 @@ export const ClinicManagement = () => {
         .maybeSingle();
 
       if (error && error.code !== "PGRST116") {
-        console.error("Error loading clinic:", error);
-        toast.error("Failed to load clinic");
+        console.error("Error loading business:", error);
+        toast.error("Failed to load business");
         return;
       }
 

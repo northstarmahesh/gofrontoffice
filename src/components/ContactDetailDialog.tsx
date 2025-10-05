@@ -249,7 +249,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
           .single();
 
         if (!clinicData?.clinic_id) {
-          toast.error("No clinic found for user");
+          toast.error("No business found for user");
           return;
         }
 
@@ -284,7 +284,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         .single();
 
       if (!clinicData?.clinic_id) {
-        toast.error("No clinic found for user");
+        toast.error("No business found for user");
         return;
       }
 
@@ -728,7 +728,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                               };
 
                               const getTooltip = () => {
-                                if (!ch.isConnected) return `${ch.channel.toUpperCase()} not connected to your clinic`;
+                                if (!ch.isConnected) return `${ch.channel.toUpperCase()} not connected to your business`;
                                 if (!ch.hasUsed) return `Contact hasn't used ${ch.channel.toUpperCase()} yet`;
                                 return '';
                               };

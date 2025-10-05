@@ -148,7 +148,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground px-4">You're All Set! 🎉</h2>
             <p className="text-sm sm:text-lg text-muted-foreground max-w-md mx-auto px-4">
-              Your clinic is configured and ready. Your AI assistant will now help manage your front office operations.
+              Your business is configured and ready. Your AI assistant will now help manage your front office operations.
             </p>
             
             <Card className="max-w-md mx-auto border-0 shadow-lg bg-gradient-to-br from-primary/10 to-secondary/10">

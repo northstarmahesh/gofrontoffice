@@ -112,7 +112,7 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-primary" />
-                <CardTitle>Clinic Profile</CardTitle>
+                <CardTitle>Business Profile</CardTitle>
               </div>
               <div className="flex items-center gap-2">
                 {isLocked && (
@@ -122,7 +122,7 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
               </div>
             </div>
             <CardDescription>
-              {isLocked ? "Basic information about your clinic (click to view)" : "Basic information about your clinic"}
+              {isLocked ? "Basic information about your business (click to view)" : "Basic information about your business"}
             </CardDescription>
           </CardHeader>
         </CollapsibleTrigger>
@@ -133,7 +133,7 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
                 <div className="flex items-center gap-2">
                   <Lock className="h-4 w-4 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    Clinic information is locked to prevent accidental changes
+                    Business information is locked to prevent accidental changes
                   </p>
                 </div>
                 <Button
@@ -150,7 +150,7 @@ export const ClinicProfile = ({ clinicId, onSaved }: ClinicProfileProps) => {
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Clinic Name *</Label>
+                <Label htmlFor="name">Business Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}

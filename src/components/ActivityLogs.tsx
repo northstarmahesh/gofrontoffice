@@ -51,7 +51,7 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         .single();
 
       if (!clinicData?.clinic_id) {
-        toast.error("No clinic found");
+        toast.error("No business found");
         return;
       }
 

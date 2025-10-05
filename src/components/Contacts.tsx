@@ -147,7 +147,7 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
         .single();
 
       if (!clinicData?.clinic_id) {
-        toast.error("No clinic found for user");
+        toast.error("No business found for user");
         return;
       }
 
@@ -229,7 +229,7 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Contacts</h2>
-          <p className="text-muted-foreground">Manage your clinic's contact list</p>
+          <p className="text-muted-foreground">Manage your business contact list</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);

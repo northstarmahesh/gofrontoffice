@@ -456,7 +456,7 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
 
       {/* Skip option */}
       <p className="text-center text-sm text-muted-foreground">
-        You can always add more channels later in Clinic Settings
+        You can always add more channels later in Business Settings
       </p>
 
       {pendingPhoneVerification && (
