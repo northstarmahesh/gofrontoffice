@@ -557,55 +557,23 @@ const Auth = () => {
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-12 flex flex-col justify-center">
-          <h1 className="text-4xl font-bold mb-6 leading-tight">
+        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-8 lg:p-12 flex flex-col justify-center">
+          <h1 className="text-3xl lg:text-4xl font-bold mb-6 leading-tight">
             Din digitala assistent — tillgänglig dygnet runt
           </h1>
 
-          <div className="space-y-4 mb-8">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                <Clock className="text-white" size={20} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-base mb-0.5 text-white">Spara 5+ timmar per vecka</h3>
-                <p className="text-sm text-white/75">Låt AI hantera repetitiva kundsamtal automatiskt</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                <MessageSquare className="text-white" size={20} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-base mb-0.5 text-white">Alla kanaler på ett ställe</h3>
-                <p className="text-sm text-white/75">WhatsApp, SMS, Instagram, Messenger med mera</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="text-white" size={20} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-base mb-0.5 text-white">Du har full kontroll</h3>
-                <p className="text-sm text-white/75">Granska och godkänn alla AI-genererade svar</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Testimonials on left side */}
-          <div className="space-y-3 max-w-lg">
+          {/* Testimonials at top */}
+          <div className="space-y-3 mb-8">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-white font-bold">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
                   SB
                 </div>
                 <div className="flex-1">
                   <p className="text-sm mb-2 italic text-white/90">
                     "Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på medan AI hanterar kundkommunikationen."
                   </p>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
                       <p className="font-semibold text-sm text-white">Sara Bergström</p>
                       <p className="text-xs text-white/75">VD, Bella Clinic Stockholm</p>
@@ -624,14 +592,14 @@ const Auth = () => {
             
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-white font-bold">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
                   ME
                 </div>
                 <div className="flex-1">
                   <p className="text-sm mb-2 italic text-white/90">
                     "Implementeringen var super smidig. Personlig support hela vägen och vi såg resultat redan första veckan!"
                   </p>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
                       <p className="font-semibold text-sm text-white">Marcus Eriksson</p>
                       <p className="text-xs text-white/75">Grundare, Nordic Wellness</p>
@@ -646,6 +614,30 @@ const Auth = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Simplified bullet points below testimonials */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="text-white" size={20} />
+              </div>
+              <p className="text-base font-medium text-white">Spara 5+ timmar per vecka</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <MessageSquare className="text-white" size={20} />
+              </div>
+              <p className="text-base font-medium text-white">Alla kanaler på ett ställe</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="text-white" size={20} />
+              </div>
+              <p className="text-base font-medium text-white">Granska och godkänn svar – eller kör på autopilot.</p>
             </div>
           </div>
         </div>
@@ -824,13 +816,34 @@ const Auth = () => {
       </div>
 
       <div className="lg:hidden min-h-screen flex flex-col">
-          <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white px-4 pt-8 pb-10">
-          <h1 className="text-3xl font-bold mb-3 leading-tight">
-            {mode === 'login' ? 'Välkommen tillbaka' : 'Kom igång med Front Office'}
+          <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white px-4 pt-8 pb-6">
+          <h1 className="text-2xl font-bold mb-4 leading-tight">
+            Din digitala assistent — tillgänglig dygnet runt
           </h1>
-          <p className="text-lg text-white/90 font-medium">
-            {mode === 'login' ? 'Logga in för att fortsätta' : 'Din digitala assistent — tillgänglig dygnet runt'}
-          </p>
+          
+          {/* Simplified bullet points for mobile */}
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="text-white" size={16} />
+              </div>
+              <p className="text-sm font-medium text-white">Spara 5+ timmar per vecka</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <MessageSquare className="text-white" size={16} />
+              </div>
+              <p className="text-sm font-medium text-white">Alla kanaler på ett ställe</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="text-white" size={16} />
+              </div>
+              <p className="text-sm font-medium text-white">Granska och godkänn svar – eller kör på autopilot.</p>
+            </div>
+          </div>
         </div>
 
         <div className="flex-1 bg-background rounded-t-[2rem] -mt-6 p-4 pt-6">
