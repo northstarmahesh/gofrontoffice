@@ -761,93 +761,185 @@ const Auth = () => {
           </Card>
           
           {/* Partner logos below login card */}
-          <div className="w-full">
-            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-6">
+          <div className="w-full overflow-hidden">
+            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4">
               Front Office samarbetar med
             </h3>
-            <div className="grid grid-cols-4 gap-4 max-w-md mx-auto">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <Instagram className="text-white" size={24} />
+            <div className="relative">
+              <div className="flex animate-scroll">
+                {/* First set of logos */}
+                <div className="flex gap-8 px-4">
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-md">
+                      <Instagram className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Instagram</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md">
+                      <MessageSquare className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">WhatsApp</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+                      <PhoneIcon className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Telefon</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-md">
+                      <Send className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">SMS</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-md">
+                      <MessageSquare className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Messenger</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-md">
+                      <Chrome className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Google</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-md">
+                      <Calendar className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Bokadirekt</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Björn Lundén</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">PipeDrive</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-lime-500 to-lime-600 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Lime</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">HubSpot</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Salesforce</span>
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-center">Instagram</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <MessageSquare className="text-white" size={24} />
+                
+                {/* Duplicate set for seamless loop */}
+                <div className="flex gap-8 px-4">
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-md">
+                      <Instagram className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Instagram</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md">
+                      <MessageSquare className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">WhatsApp</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+                      <PhoneIcon className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Telefon</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-md">
+                      <Send className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">SMS</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-md">
+                      <MessageSquare className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Messenger</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-md">
+                      <Chrome className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Google</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-md">
+                      <Calendar className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Bokadirekt</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Björn Lundén</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">PipeDrive</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-lime-500 to-lime-600 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Lime</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">HubSpot</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-md">
+                      <Building2 className="text-white" size={18} />
+                    </div>
+                    <span className="text-[10px] font-medium text-center whitespace-nowrap">Salesforce</span>
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-center">WhatsApp</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <PhoneIcon className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">Telefon</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <Send className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">SMS</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <MessageSquare className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">Messenger</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <Chrome className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">Google</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <Calendar className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">Bokadirekt</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <Building2 className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">Björn Lundén</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <Building2 className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">PipeDrive</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-lime-500 to-lime-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <Building2 className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">Lime</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <Building2 className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">HubSpot</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                  <Building2 className="text-white" size={24} />
-                </div>
-                <span className="text-xs font-medium text-center">Salesforce</span>
               </div>
             </div>
           </div>
@@ -988,93 +1080,185 @@ const Auth = () => {
             
             {/* Partner logos for mobile */}
             {mode === 'login' && (
-              <div className="mt-8">
-                <h3 className="text-center text-sm font-semibold text-muted-foreground mb-6">
+              <div className="mt-8 overflow-hidden">
+                <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4">
                   Front Office samarbetar med
                 </h3>
-                <div className="grid grid-cols-4 gap-3">
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg">
-                      <Instagram className="text-white" size={20} />
+                <div className="relative">
+                  <div className="flex animate-scroll">
+                    {/* First set */}
+                    <div className="flex gap-6 px-4">
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-md">
+                          <Instagram className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Instagram</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md">
+                          <MessageSquare className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">WhatsApp</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+                          <PhoneIcon className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Telefon</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-md">
+                          <Send className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">SMS</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-md">
+                          <MessageSquare className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Messenger</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-md">
+                          <Chrome className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Google</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-md">
+                          <Calendar className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Bokadirekt</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Björn Lundén</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">PipeDrive</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-lime-500 to-lime-600 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Lime</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">HubSpot</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Salesforce</span>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-medium text-center">Instagram</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-                      <MessageSquare className="text-white" size={20} />
+                    
+                    {/* Duplicate set */}
+                    <div className="flex gap-6 px-4">
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-md">
+                          <Instagram className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Instagram</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md">
+                          <MessageSquare className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">WhatsApp</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+                          <PhoneIcon className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Telefon</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-md">
+                          <Send className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">SMS</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-md">
+                          <MessageSquare className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Messenger</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-md">
+                          <Chrome className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Google</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-md">
+                          <Calendar className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Bokadirekt</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Björn Lundén</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">PipeDrive</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-lime-500 to-lime-600 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Lime</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">HubSpot</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-md">
+                          <Building2 className="text-white" size={18} />
+                        </div>
+                        <span className="text-[10px] font-medium text-center whitespace-nowrap">Salesforce</span>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-medium text-center">WhatsApp</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                      <PhoneIcon className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">Telefon</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                      <Send className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">SMS</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
-                      <MessageSquare className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">Messenger</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg">
-                      <Chrome className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">Google</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg">
-                      <Calendar className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">Bokadirekt</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg">
-                      <Building2 className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">Björn Lundén</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
-                      <Building2 className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">PipeDrive</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-lime-500 to-lime-600 flex items-center justify-center shadow-lg">
-                      <Building2 className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">Lime</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center shadow-lg">
-                      <Building2 className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">HubSpot</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg">
-                      <Building2 className="text-white" size={20} />
-                    </div>
-                    <span className="text-[10px] font-medium text-center">Salesforce</span>
                   </div>
                 </div>
               </div>
