@@ -650,6 +650,45 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_leads: {
+        Row: {
+          additional_info: string | null
+          business_name: string
+          business_type: string | null
+          created_at: string
+          email: string
+          id: string
+          meeting_booked: boolean | null
+          meeting_booked_at: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          additional_info?: string | null
+          business_name: string
+          business_type?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          meeting_booked?: boolean | null
+          meeting_booked_at?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          additional_info?: string | null
+          business_name?: string
+          business_type?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          meeting_booked?: boolean | null
+          meeting_booked_at?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
