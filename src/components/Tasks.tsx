@@ -40,6 +40,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [compactView, setCompactView] = useState(true);
   const [inlineExpandedTasks, setInlineExpandedTasks] = useState<Set<string>>(new Set());
+  const [tasksSectionCollapsed, setTasksSectionCollapsed] = useState(false);
 
   useEffect(() => {
     loadLocations();
@@ -943,10 +944,10 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCompactView(!compactView)}
+                      onClick={() => setTasksSectionCollapsed(!tasksSectionCollapsed)}
                       className="gap-2"
                     >
-                      {compactView ? (
+                      {tasksSectionCollapsed ? (
                         <>
                           <ChevronDown className="h-4 w-4" />
                           Expand
@@ -954,43 +955,47 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                       ) : (
                         <>
                           <ChevronUp className="h-4 w-4" />
-                          Compact
+                          Collapse
                         </>
                       )}
                     </Button>
                   </div>
 
                   {/* Your Tasks */}
-                  <div className="space-y-4">
-                    {todayHumanTasks.map((task) => renderTaskCard(task, false))}
-                  </div>
+                  {!tasksSectionCollapsed && (
+                    <>
+                      <div className="space-y-4">
+                        {todayHumanTasks.map((task) => renderTaskCard(task, false))}
+                      </div>
 
-                  {/* Analytics below tasks */}
-                  <div className="pt-6 border-t">
-                    <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {stats.map((stat) => {
-                        const Icon = stat.icon;
-                        return (
-                          <Card
-                            key={stat.label}
-                            className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                          >
-                            <div className="flex flex-col items-center text-center">
-                              <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
-                                <Icon className={`h-8 w-8 ${stat.color}`} />
-                              </div>
-                              <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
-                              <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
-                              <p className={`text-xs font-medium ${stat.change.startsWith('+') ? 'text-success' : 'text-muted-foreground'}`}>
-                                {stat.change}
-                              </p>
-                            </div>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </div>
+                      {/* Analytics below tasks */}
+                      <div className="pt-6 border-t">
+                        <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          {stats.map((stat) => {
+                            const Icon = stat.icon;
+                            return (
+                              <Card
+                                key={stat.label}
+                                className="border-0 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                              >
+                                <div className="flex flex-col items-center text-center">
+                                  <div className={`rounded-2xl ${stat.bgColor} p-4 mb-3`}>
+                                    <Icon className={`h-8 w-8 ${stat.color}`} />
+                                  </div>
+                                  <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
+                                  <p className="text-sm font-semibold text-foreground mb-1">{stat.label}</p>
+                                  <p className={`text-xs font-medium ${stat.change.startsWith('+') || stat.change.startsWith('-') ? 'text-success' : 'text-muted-foreground'}`}>
+                                    {stat.change}
+                                  </p>
+                                </div>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
