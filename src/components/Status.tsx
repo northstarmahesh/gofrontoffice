@@ -315,6 +315,21 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
   };
 
   const handleChannelToggle = async (channel: keyof typeof channels) => {
+    // Check if channel is connected first
+    if (!connectionStatus[channel]) {
+      toast.error(
+        `Please connect ${channel.toUpperCase()} in Integrations & Tools first`,
+        {
+          description: "You need to set up this channel before enabling it.",
+          action: {
+            label: "Go to Tools",
+            onClick: () => onNavigateToClinic?.()
+          }
+        }
+      );
+      return;
+    }
+
     const newValue = !channels[channel];
     setChannels((prev) => ({ ...prev, [channel]: newValue }));
     

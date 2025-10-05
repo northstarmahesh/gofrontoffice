@@ -166,17 +166,13 @@ const Index = () => {
             <DropdownMenuContent align="end" className="w-56 bg-background z-[100]">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => toast.info("Password management coming soon")}>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Password & Login</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("Billing management coming soon")}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Billing</span>
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCurrentView("clinic")}>
                 <UsersIcon className="mr-2 h-4 w-4" />
                 <span>Team Mates</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Password management coming soon")}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Password & Login</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
