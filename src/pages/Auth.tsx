@@ -72,21 +72,45 @@ const Auth = () => {
       loginSchema.parse({ contact: contactInfo });
       
       if (loginMethod === 'email') {
+        // Try to sign in - if user doesn't exist, Supabase will create them with OTP
         const { error } = await supabase.auth.signInWithOtp({
           email: contactInfo,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
+            shouldCreateUser: false, // Don't auto-create, we'll redirect to signup
           },
         });
+
+        // If user doesn't exist, redirect to signup
+        if (error && error.message.includes('User not found')) {
+          toast.info("Ny användare! Låt oss sätta upp ditt konto.");
+          setFormData({ ...formData, email: contactInfo });
+          setMode('signup');
+          setIsSubmitting(false);
+          return;
+        }
 
         if (error) throw error;
         toast.success("Verifieringskod skickad till din e-post");
         setStep('otp');
       } else {
         const fullPhone = `${countryCode}${contactInfo}`;
+        
         const { error } = await supabase.auth.signInWithOtp({
           phone: fullPhone,
+          options: {
+            shouldCreateUser: false, // Don't auto-create, we'll redirect to signup
+          },
         });
+
+        // If user doesn't exist, redirect to signup
+        if (error && error.message.includes('User not found')) {
+          toast.info("Ny användare! Låt oss sätta upp ditt konto.");
+          setFormData({ ...formData, phone: fullPhone });
+          setMode('signup');
+          setIsSubmitting(false);
+          return;
+        }
 
         if (error) throw error;
         toast.success("Verifieringskod skickad till ditt telefonnummer");
@@ -179,71 +203,115 @@ const Auth = () => {
     }
   };
 
-  const PartnerLogos = () => (
-    <div className="mt-8 pt-8 border-t border-white/20">
-      <h3 className="text-center text-sm font-semibold text-white/60 mb-6">
-        FrontOffice samarbetar med:
-      </h3>
-      <div className="grid grid-cols-5 gap-4 items-center justify-items-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-pink-500/20 flex items-center justify-center">
-            <Instagram className="text-pink-400" size={24} />
-          </div>
-          <span className="text-xs text-white/70">Instagram</span>
+  const PartnerLogos = () => {
+    const partners = [
+      { name: "Instagram", icon: Instagram, color: "pink" },
+      { name: "WhatsApp", icon: MessageSquare, color: "green" },
+      { name: "Telefon", icon: PhoneIcon, color: "blue" },
+      { name: "SMS", icon: Send, color: "indigo" },
+      { name: "Messenger", icon: MessageSquare, color: "blue-600" },
+      { name: "Google", icon: Chrome, color: "yellow" },
+      { name: "Microsoft", icon: Building2, color: "blue-400" },
+      { name: "Bokadirekt", icon: Calendar, color: "purple" },
+      { name: "Fortnox", icon: Building2, color: "orange" },
+      { name: "Björn Lundén", icon: Building2, color: "teal" },
+    ];
+
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % partners.length);
+      }, 2000);
+      return () => clearInterval(interval);
+    }, [partners.length]);
+
+    const visiblePartners = [
+      partners[currentIndex],
+      partners[(currentIndex + 1) % partners.length],
+      partners[(currentIndex + 2) % partners.length],
+      partners[(currentIndex + 3) % partners.length],
+      partners[(currentIndex + 4) % partners.length],
+    ];
+
+    return (
+      <div className="mt-8 pt-8 border-t border-white/20">
+        <h3 className="text-center text-sm font-semibold text-white/60 mb-6">
+          FrontOffice samarbetar med:
+        </h3>
+        <div className="flex gap-8 items-center justify-center overflow-hidden">
+          {visiblePartners.map((partner, idx) => {
+            const Icon = partner.icon;
+            return (
+              <div
+                key={`${partner.name}-${idx}`}
+                className="flex flex-col items-center gap-2 transition-all duration-500 ease-in-out"
+                style={{
+                  animation: "fadeInOut 2s ease-in-out infinite",
+                }}
+              >
+                <div className={`w-12 h-12 rounded-lg bg-${partner.color}-500/20 flex items-center justify-center`}>
+                  <Icon className={`text-${partner.color}-400`} size={24} />
+                </div>
+                <span className="text-xs text-white/70">{partner.name}</span>
+              </div>
+            );
+          })}
         </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
-            <MessageSquare className="text-green-400" size={24} />
+      </div>
+    );
+  };
+
+  const TestimonialSection = () => (
+    <div className="mt-8 space-y-6">
+      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-yellow-accent/20 flex items-center justify-center flex-shrink-0 text-yellow-accent font-bold text-lg">
+            SB
           </div>
-          <span className="text-xs text-white/70">WhatsApp</span>
+          <div className="flex-1">
+            <p className="text-white/90 mb-3 italic">
+              "Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på medan AI hanterar kundkommunikationen. Otroligt värdefullt!"
+            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-white">Sara Bergström</p>
+                <p className="text-sm text-white/60">VD, Bella Clinic Stockholm</p>
+              </div>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg key={star} className="w-4 h-4 fill-yellow-accent" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                  </svg>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
-            <PhoneIcon className="text-blue-400" size={24} />
+      </div>
+      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold text-lg">
+            ME
           </div>
-          <span className="text-xs text-white/70">Telefon</span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-            <Send className="text-indigo-400" size={24} />
+          <div className="flex-1">
+            <p className="text-white/90 mb-3 italic">
+              "Implementeringen var super smidig. Personlig support hela vägen och vi såg resultat redan första veckan!"
+            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-white">Marcus Eriksson</p>
+                <p className="text-sm text-white/60">Grundare, Nordic Wellness</p>
+              </div>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg key={star} className="w-4 h-4 fill-yellow-accent" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                  </svg>
+                ))}
+              </div>
+            </div>
           </div>
-          <span className="text-xs text-white/70">SMS</span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-blue-600/20 flex items-center justify-center">
-            <MessageSquare className="text-blue-500" size={24} />
-          </div>
-          <span className="text-xs text-white/70">Messenger</span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-            <Chrome className="text-yellow-400" size={24} />
-          </div>
-          <span className="text-xs text-white/70">Google</span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-blue-400/20 flex items-center justify-center">
-            <Building2 className="text-blue-300" size={24} />
-          </div>
-          <span className="text-xs text-white/70">Microsoft</span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
-            <Calendar className="text-purple-400" size={24} />
-          </div>
-          <span className="text-xs text-white/70">Bokadirekt</span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
-            <Building2 className="text-orange-400" size={24} />
-          </div>
-          <span className="text-xs text-white/70">Fortnox</span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-lg bg-teal-500/20 flex items-center justify-center">
-            <Building2 className="text-teal-400" size={24} />
-          </div>
-          <span className="text-xs text-white/70">Björn Lundén</span>
         </div>
       </div>
     </div>
@@ -285,6 +353,23 @@ const Auth = () => {
                 disabled={isSubmitting || otp.length !== 6}
               >
                 {isSubmitting ? "Verifierar..." : "Verifiera"}
+              </Button>
+              <div className="flex items-center gap-2 my-4">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground">eller</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <Button 
+                type="button" 
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setMode('signup');
+                  setStep('form');
+                  setOtp('');
+                }}
+              >
+                Kom igång
               </Button>
               <Button 
                 type="button" 
@@ -488,7 +573,7 @@ const Auth = () => {
             Din digitala assistent — tillgänglig dygnet runt, året runt
           </p>
           <p className="text-lg text-white/80 mb-12">
-            Vi onboardar för närvarande kunder manuellt för att säkerställa att du får den bästa möjliga upplevelsen från dag ett. Låt oss hjälpa dig komma igång.
+            Vi hjälper dig att automatisera kundkommunikation och öka dina bokningar — helt på autopilot. Spara tid, minska stress och förbättra kundupplevelsen med vår AI-drivna assistent.
           </p>
 
           <div className="space-y-6">
@@ -523,11 +608,12 @@ const Auth = () => {
             </div>
           </div>
 
-          <PartnerLogos />
-        </div>
+            <PartnerLogos />
+            <TestimonialSection />
+          </div>
 
-        <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background/50 to-primary/5">
-          <Card className="w-full max-w-md shadow-2xl border-2 border-primary/10">
+          <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background/50 to-primary/5">
+            <Card className="w-full max-w-md shadow-2xl border-2 border-primary/10">
             <CardHeader className="space-y-4 text-center">
               <div className="flex justify-center mb-2">
                 <img 
@@ -615,6 +701,19 @@ const Auth = () => {
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
+                      </Button>
+                      <div className="flex items-center gap-2 my-4">
+                        <div className="flex-1 h-px bg-border" />
+                        <span className="text-xs text-muted-foreground">eller</span>
+                        <div className="flex-1 h-px bg-border" />
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setMode('signup')}
+                      >
+                        Kom igång
                       </Button>
                     </form>
                   </div>
@@ -815,6 +914,19 @@ const Auth = () => {
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
+                    </Button>
+                    <div className="flex items-center gap-2 my-4">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted-foreground">eller</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setMode('signup')}
+                    >
+                      Kom igång
                     </Button>
                   </form>
                 </TabsContent>
