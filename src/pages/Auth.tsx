@@ -363,23 +363,6 @@ const Auth = () => {
               >
                 {isSubmitting ? "Verifierar..." : "Verifiera"}
               </Button>
-              <div className="flex items-center gap-2 my-4">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">eller</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-              <Button 
-                type="button" 
-                variant="outline"
-                className="w-full h-12 text-base"
-                onClick={() => {
-                  setMode('signup');
-                  setStep('form');
-                  setOtp('');
-                }}
-              >
-                Kom igång
-              </Button>
               <Button 
                 type="button" 
                 variant="ghost"
