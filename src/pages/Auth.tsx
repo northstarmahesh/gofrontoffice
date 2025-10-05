@@ -94,14 +94,16 @@ const Auth = () => {
       } else {
         const fullPhone = `${countryCode}${contactInfo}`;
         
-        const { error } = await supabase.auth.signInWithOtp({
-          phone: fullPhone,
-          options: {
-            shouldCreateUser: true,
-          },
+        // Use custom edge function to send SMS verification code via Twilio
+        const { error } = await supabase.functions.invoke('send-phone-verification', {
+          body: { phone: fullPhone }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error sending verification code:', error);
+          throw new Error('Kunde inte skicka verifieringskod');
+        }
+
         toast.success("Verifieringskod skickad till ditt telefonnummer");
         setStep('otp');
       }
@@ -136,12 +138,11 @@ const Auth = () => {
           return;
         }
 
-        // Use the session from the verification response to sign in
-        if (verifyResult.session?.properties?.hashed_token) {
-          const { error: signInError } = await supabase.auth.verifyOtp({
-            email: contactInfo,
-            token: verifyResult.session.properties.hashed_token,
-            type: 'email'
+        // Sign in with the access and refresh tokens
+        if (verifyResult.access_token && verifyResult.refresh_token) {
+          const { error: signInError } = await supabase.auth.setSession({
+            access_token: verifyResult.access_token,
+            refresh_token: verifyResult.refresh_token
           });
 
           if (signInError) {
@@ -152,14 +153,31 @@ const Auth = () => {
         
         toast.success("Inloggning lyckades!");
       } else {
-        // Phone verification using Supabase's built-in OTP
-        const { error } = await supabase.auth.verifyOtp({
-          phone: `${countryCode}${contactInfo}`,
-          token: otp,
-          type: 'sms'
+        // Phone verification using custom edge function
+        const fullPhone = `${countryCode}${contactInfo}`;
+        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('auth-verify-phone-otp', {
+          body: { phone: fullPhone, code: otp }
         });
 
-        if (error) throw error;
+        if (verifyError || !verifyResult?.verified) {
+          toast.error("Ogiltig verifieringskod");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Sign in with the access and refresh tokens
+        if (verifyResult.access_token && verifyResult.refresh_token) {
+          const { error: signInError } = await supabase.auth.setSession({
+            access_token: verifyResult.access_token,
+            refresh_token: verifyResult.refresh_token
+          });
+
+          if (signInError) {
+            console.error("Sign in error:", signInError);
+            throw signInError;
+          }
+        }
+        
         toast.success("Inloggning lyckades!");
       }
     } catch (error) {
@@ -945,31 +963,31 @@ const Auth = () => {
             />
           </div>
           
-          <h1 className="text-2xl font-bold mb-4 leading-tight">
+          <h1 className="text-3xl font-bold mb-4 leading-tight text-center">
             Din digitala assistent — tillgänglig dygnet runt
           </h1>
           
           {/* Simplified bullet points for mobile */}
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2">
+          <div className="space-y-2 mb-4 text-center">
+            <div className="flex items-center gap-2 justify-center">
               <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <Clock className="text-white" size={16} />
               </div>
-              <p className="text-sm font-medium text-white">Spara 5+ timmar per vecka</p>
+              <p className="text-base font-medium text-white">Spara 5+ timmar per vecka</p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 justify-center">
               <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <MessageSquare className="text-white" size={16} />
               </div>
-              <p className="text-sm font-medium text-white">Alla kanaler på ett ställe</p>
+              <p className="text-base font-medium text-white">Alla kanaler på ett ställe</p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 justify-center">
               <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <CheckCircle className="text-white" size={16} />
               </div>
-              <p className="text-sm font-medium text-white">Granska och godkänn svar – eller kör på autopilot.</p>
+              <p className="text-base font-medium text-white">Granska och godkänn svar – eller kör på autopilot.</p>
             </div>
           </div>
         </div>
@@ -1245,11 +1263,38 @@ const Auth = () => {
                         </div>
                         <span className="text-[10px] font-medium text-center whitespace-nowrap">Salesforce</span>
                       </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Mobile Testimonial */}
+              <div className="mt-6 bg-card/80 backdrop-blur-sm rounded-lg p-4 border border-border/50 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-bold">
+                    SB
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm mb-2 italic text-muted-foreground">
+                      "Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på medan AI hanterar kundkommunikationen."
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-sm">Sara Bergström</p>
+                        <p className="text-xs text-muted-foreground">VD, Bella Clinic</p>
+                      </div>
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <svg key={star} className="w-3 h-3 fill-primary" viewBox="0 0 20 20">
+                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                          </svg>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
           </div>
         </div>
       </div>
