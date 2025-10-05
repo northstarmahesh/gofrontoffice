@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import logo from "@/assets/front-office-logo-yellow-full.png";
+import logoWhite from "@/assets/front-office-logo-white-full.png";
 import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, CheckCircle, Instagram, Chrome, Send, CreditCard } from "lucide-react";
 import { z } from "zod";
 
@@ -546,19 +547,18 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="hidden lg:grid lg:grid-cols-2 min-h-screen relative">
-        {/* Logo positioned at top center between columns */}
-        <div className="absolute left-1/2 top-12 -translate-x-1/2 z-20">
-          <div className="bg-white rounded-2xl shadow-xl p-4">
+        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-8 lg:p-12 flex flex-col justify-start">
+          {/* White logo at top left */}
+          <div className="mb-8">
             <img 
-              src={logo} 
+              src={logoWhite} 
               alt="Front Office" 
-              className="h-14 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
           </div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-8 lg:p-12 flex flex-col justify-center pt-32 lg:pt-12">
-          <h1 className="text-3xl lg:text-4xl font-bold mb-6 leading-tight">
+          
+          <div className="flex-1 flex flex-col justify-center">
+            <h1 className="text-3xl lg:text-4xl font-bold mb-6 leading-tight">
             Din digitala assistent — tillgänglig dygnet runt
           </h1>
 
@@ -641,8 +641,6 @@ const Auth = () => {
             </div>
           </div>
         </div>
-
-          <div className="flex items-center justify-center p-8 flex-col">
             <Card className="w-full max-w-md shadow-xl border-2">
             <CardHeader className="text-center space-y-2 pb-6">
               {mode === 'login' ? (
@@ -816,7 +814,16 @@ const Auth = () => {
       </div>
 
       <div className="lg:hidden min-h-screen flex flex-col">
-          <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white px-4 pt-8 pb-6">
+          <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white px-4 pt-6 pb-6">
+          {/* White logo at top for mobile */}
+          <div className="mb-4">
+            <img 
+              src={logoWhite} 
+              alt="Front Office" 
+              className="h-10 w-auto object-contain"
+            />
+          </div>
+          
           <h1 className="text-2xl font-bold mb-4 leading-tight">
             Din digitala assistent — tillgänglig dygnet runt
           </h1>
