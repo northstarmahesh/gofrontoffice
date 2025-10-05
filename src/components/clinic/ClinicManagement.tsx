@@ -21,10 +21,12 @@ import { LocationManager } from "./LocationManager";
 import { KnowledgeBase } from "./KnowledgeBase";
 import { ClinicInfo } from "./ClinicInfo";
 import VonageConnection from "./VonageConnection";
+import { MessengerConnection } from "./MessengerConnection";
 
 interface ChannelStatus {
   instagram: boolean;
   facebook: boolean;
+  messenger: boolean;
   phone: boolean;
   email: boolean;
   sms: boolean;
@@ -37,6 +39,7 @@ const ClinicManagement = () => {
   const [channelStatus, setChannelStatus] = useState<ChannelStatus>({
     instagram: false,
     facebook: false,
+    messenger: false,
     phone: false,
     email: false,
     sms: false,
@@ -96,6 +99,7 @@ const ClinicManagement = () => {
       setChannelStatus({
         instagram: integrations?.some(i => i.integration_type === "instagram" && i.is_connected) || false,
         facebook: integrations?.some(i => i.integration_type === "facebook" && i.is_connected) || false,
+        messenger: integrations?.some(i => i.integration_type === "messenger" && i.is_connected) || false,
         phone: phoneNumbers?.some(p => p.channels?.includes("voice")) || false,
         sms: phoneNumbers?.some(p => p.channels?.includes("sms")) || false,
         whatsapp: phoneNumbers?.some(p => p.channels?.includes("whatsapp")) || false,
@@ -179,7 +183,7 @@ const ClinicManagement = () => {
   }
 
   const connectedCount = Object.values(channelStatus).filter(Boolean).length;
-  const totalChannels = 6;
+  const totalChannels = 7;
 
   return (
     <div className="space-y-6">
@@ -263,20 +267,12 @@ const ClinicManagement = () => {
               </div>
 
               {/* Facebook Messenger */}
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-card opacity-60">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-lg bg-[#0084FF] p-2">
-                    <Facebook className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Facebook Messenger</p>
-                    <p className="text-sm text-muted-foreground">
-                      Respond to Messenger conversations
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="secondary">Coming Soon</Badge>
-              </div>
+              <MessengerConnection
+                clinicId={clinicId}
+                locationId=""
+                isConnected={channelStatus.messenger}
+                onConnectionChange={() => checkChannelStatus(clinicId)}
+              />
             </CardContent>
           </Card>
 
