@@ -25,20 +25,28 @@ serve(async (req: Request) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify the OTP using Supabase's built-in system
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: 'email'
-    });
+    // Find the verification record
+    const { data: verification, error: fetchError } = await supabase
+      .from("email_verifications")
+      .select("*")
+      .eq("email", email)
+      .eq("code", code)
+      .gte("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (error) {
-      console.error("Verification error:", error);
+    if (fetchError) {
+      console.error("Fetch error:", fetchError);
+      throw new Error("Failed to verify code");
+    }
+
+    if (!verification) {
       return new Response(
-        JSON.stringify({ verified: false, error: error.message }),
+        JSON.stringify({ verified: false, error: "Invalid or expired code" }),
         {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -46,20 +54,81 @@ serve(async (req: Request) => {
       );
     }
 
-    console.log("Email verified successfully for:", email);
+    // Delete the used verification code
+    await supabase
+      .from("email_verifications")
+      .delete()
+      .eq("id", verification.id);
 
-    return new Response(
-      JSON.stringify({ 
-        verified: true,
-        access_token: data.session?.access_token,
-        refresh_token: data.session?.refresh_token,
-        user: data.user
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Check if user exists
+    const { data: { users } } = await supabase.auth.admin.listUsers();
+    const existingUser = users?.find(u => u.email === email);
+
+    if (!existingUser) {
+      // Create new user with email confirmed
+      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: {
+          email_verified: true
+        }
+      });
+
+      if (createError) {
+        console.error("Error creating user:", createError);
+        throw new Error("Failed to create user");
       }
-    );
+
+      console.log("Created new user:", newUser.user.id);
+      
+      // Generate sign-in link for new user
+      const { data: signInLink, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email
+      });
+
+      if (linkError) {
+        console.error("Link error:", linkError);
+        throw new Error("Failed to generate sign-in link");
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          verified: true,
+          user: newUser.user,
+          sign_in_link: signInLink.properties.action_link
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    } else {
+      console.log("User already exists:", existingUser.id);
+      
+      // Generate sign-in link for existing user
+      const { data: signInLink, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email
+      });
+
+      if (linkError) {
+        console.error("Link error:", linkError);
+        throw new Error("Failed to generate sign-in link");
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          verified: true,
+          user: existingUser,
+          sign_in_link: signInLink.properties.action_link
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
   } catch (error: any) {
     console.error("Error:", error);
     return new Response(

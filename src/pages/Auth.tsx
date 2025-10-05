@@ -140,31 +140,12 @@ const Auth = () => {
           return;
         }
 
-        // Sign in with the access and refresh tokens
-        if (verifyResult.access_token && verifyResult.refresh_token) {
-          const { error: signInError } = await supabase.auth.setSession({
-            access_token: verifyResult.access_token,
-            refresh_token: verifyResult.refresh_token
-          });
-
-          if (signInError) {
-            console.error("Sign in error:", signInError);
-            toast.error("Kunde inte logga in");
-            setIsSubmitting(false);
-            return;
-          }
-
-          console.log('Session set successfully, redirecting...');
-          toast.success("Inloggning lyckades!");
-          
-          // Explicit redirect after successful session establishment
-          setTimeout(() => {
-            navigate("/");
-          }, 500);
+        // Navigate to the sign-in link
+        if (verifyResult.sign_in_link) {
+          window.location.href = verifyResult.sign_in_link;
         } else {
-          toast.error("Kunde inte hämta inloggningsuppgifter");
+          toast.error("Kunde inte generera inloggningslänk");
           setIsSubmitting(false);
-          return;
         }
       } else {
         // Phone verification using custom edge function
