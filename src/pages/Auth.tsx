@@ -547,13 +547,14 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="hidden lg:grid lg:grid-cols-2 min-h-screen relative">
+        {/* Left Column - Content */}
         <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-8 lg:p-12 flex flex-col justify-start">
-          {/* White logo at top left */}
+          {/* White logo at top left - bigger */}
           <div className="mb-8">
             <img 
               src={logoWhite} 
               alt="Front Office" 
-              className="h-12 w-auto object-contain"
+              className="h-24 w-auto object-contain"
             />
           </div>
           
@@ -641,7 +642,12 @@ const Auth = () => {
             </div>
           </div>
         </div>
-            <Card className="w-full max-w-md shadow-xl border-2">
+        </div>
+        
+        {/* Right Column - Login Card and Partner Logos */}
+        <div className="flex flex-col items-center justify-center p-8">
+          <div className="w-full max-w-md space-y-8">
+            <Card className="w-full shadow-xl border-2">
             <CardHeader className="text-center space-y-2 pb-6">
               {mode === 'login' ? (
                 <>
@@ -755,7 +761,7 @@ const Auth = () => {
           </Card>
           
           {/* Partner logos below login card */}
-          <div className="w-full max-w-md mt-8">
+          <div className="w-full">
             <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4">
               Front Office samarbetar med
             </h3>
@@ -810,17 +816,18 @@ const Auth = () => {
               </div>
             </div>
           </div>
+          </div>
         </div>
       </div>
 
       <div className="lg:hidden min-h-screen flex flex-col">
           <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white px-4 pt-6 pb-6">
-          {/* White logo at top for mobile */}
+          {/* White logo at top for mobile - bigger */}
           <div className="mb-4">
             <img 
               src={logoWhite} 
               alt="Front Office" 
-              className="h-10 w-auto object-contain"
+              className="h-16 w-auto object-contain"
             />
           </div>
           
@@ -855,17 +862,6 @@ const Auth = () => {
 
         <div className="flex-1 bg-background rounded-t-[2rem] -mt-6 p-4 pt-6">
           <div className="max-w-lg mx-auto">
-            {/* Logo centered above form */}
-            <div className="flex justify-center mb-6">
-              <div className="bg-white rounded-2xl shadow-lg p-4">
-                <img 
-                  src={logo} 
-                  alt="Front Office" 
-                  className="h-10 w-auto object-contain"
-                />
-              </div>
-            </div>
-            
             {mode === 'login' ? (
               <form onSubmit={handleLogin} className="space-y-5">
                 <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone' | 'bankid')}>
@@ -954,6 +950,65 @@ const Auth = () => {
                 </div>
               </form>
             ) : null}
+            
+            {/* Partner logos for mobile */}
+            {mode === 'login' && (
+              <div className="mt-8">
+                <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4">
+                  Front Office samarbetar med
+                </h3>
+                <div className="flex flex-wrap gap-4 items-center justify-center">
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg">
+                      <Instagram className="text-white" size={24} />
+                    </div>
+                    <span className="text-xs font-medium">Instagram</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
+                      <MessageSquare className="text-white" size={24} />
+                    </div>
+                    <span className="text-xs font-medium">WhatsApp</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                      <PhoneIcon className="text-white" size={24} />
+                    </div>
+                    <span className="text-xs font-medium">Telefon</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                      <Send className="text-white" size={24} />
+                    </div>
+                    <span className="text-xs font-medium">SMS</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
+                      <MessageSquare className="text-white" size={24} />
+                    </div>
+                    <span className="text-xs font-medium">Messenger</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg">
+                      <Chrome className="text-white" size={24} />
+                    </div>
+                    <span className="text-xs font-medium">Google</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg">
+                      <Calendar className="text-white" size={24} />
+                    </div>
+                    <span className="text-xs font-medium">Bokadirekt</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
