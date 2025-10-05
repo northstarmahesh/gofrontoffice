@@ -48,13 +48,19 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
       console.log("Loading activity logs...");
       
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log("Current user:", user?.email);
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log("Current user:", user?.email, "Error:", userError);
+
+      if (!user) {
+        console.log("No user found - not authenticated");
+        setLogs([]);
+        return;
+      }
 
       const { data: clinicData, error: clinicError } = await supabase
         .from("clinic_users")
         .select("clinic_id")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
       console.log("Clinic data:", clinicData, "Error:", clinicError);
@@ -62,12 +68,14 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
       if (clinicError) {
         console.error("Error fetching clinic:", clinicError);
         toast.error("Failed to load clinic information");
+        setLogs([]);
         return;
       }
 
       if (!clinicData?.clinic_id) {
-        console.log("No clinic found for user");
-        toast.error("No business found for your account");
+        console.log("No clinic found for user", user.email);
+        // Don't show error toast here - user might be in onboarding
+        setLogs([]);
         return;
       }
 
@@ -80,11 +88,18 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         .limit(50);
 
       console.log("Activity logs fetched:", data?.length, "logs", "Error:", error);
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching logs:", error);
+        toast.error("Failed to load activity logs");
+        setLogs([]);
+        return;
+      }
+      
       setLogs(data || []);
     } catch (error) {
       console.error("Error loading activity logs:", error);
       toast.error("Failed to load activity logs");
+      setLogs([]);
     } finally {
       setLoading(false);
     }

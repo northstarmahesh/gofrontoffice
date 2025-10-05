@@ -142,10 +142,17 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
     
     try {
       // Get clinic_id for current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Not authenticated");
+        return;
+      }
+
       const { data: clinicData } = await supabase
         .from("clinic_users")
         .select("clinic_id")
-        .single();
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       if (!clinicData?.clinic_id) {
         toast.error("No business found for user");

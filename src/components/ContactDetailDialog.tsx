@@ -259,10 +259,17 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         if (error) throw error;
       } else {
         // Create new contact - need clinic_id from current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast.error("Not authenticated");
+          return;
+        }
+
         const { data: clinicData } = await supabase
           .from("clinic_users")
           .select("clinic_id")
-          .single();
+          .eq("user_id", user.id)
+          .maybeSingle();
 
         if (!clinicData?.clinic_id) {
           toast.error("No business found for user");
@@ -294,19 +301,20 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
 
     setIsSending(true);
     try {
-      const { data: clinicData } = await supabase
-        .from("clinic_users")
-        .select("clinic_id")
-        .single();
-
-      if (!clinicData?.clinic_id) {
-        toast.error("No business found for user");
-        return;
-      }
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Not authenticated");
+        return;
+      }
+
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicData?.clinic_id) {
+        toast.error("No business found for user");
         return;
       }
 
