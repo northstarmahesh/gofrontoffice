@@ -325,7 +325,7 @@ const Auth = () => {
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-12 w-auto mx-auto mb-4"
+              className="h-12 w-auto object-contain mb-4"
             />
             <CardTitle className="text-2xl font-bold">Ange verifieringskod</CardTitle>
             <CardDescription>
@@ -420,23 +420,20 @@ const Auth = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
         <div className="hidden lg:grid lg:grid-cols-2 min-h-screen">
-          <div className="bg-[hsl(var(--auth-bg))] text-white p-12 flex flex-col justify-center">
-            <img 
-              src={logo} 
-              alt="Front Office" 
-              className="h-20 w-auto mb-12"
-            />
-            <h1 className="text-5xl font-bold mb-4 leading-tight">
-              Välkommen till Front Office
-            </h1>
-            <p className="text-2xl text-yellow-accent font-semibold mb-8">
-              Ditt nya digitala team
-            </p>
-            <p className="text-lg text-white/80 mb-12">
-              Vi hjälper dig att automatisera kundkommunikation och öka dina bokningar — helt på autopilot. Spara tid, minska stress och förbättra kundupplevelsen med vår AI-drivna assistent.
-            </p>
+        <div className="bg-[hsl(var(--auth-bg))] text-white p-12 flex flex-col justify-center">
+          <img 
+            src={logo} 
+            alt="Front Office" 
+            className="h-16 w-auto object-contain mb-12"
+          />
+          <h1 className="text-5xl font-bold mb-4 leading-tight">
+            Välkommen till Front Office
+          </h1>
+          <p className="text-2xl text-yellow-accent font-semibold mb-8">
+            Ditt nya digitala team
+          </p>
 
-            <div className="space-y-6">
+          <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-yellow-accent/20 flex items-center justify-center flex-shrink-0">
                   <Clock className="text-yellow-accent" size={24} />
@@ -478,7 +475,7 @@ const Auth = () => {
                   <img 
                     src={logo} 
                     alt="Front Office Logo" 
-                    className="h-16 w-auto"
+                    className="h-12 w-auto object-contain"
                   />
                 </div>
                 <div className="space-y-2">
@@ -519,7 +516,7 @@ const Auth = () => {
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-14 w-auto mb-6"
+              className="h-12 w-auto object-contain mb-6"
             />
             <h1 className="text-3xl font-bold mb-2 leading-tight">
               Boka ditt onboarding-samtal
@@ -564,16 +561,13 @@ const Auth = () => {
           <img 
             src={logo} 
             alt="Front Office" 
-            className="h-20 w-auto mb-12"
+            className="h-16 w-auto object-contain mb-12"
           />
           <h1 className="text-5xl font-bold mb-4 leading-tight">
             Välkommen till Front Office
           </h1>
           <p className="text-2xl text-yellow-accent font-semibold mb-8">
             Din digitala assistent — tillgänglig dygnet runt, året runt
-          </p>
-          <p className="text-lg text-white/80 mb-12">
-            Vi hjälper dig att automatisera kundkommunikation och öka dina bokningar — helt på autopilot. Spara tid, minska stress och förbättra kundupplevelsen med vår AI-drivna assistent.
           </p>
 
           <div className="space-y-6">
@@ -618,7 +612,7 @@ const Auth = () => {
                 <img 
                   src={logo} 
                   alt="Front Office Logo" 
-                  className="h-16 w-auto"
+                  className="h-12 w-auto object-contain"
                 />
               </div>
             </CardHeader>
@@ -835,12 +829,12 @@ const Auth = () => {
       </div>
 
       <div className="lg:hidden min-h-screen flex flex-col">
-        <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-6 pb-8">
-          <img 
-            src={logo} 
-            alt="Front Office" 
-            className="h-16 w-auto mb-6"
-          />
+          <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-6 pb-8">
+            <img 
+              src={logo} 
+              alt="Front Office" 
+              className="h-12 w-auto object-contain mb-6"
+            />
           <h1 className="text-2xl font-bold mb-2 leading-tight">
             {mode === 'login' ? 'Välkommen tillbaka' : 'Kom igång med Front Office'}
           </h1>
