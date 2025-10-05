@@ -84,9 +84,9 @@ serve(async (req: Request) => {
       console.log("User already exists:", existingUserData.id);
     }
 
-    // Generate magic link for sign-in
+    // Generate a recovery link which includes access tokens
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
+      type: 'recovery',
       email,
     });
 
@@ -95,70 +95,35 @@ serve(async (req: Request) => {
       throw new Error("Failed to generate authentication link");
     }
 
-    // Extract tokens from the action link
+    // Extract the token_hash from the action link
     const actionLink = linkData.properties.action_link;
-    console.log("Generated action link");
-    
-    // Parse the verification URL to get tokens
     const linkUrl = new URL(actionLink);
-    const accessToken = linkUrl.searchParams.get('access_token');
-    const refreshToken = linkUrl.searchParams.get('refresh_token');
     const tokenHash = linkUrl.searchParams.get('token_hash');
     const typeParam = linkUrl.searchParams.get('type');
 
-    console.log("Token info - has access_token:", !!accessToken, "has refresh_token:", !!refreshToken, "has token_hash:", !!tokenHash);
-
-    // If we got direct tokens from the link, return them
-    if (accessToken && refreshToken) {
-      return new Response(
-        JSON.stringify({ 
-          verified: true,
-          access_token: accessToken,
-          refresh_token: refreshToken,
-          user: linkData.user
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    if (!tokenHash) {
+      throw new Error("Failed to generate token hash");
     }
 
-    // Otherwise, if we have a token hash, verify it to get session
-    if (tokenHash) {
-      const { data: sessionData, error: verifyError } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: (typeParam as any) || 'magiclink',
-      });
+    // Verify the OTP token to create a session
+    const { data: sessionData, error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: (typeParam as any) || 'recovery',
+    });
 
-      if (verifyError) {
-        console.error("Verify OTP error:", verifyError);
-        throw new Error("Failed to create session");
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          verified: true,
-          access_token: sessionData.session?.access_token || null,
-          refresh_token: sessionData.session?.refresh_token || null,
-          user: sessionData.user
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    if (verifyError) {
+      console.error("Verify error:", verifyError);
+      throw new Error("Failed to create session");
     }
 
-    // Fallback - return user info without tokens (client will need to sign in)
-    console.warn("No tokens available, returning user info only");
+    console.log("Session created successfully");
+
     return new Response(
       JSON.stringify({ 
         verified: true,
-        access_token: null,
-        refresh_token: null,
-        user: linkData.user,
-        requires_signin: true
+        access_token: sessionData.session?.access_token,
+        refresh_token: sessionData.session?.refresh_token,
+        user: sessionData.user
       }),
       {
         status: 200,
