@@ -752,12 +752,15 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                   <Badge className={cn("bg-yellow-accent text-yellow-accent-foreground font-semibold", compactView ? "text-xs" : "text-xs")}>
                     ⚡ AI Draft - Action Required
                   </Badge>
-                  {task.message_history && task.message_history.length > 1 && (
+                  {task.message_history && task.message_history.length > 0 && (
                     <div className="flex items-center gap-2">
                       {(() => {
                         const originalTime = new Date(task.message_history[0].created_at);
-                        const draftTime = new Date(task.message_history[task.message_history.length - 1].created_at);
-                        const waitMinutes = Math.floor((draftTime.getTime() - originalTime.getTime()) / 60000);
+                        const now = new Date();
+                        const waitMinutes = Math.floor((now.getTime() - originalTime.getTime()) / 60000);
+                        const draftTime = task.message_history.length > 1 
+                          ? new Date(task.message_history[task.message_history.length - 1].created_at)
+                          : originalTime;
                         return (
                           <>
                             <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/30">
