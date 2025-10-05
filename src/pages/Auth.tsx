@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import logo from "@/assets/front-office-logo-white-full.png";
 import frontOfficeLogo from "@/assets/front-office-logo-auth.png";
-import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, Target } from "lucide-react";
+import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, Target, Instagram as InstagramIcon, CheckCircle } from "lucide-react";
 import { z } from "zod";
 
 const leadSchema = z.object({
@@ -149,7 +149,7 @@ const Auth = () => {
               Ditt nya digitala team
             </p>
             <p className="text-lg text-white/80 mb-12">
-              Vi hjälper dig att automatisera kundkommunikation och boka fler möten — helt på autopilot.
+              Vi hjälper dig att automatisera kundkommunikation och öka dina bokningar — helt på autopilot. Spara tid, minska stress och förbättra kundupplevelsen med vår AI-drivna assistent.
             </p>
 
             <div className="space-y-6">
@@ -159,7 +159,7 @@ const Auth = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Spara 5+ timmar per vecka</h3>
-                  <p className="text-white/70">Låt AI hantera repetitiva frågor</p>
+                  <p className="text-white/70">Låt AI hantera repetitiva frågor och administrativa uppgifter automatiskt</p>
                 </div>
               </div>
 
@@ -169,17 +169,31 @@ const Auth = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Alla kanaler, ett ställe</h3>
-                  <p className="text-white/70">WhatsApp, SMS, Instagram & mer</p>
+                  <p className="text-white/70">Hantera WhatsApp, SMS, Instagram, Messenger och mycket mer från en enda plattform</p>
+                  <div className="flex gap-3 mt-3">
+                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <MessageSquare className="text-green-400" size={16} />
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <MessageSquare className="text-blue-400" size={16} />
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center">
+                      <InstagramIcon className="text-pink-400" size={16} />
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                      <MessageSquare className="text-indigo-400" size={16} />
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-purple-400/20 flex items-center justify-center flex-shrink-0">
-                  <Target className="text-purple-400" size={24} />
+                  <CheckCircle className="text-purple-400" size={24} />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Du har full kontroll</h3>
-                  <p className="text-white/70">Granska och godkänn alla svar</p>
+                  <p className="text-white/70">Granska och godkänn alla AI-genererade svar innan de skickas till dina kunder</p>
                 </div>
               </div>
             </div>
@@ -202,7 +216,7 @@ const Auth = () => {
                     Boka ditt onboarding-samtal
                   </CardTitle>
                   <CardDescription className="text-base">
-                    Välj en tid som passar dig så hjälper vi dig komma igång
+                    Välj en tid som passar dig, så guidar vi dig genom hur Front Office kan förenkla din vardag och öka dina bokningar
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -243,7 +257,7 @@ const Auth = () => {
               Boka ditt onboarding-samtal
             </h1>
             <p className="text-lg text-yellow-accent font-semibold mb-2">
-              Vi hjälper dig komma igång
+              Vi hjälper dig komma igång med Front Office
             </p>
           </div>
 
@@ -291,10 +305,10 @@ const Auth = () => {
             Välkommen till Front Office
           </h1>
           <p className="text-2xl text-yellow-accent font-semibold mb-8">
-            Din digitala assistent — 24/7
+            Din digitala assistent — tillgänglig dygnet runt, året runt
           </p>
           <p className="text-lg text-white/80 mb-12">
-            Vi onboardar för närvarande kunder manuellt för att garantera bästa möjliga upplevelse.
+            Vi onboardar för närvarande kunder manuellt för att säkerställa att du får den bästa möjliga upplevelsen från dag ett. Låt oss hjälpa dig komma igång.
           </p>
 
           <div className="space-y-6">
@@ -304,7 +318,7 @@ const Auth = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">Spara 5+ timmar per vecka</h3>
-                <p className="text-white/70">Automatisera repetitiva kundsamtal</p>
+                <p className="text-white/70">Låt AI hantera repetitiva kundsamtal och administrativa uppgifter automatiskt</p>
               </div>
             </div>
 
@@ -314,17 +328,33 @@ const Auth = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">Alla kanaler på ett ställe</h3>
-                <p className="text-white/70">WhatsApp, SMS, Instagram, Messenger</p>
+                <p className="text-white/70 flex items-center gap-2 flex-wrap">
+                  Hantera WhatsApp, SMS, Instagram, Messenger och mycket mer från en enda plattform
+                </p>
+                <div className="flex gap-3 mt-3">
+                  <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <MessageSquare className="text-green-400" size={16} />
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                    <MessageSquare className="text-blue-400" size={16} />
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center">
+                    <InstagramIcon className="text-pink-400" size={16} />
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                    <MessageSquare className="text-indigo-400" size={16} />
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-full bg-purple-400/20 flex items-center justify-center flex-shrink-0">
-                <Target className="text-purple-400" size={24} />
+                <CheckCircle className="text-purple-400" size={24} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">Full kontroll</h3>
-                <p className="text-white/70">Granska och godkänn alla AI-svar</p>
+                <h3 className="font-semibold text-lg mb-1">Du har full kontroll</h3>
+                <p className="text-white/70">Granska och godkänn alla AI-genererade svar innan de skickas till dina kunder</p>
               </div>
             </div>
           </div>
@@ -346,7 +376,7 @@ const Auth = () => {
                   Kom igång med Front Office
                 </CardTitle>
                 <CardDescription className="text-base">
-                  Fyll i dina uppgifter så bokar vi ett onboarding-samtal
+                  Fyll i dina uppgifter nedan så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
                 </CardDescription>
               </div>
             </CardHeader>
@@ -376,7 +406,7 @@ const Auth = () => {
                   <Input
                     id="businessName"
                     type="text"
-                    placeholder="Din klinik/salon"
+                    placeholder="Ditt företag"
                     value={formData.businessName}
                     onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
                     required
@@ -391,16 +421,19 @@ const Auth = () => {
                     onValueChange={(value) => setFormData({ ...formData, businessType: value })}
                     required
                   >
-                    <SelectTrigger id="businessType" className="h-11">
+                  <SelectTrigger id="businessType" className="h-11">
                       <SelectValue placeholder="Välj typ av verksamhet" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="skönhetssalong">Skönhetssalong</SelectItem>
-                      <SelectItem value="hårsalong">Hårsalong</SelectItem>
-                      <SelectItem value="nagelstudio">Nagelstudio</SelectItem>
-                      <SelectItem value="spa">Spa & Wellness</SelectItem>
-                      <SelectItem value="tandklinik">Tandklinik</SelectItem>
-                      <SelectItem value="hudvårdsklinik">Hudvårdsklinik</SelectItem>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="hälsa-vård">Hälsa & Vård</SelectItem>
+                      <SelectItem value="skönhet-wellness">Skönhet & Wellness</SelectItem>
+                      <SelectItem value="handel-detaljhandel">Handel & Detaljhandel</SelectItem>
+                      <SelectItem value="fordon-bilhandel">Fordon & Bilhandel</SelectItem>
+                      <SelectItem value="fastighet-förvaltning">Fastighet & Förvaltning</SelectItem>
+                      <SelectItem value="personliga-tjänster">Personliga tjänster</SelectItem>
+                      <SelectItem value="professionella-tjänster">Professionella tjänster</SelectItem>
+                      <SelectItem value="mat-dryck">Mat & Dryck</SelectItem>
+                      <SelectItem value="utbildning-träning">Utbildning & Träning</SelectItem>
                       <SelectItem value="annat">Annat</SelectItem>
                     </SelectContent>
                   </Select>
@@ -437,7 +470,7 @@ const Auth = () => {
                   className="w-full h-11"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Skickar..." : "Fortsätt till bokning"}
+                  {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center pt-2">
@@ -460,8 +493,11 @@ const Auth = () => {
           <h1 className="text-3xl font-bold mb-2 leading-tight">
             Välkommen till Front Office
           </h1>
-          <p className="text-lg text-yellow-accent font-semibold mb-4">
-            Din digitala assistent — 24/7
+          <p className="text-base text-yellow-accent font-semibold mb-1">
+            Din digitala assistent — dygnet runt
+          </p>
+          <p className="text-sm text-white/80 mb-4">
+            Automatisera kundkommunikation och spara tid varje dag
           </p>
           
           <div className="grid grid-cols-3 gap-3">
@@ -481,9 +517,25 @@ const Auth = () => {
 
             <div className="flex flex-col items-center text-center">
               <div className="w-12 h-12 rounded-full bg-purple-400/20 flex items-center justify-center mb-2">
-                <Target className="text-purple-400" size={20} />
+                <CheckCircle className="text-purple-400" size={20} />
               </div>
               <p className="text-xs font-semibold leading-tight">Full kontroll</p>
+            </div>
+          </div>
+          
+          {/* Channel logos */}
+          <div className="mt-4 flex justify-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+              <MessageSquare className="text-green-400" size={14} />
+            </div>
+            <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <MessageSquare className="text-blue-400" size={14} />
+            </div>
+            <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center">
+              <InstagramIcon className="text-pink-400" size={14} />
+            </div>
+            <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
+              <MessageSquare className="text-indigo-400" size={14} />
             </div>
           </div>
         </div>
@@ -493,7 +545,7 @@ const Auth = () => {
             <div className="mb-6 text-center">
               <h2 className="text-xl font-bold mb-2">Kom igång</h2>
               <p className="text-sm text-muted-foreground">
-                Fyll i dina uppgifter så bokar vi ett onboarding-samtal
+                Fyll i dina uppgifter nedan så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
               </p>
             </div>
 
@@ -515,7 +567,7 @@ const Auth = () => {
                 <Input
                   id="businessName-mobile"
                   type="text"
-                  placeholder="Din klinik/salon"
+                  placeholder="Ditt företag"
                   value={formData.businessName}
                   onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
                   required
@@ -532,13 +584,16 @@ const Auth = () => {
                   <SelectTrigger id="businessType-mobile">
                     <SelectValue placeholder="Välj typ" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="skönhetssalong">Skönhetssalong</SelectItem>
-                    <SelectItem value="hårsalong">Hårsalong</SelectItem>
-                    <SelectItem value="nagelstudio">Nagelstudio</SelectItem>
-                    <SelectItem value="spa">Spa & Wellness</SelectItem>
-                    <SelectItem value="tandklinik">Tandklinik</SelectItem>
-                    <SelectItem value="hudvårdsklinik">Hudvårdsklinik</SelectItem>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="hälsa-vård">Hälsa & Vård</SelectItem>
+                    <SelectItem value="skönhet-wellness">Skönhet & Wellness</SelectItem>
+                    <SelectItem value="handel-detaljhandel">Handel & Detaljhandel</SelectItem>
+                    <SelectItem value="fordon-bilhandel">Fordon & Bilhandel</SelectItem>
+                    <SelectItem value="fastighet-förvaltning">Fastighet & Förvaltning</SelectItem>
+                    <SelectItem value="personliga-tjänster">Personliga tjänster</SelectItem>
+                    <SelectItem value="professionella-tjänster">Professionella tjänster</SelectItem>
+                    <SelectItem value="mat-dryck">Mat & Dryck</SelectItem>
+                    <SelectItem value="utbildning-träning">Utbildning & Träning</SelectItem>
                     <SelectItem value="annat">Annat</SelectItem>
                   </SelectContent>
                 </Select>
@@ -571,11 +626,11 @@ const Auth = () => {
                 className="w-full"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Skickar..." : "Fortsätt till bokning"}
+                {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">
-                Vi kontaktar dig för att boka ett onboarding-samtal
+                Genom att skicka detta formulär godkänner du att vi kontaktar dig angående Front Office
               </p>
             </form>
           </Card>
