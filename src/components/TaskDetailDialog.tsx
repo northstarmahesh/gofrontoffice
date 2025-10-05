@@ -180,8 +180,11 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
         .limit(1)
         .maybeSingle();
 
-      // Create activity log for sent message
-      const { error: logError } = await supabase
+      const contactName = task.contact_name || relatedLog?.contact_name;
+      const contactInfo = task.contact_info || relatedLog?.contact_info;
+
+      // Create activity log for sent message with animation effect
+      const { data: newLog, error: logError } = await supabase
         .from("activity_logs")
         .insert({
           user_id: user.id,
@@ -190,11 +193,13 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
           type: task.source || "message",
           title: `Sent ${task.source || "message"}`,
           summary: message,
-          contact_name: task.contact_name || relatedLog?.contact_name,
-          contact_info: task.contact_info || relatedLog?.contact_info,
+          contact_name: contactName,
+          contact_info: contactInfo,
           status: "completed",
           direction: "outbound"
-        });
+        })
+        .select()
+        .single();
 
       if (logError) {
         console.error("Activity log error:", logError);
@@ -202,10 +207,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
       }
 
       // Ensure contact exists
-      if ((task.contact_name || relatedLog?.contact_name) && (task.contact_info || relatedLog?.contact_info)) {
-        const contactName = task.contact_name || relatedLog?.contact_name;
-        const contactInfo = task.contact_info || relatedLog?.contact_info;
-        
+      if (contactName && contactInfo) {
         const { data: existingContact } = await supabase
           .from("contacts")
           .select("id")
@@ -213,7 +215,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
           .eq("phone", contactInfo)
           .maybeSingle();
 
-        if (!existingContact && contactName && contactInfo) {
+        if (!existingContact) {
           const { error: contactError } = await supabase
             .from("contacts")
             .insert({
@@ -229,10 +231,20 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
         }
       }
       
-      toast.success("Message sent and logged successfully!");
+      // Show success message
+      toast.success("Message sent successfully!", {
+        description: "The message has been added to activity logs"
+      });
+
+      // Simulate sending animation - add the message to activity history immediately
+      if (newLog) {
+        setActivityHistory(prev => [...prev, newLog as any]);
+      }
       
-      // Mark task as completed
-      await handleMarkAsDone();
+      // Mark task as completed after a short delay to show the new message
+      setTimeout(async () => {
+        await handleMarkAsDone();
+      }, 500);
     } catch (error) {
       console.error("Error sending message:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to send message";

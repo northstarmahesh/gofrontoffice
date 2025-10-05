@@ -68,7 +68,13 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       loadTasks();
       loadActivityLogs();
       loadAnalytics();
-      syncTaskContactsToDatabase();
+      // Only sync dummy contacts once when location is first selected
+      // Don't run this on every render to avoid duplicates
+      const hasRunSync = sessionStorage.getItem(`synced-${selectedLocation}`);
+      if (!hasRunSync) {
+        syncTaskContactsToDatabase();
+        sessionStorage.setItem(`synced-${selectedLocation}`, 'true');
+      }
     }
 
     // Set up realtime subscription for tasks
@@ -91,7 +97,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     return () => {
       supabase.removeChannel(tasksChannel);
     };
-  }, [refreshKey, selectedLocation, selectedDate, dateFilter, dateRange]);
+  }, [selectedLocation]);
 
   const loadLocations = async () => {
     try {
@@ -252,12 +258,12 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
       if (!clinicData?.clinic_id) return;
 
-      // Get all tasks with contacts
-      const allTasksWithContacts = [...humanTasks, ...dummyHumanTasks].filter(
+      // Get all tasks with contacts (only from dummy data for demo)
+      const allTasksWithContacts = [...dummyHumanTasks].filter(
         task => task.contact_name && task.contact_info
       );
 
-      // Sync each contact
+      // Sync each contact - check if already exists first to avoid duplicates
       for (const task of allTasksWithContacts) {
         const { data: existingContact } = await supabase
           .from("contacts")
@@ -267,42 +273,54 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           .maybeSingle();
 
         if (!existingContact && task.contact_name && task.contact_info) {
-          await supabase
+          // Create contact
+          const { data: newContact, error: contactError } = await supabase
             .from("contacts")
             .insert({
               clinic_id: clinicData.clinic_id,
               name: task.contact_name,
               phone: task.contact_info,
               location_id: selectedLocation
-            });
+            })
+            .select()
+            .single();
 
-          // Also ensure activity logs exist
-          const { data: existingLog } = await supabase
-            .from("activity_logs")
-            .select("id")
-            .eq("contact_info", task.contact_info)
-            .eq("clinic_id", clinicData.clinic_id)
-            .maybeSingle();
+          if (contactError) {
+            console.error("Error creating contact:", contactError);
+            continue;
+          }
 
-          if (!existingLog && task.message_history && task.message_history.length > 0) {
-            // Create activity logs from message history
+          // Create activity logs from message history only if they don't exist
+          if (task.message_history && task.message_history.length > 0) {
             for (const msg of task.message_history) {
-              await supabase
+              // Check if this specific log already exists
+              const { data: existingLog } = await supabase
                 .from("activity_logs")
-                .insert({
-                  user_id: user.id,
-                  clinic_id: clinicData.clinic_id,
-                  location_id: selectedLocation,
-                  type: msg.type === 'draft' ? task.source : msg.type,
-                  title: msg.title,
-                  summary: msg.summary,
-                  contact_name: task.contact_name,
-                  contact_info: task.contact_info,
-                  status: msg.type === 'draft' ? 'pending' : 'completed',
-                  direction: msg.type === 'draft' ? 'outbound' : (msg as any).direction || 'inbound',
-                  duration: (msg as any).duration,
-                  created_at: msg.created_at
-                });
+                .select("id")
+                .eq("contact_info", task.contact_info)
+                .eq("clinic_id", clinicData.clinic_id)
+                .eq("title", msg.title)
+                .eq("created_at", msg.created_at)
+                .maybeSingle();
+
+              if (!existingLog) {
+                await supabase
+                  .from("activity_logs")
+                  .insert({
+                    user_id: user.id,
+                    clinic_id: clinicData.clinic_id,
+                    location_id: selectedLocation,
+                    type: msg.type === 'draft' ? task.source : msg.type,
+                    title: msg.title,
+                    summary: msg.summary,
+                    contact_name: task.contact_name,
+                    contact_info: task.contact_info,
+                    status: msg.type === 'draft' ? 'pending' : 'completed',
+                    direction: msg.type === 'draft' ? 'outbound' : (msg as any).direction || 'inbound',
+                    duration: (msg as any).duration,
+                    created_at: msg.created_at
+                  });
+              }
             }
           }
         }
@@ -1008,9 +1026,14 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                 compactView ? "p-3" : "p-5"
               )}>
                 <div className="flex items-center justify-between">
-                  <Badge className={cn("bg-yellow-accent text-yellow-accent-foreground font-semibold", compactView ? "text-xs" : "text-xs")}>
-                    ⚡ AI Draft - Action Required
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={cn("bg-yellow-accent text-yellow-accent-foreground font-semibold", compactView ? "text-xs" : "text-xs")}>
+                      ⚡ AI Draft - Manual Review Required
+                    </Badge>
+                    <Badge variant="outline" className="text-xs text-muted-foreground">
+                      Auto-pilot: OFF
+                    </Badge>
+                  </div>
                   {task.message_history && task.message_history.length > 0 && (
                     <div className="flex items-center gap-2">
                       {(() => {
