@@ -547,52 +547,49 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="hidden lg:grid lg:grid-cols-2 min-h-screen relative">
         {/* Logo positioned at top center between columns */}
-        <div className="absolute left-1/2 top-12 -translate-x-1/2 z-20">
-          <div className="bg-white rounded-3xl shadow-2xl p-6">
+        <div className="absolute left-1/2 top-8 -translate-x-1/2 z-20">
+          <div className="bg-white rounded-2xl shadow-xl p-4">
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-20 w-auto object-contain"
+              className="h-14 w-auto object-contain"
             />
           </div>
         </div>
         
         <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-12 flex flex-col justify-center">
-          <h1 className="text-5xl font-bold mb-4 leading-tight">
-            Välkommen till Front Office
+          <h1 className="text-4xl font-bold mb-6 leading-tight">
+            Din digitala assistent — tillgänglig dygnet runt
           </h1>
-          <p className="text-2xl text-white/90 font-medium mb-12">
-            Din digitala assistent — tillgänglig dygnet runt, året runt
-          </p>
 
-          <div className="space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                <Clock className="text-white" size={24} />
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="text-white" size={20} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1 text-white">Spara 5+ timmar per vecka</h3>
-                <p className="text-white/80">Låt AI hantera repetitiva kundsamtal och administrativa uppgifter automatiskt</p>
+                <h3 className="font-semibold text-base mb-0.5 text-white">Spara 5+ timmar per vecka</h3>
+                <p className="text-sm text-white/75">Låt AI hantera repetitiva kundsamtal automatiskt</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                <MessageSquare className="text-white" size={24} />
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <MessageSquare className="text-white" size={20} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1 text-white">Alla kanaler på ett ställe</h3>
-                <p className="text-white/80">Hantera WhatsApp, SMS, Instagram, Messenger och mycket mer från en enda plattform</p>
+                <h3 className="font-semibold text-base mb-0.5 text-white">Alla kanaler på ett ställe</h3>
+                <p className="text-sm text-white/75">WhatsApp, SMS, Instagram, Messenger med mera</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="text-white" size={24} />
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="text-white" size={20} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1 text-white">Du har full kontroll</h3>
-                <p className="text-white/80">Granska och godkänn alla AI-genererade svar innan de skickas till dina kunder</p>
+                <h3 className="font-semibold text-base mb-0.5 text-white">Du har full kontroll</h3>
+                <p className="text-sm text-white/75">Granska och godkänn alla AI-genererade svar</p>
               </div>
             </div>
           </div>
@@ -600,11 +597,16 @@ const Auth = () => {
             <PartnerLogos />
           </div>
 
-          <div className="flex items-center justify-center p-12 flex-col gap-6">
+          <div className="flex items-center justify-center p-8 flex-col">
             <Card className="w-full max-w-md shadow-xl border-2">
-            <CardHeader className="text-center space-y-3 pb-6">
+            <CardHeader className="text-center space-y-2 pb-6">
               {mode === 'login' ? (
-                <CardTitle className="text-2xl font-bold">Logga in</CardTitle>
+                <>
+                  <CardTitle className="text-2xl font-bold">Välkommen till Front Office</CardTitle>
+                  <CardDescription className="text-base">
+                    Logga in med E-post, Telefon eller BankID
+                  </CardDescription>
+                </>
               ) : (
                 <CardTitle className="text-2xl font-bold">Kom igång med Front Office</CardTitle>
               )}
@@ -708,7 +710,7 @@ const Auth = () => {
               ) : null}
             </CardContent>
           </Card>
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-md mt-6">
             <TestimonialSection />
           </div>
         </div>
