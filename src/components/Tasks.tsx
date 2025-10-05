@@ -757,7 +757,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           <div className="flex items-center justify-between pt-2 border-t" onClick={(e) => e.stopPropagation()}>
             <span className="text-sm text-muted-foreground">{task.time}</span>
             <div className="flex items-center gap-2">
-              {hasDraft && isInlineExpanded ? (
+              {hasDraft ? (
                 <>
                   <Button
                     size="sm"
@@ -780,8 +780,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     Send
                   </Button>
                 </>
-              ) : !isInlineExpanded ? (
-                <div className="text-xs text-muted-foreground">Click to expand</div>
               ) : (
                 <div className="flex items-center gap-2 text-primary font-medium text-sm cursor-pointer" onClick={(e) => {
                   e.stopPropagation();
