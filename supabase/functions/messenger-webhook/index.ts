@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
             // Get clinic integration to find which clinic this message belongs to
             const { data: integration } = await supabase
               .from('clinic_integrations')
-              .select('clinic_id, location_id')
+              .select('clinic_id, location_id, access_token')
               .eq('integration_type', 'messenger')
               .eq('is_connected', true)
               .single();
@@ -197,7 +197,8 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Messenger webhook error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
