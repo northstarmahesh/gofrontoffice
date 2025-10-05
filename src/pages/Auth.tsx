@@ -140,8 +140,9 @@ const Auth = () => {
           return;
         }
 
-        // Navigate to the sign-in link
+        // Navigate to the sign-in link which will automatically log the user in
         if (verifyResult.sign_in_link) {
+          console.log('Redirecting to sign-in link...');
           window.location.href = verifyResult.sign_in_link;
         } else {
           toast.error("Kunde inte generera inloggningslänk");
