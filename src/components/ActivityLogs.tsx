@@ -95,7 +95,17 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         return;
       }
       
-      setLogs(data || []);
+      // Remove duplicates on the client side as a safety measure
+      const uniqueLogs = Array.from(
+        new Map(
+          (data || []).map(log => [
+            `${log.contact_info}-${log.title}-${log.created_at}`,
+            log
+          ])
+        ).values()
+      );
+      
+      setLogs(uniqueLogs);
     } catch (error) {
       console.error("Error loading activity logs:", error);
       toast.error("Failed to load activity logs");

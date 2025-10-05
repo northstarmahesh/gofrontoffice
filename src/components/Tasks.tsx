@@ -155,7 +155,18 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setActivityLogs(data || []);
+      
+      // Remove duplicates on the client side as a safety measure
+      const uniqueLogs = Array.from(
+        new Map(
+          (data || []).map(log => [
+            `${log.contact_info}-${log.title}-${log.created_at}`,
+            log
+          ])
+        ).values()
+      );
+      
+      setActivityLogs(uniqueLogs);
     } catch (error) {
       console.error("Error loading activity logs:", error);
     }
