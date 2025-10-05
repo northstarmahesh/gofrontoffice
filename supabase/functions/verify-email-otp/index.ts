@@ -90,21 +90,28 @@ serve(async (req: Request) => {
       console.log("User already exists:", userId);
     }
 
-    // Generate a session token for the user
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+    // Generate an access token for immediate sign-in
+    const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email,
     });
 
-    if (sessionError) {
-      console.error("Session error:", sessionError);
-      throw new Error("Failed to generate session");
+    if (tokenError) {
+      console.error("Token error:", tokenError);
+      throw new Error("Failed to generate authentication token");
     }
+
+    // Extract the token from the URL
+    const url = new URL(tokenData.properties.action_link);
+    const accessToken = url.searchParams.get('access_token');
+    const refreshToken = url.searchParams.get('refresh_token');
 
     return new Response(
       JSON.stringify({ 
         verified: true,
-        session: sessionData
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        user: tokenData.user
       }),
       {
         status: 200,
