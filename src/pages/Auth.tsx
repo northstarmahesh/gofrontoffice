@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import logo from "@/assets/front-office-logo-white-full.png";
-import frontOfficeLogo from "@/assets/front-office-logo-auth.png";
-import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, Target, Instagram as InstagramIcon, CheckCircle } from "lucide-react";
+import logo from "@/assets/front-office-logo-yellow-full.png";
+import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, CheckCircle, Instagram, Chrome, Send } from "lucide-react";
 import { z } from "zod";
 
 const leadSchema = z.object({
@@ -21,9 +21,22 @@ const leadSchema = z.object({
   additionalInfo: z.string().optional(),
 });
 
+const loginSchema = z.object({
+  contact: z.string().min(1, "Vänligen ange e-post eller telefonnummer"),
+});
+
+const otpSchema = z.object({
+  otp: z.string().length(6, "OTP måste vara 6 siffror"),
+});
+
 const Auth = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<'form' | 'booking' | 'success'>('form');
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [step, setStep] = useState<'form' | 'otp' | 'booking' | 'success'>('form');
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
+  const [contactInfo, setContactInfo] = useState('');
+  const [countryCode, setCountryCode] = useState('+46');
+  const [otp, setOtp] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     businessName: '',
@@ -34,7 +47,6 @@ const Auth = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in - redirect to main app
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/");
@@ -52,12 +64,79 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      loginSchema.parse({ contact: contactInfo });
+      
+      if (loginMethod === 'email') {
+        const { error } = await supabase.auth.signInWithOtp({
+          email: contactInfo,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+          },
+        });
+
+        if (error) throw error;
+        toast.success("Verifieringskod skickad till din e-post");
+        setStep('otp');
+      } else {
+        const fullPhone = `${countryCode}${contactInfo}`;
+        const { error } = await supabase.auth.signInWithOtp({
+          phone: fullPhone,
+        });
+
+        if (error) throw error;
+        toast.success("Verifieringskod skickad till ditt telefonnummer");
+        setStep('otp');
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        console.error('Login error:', error);
+        toast.error("Något gick fel. Försök igen.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      otpSchema.parse({ otp });
+      
+      const verifyData = loginMethod === 'email' 
+        ? { email: contactInfo, token: otp, type: 'email' as const }
+        : { phone: `${countryCode}${contactInfo}`, token: otp, type: 'sms' as const };
+
+      const { error } = await supabase.auth.verifyOtp(verifyData);
+
+      if (error) throw error;
+      
+      toast.success("Inloggning lyckades!");
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        console.error('OTP verification error:', error);
+        toast.error("Ogiltig verifieringskod");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Validate form data
       const validatedData = leadSchema.parse({
         email: formData.email,
         businessName: formData.businessName,
@@ -66,7 +145,6 @@ const Auth = () => {
         additionalInfo: formData.additionalInfo || undefined,
       });
 
-      // Submit to database
       const { error } = await supabase
         .from('onboarding_leads')
         .insert({
@@ -78,7 +156,7 @@ const Auth = () => {
         });
 
       if (error) {
-        if (error.code === '23505') { // Unique constraint violation
+        if (error.code === '23505') {
           toast.error("Denna e-postadress är redan registrerad");
         } else {
           throw error;
@@ -101,7 +179,131 @@ const Auth = () => {
     }
   };
 
-  // Success screen
+  const PartnerLogos = () => (
+    <div className="mt-8 pt-8 border-t border-white/20">
+      <h3 className="text-center text-sm font-semibold text-white/60 mb-6">
+        FrontOffice samarbetar med:
+      </h3>
+      <div className="grid grid-cols-5 gap-4 items-center justify-items-center">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-pink-500/20 flex items-center justify-center">
+            <Instagram className="text-pink-400" size={24} />
+          </div>
+          <span className="text-xs text-white/70">Instagram</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
+            <MessageSquare className="text-green-400" size={24} />
+          </div>
+          <span className="text-xs text-white/70">WhatsApp</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
+            <PhoneIcon className="text-blue-400" size={24} />
+          </div>
+          <span className="text-xs text-white/70">Telefon</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+            <Send className="text-indigo-400" size={24} />
+          </div>
+          <span className="text-xs text-white/70">SMS</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-blue-600/20 flex items-center justify-center">
+            <MessageSquare className="text-blue-500" size={24} />
+          </div>
+          <span className="text-xs text-white/70">Messenger</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-yellow-500/20 flex items-center justify-center">
+            <Chrome className="text-yellow-400" size={24} />
+          </div>
+          <span className="text-xs text-white/70">Google</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-blue-400/20 flex items-center justify-center">
+            <Building2 className="text-blue-300" size={24} />
+          </div>
+          <span className="text-xs text-white/70">Microsoft</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
+            <Calendar className="text-purple-400" size={24} />
+          </div>
+          <span className="text-xs text-white/70">Bokadirekt</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
+            <Building2 className="text-orange-400" size={24} />
+          </div>
+          <span className="text-xs text-white/70">Fortnox</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-lg bg-teal-500/20 flex items-center justify-center">
+            <Building2 className="text-teal-400" size={24} />
+          </div>
+          <span className="text-xs text-white/70">Björn Lundén</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (step === 'otp' && mode === 'login') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl">
+          <CardHeader className="text-center space-y-4">
+            <img 
+              src={logo} 
+              alt="Front Office" 
+              className="h-12 w-auto mx-auto mb-4"
+            />
+            <CardTitle className="text-2xl font-bold">Ange verifieringskod</CardTitle>
+            <CardDescription>
+              Vi har skickat en 6-siffrig kod till {loginMethod === 'email' ? contactInfo : `${countryCode}${contactInfo}`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">Verifieringskod</Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  placeholder="123456"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  required
+                  className="h-11 text-center text-2xl tracking-widest"
+                  maxLength={6}
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full h-11"
+                disabled={isSubmitting || otp.length !== 6}
+              >
+                {isSubmitting ? "Verifierar..." : "Verifiera"}
+              </Button>
+              <Button 
+                type="button" 
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setStep('form');
+                  setOtp('');
+                }}
+              >
+                Tillbaka
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (step === 'success') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
@@ -129,18 +331,15 @@ const Auth = () => {
     );
   }
 
-  // Booking screen
   if (step === 'booking') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
-        {/* Desktop Layout */}
         <div className="hidden lg:grid lg:grid-cols-2 min-h-screen">
-          {/* Left side - Branding */}
           <div className="bg-[hsl(var(--auth-bg))] text-white p-12 flex flex-col justify-center">
             <img 
               src={logo} 
               alt="Front Office" 
-              className="h-16 w-auto mb-12"
+              className="h-20 w-auto mb-12"
             />
             <h1 className="text-5xl font-bold mb-4 leading-tight">
               Välkommen till Front Office
@@ -170,20 +369,6 @@ const Auth = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Alla kanaler, ett ställe</h3>
                   <p className="text-white/70">Hantera WhatsApp, SMS, Instagram, Messenger och mycket mer från en enda plattform</p>
-                  <div className="flex gap-3 mt-3">
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <MessageSquare className="text-green-400" size={16} />
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <MessageSquare className="text-blue-400" size={16} />
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center">
-                      <InstagramIcon className="text-pink-400" size={16} />
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                      <MessageSquare className="text-indigo-400" size={16} />
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -197,17 +382,18 @@ const Auth = () => {
                 </div>
               </div>
             </div>
+
+            <PartnerLogos />
           </div>
 
-          {/* Right side - Booking */}
           <div className="flex items-center justify-center p-12">
             <Card className="w-full max-w-2xl shadow-2xl border-2 border-primary/10">
               <CardHeader className="text-center space-y-4">
                 <div className="flex justify-center mb-2">
                   <img 
-                    src={frontOfficeLogo} 
+                    src={logo} 
                     alt="Front Office Logo" 
-                    className="h-12 w-auto"
+                    className="h-16 w-auto"
                   />
                 </div>
                 <div className="space-y-2">
@@ -233,9 +419,7 @@ const Auth = () => {
               <div className="p-6 border-t">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setStep('success');
-                  }}
+                  onClick={() => setStep('success')}
                   className="w-full"
                 >
                   Jag har bokat min tid
@@ -245,7 +429,6 @@ const Auth = () => {
           </div>
         </div>
 
-        {/* Mobile Layout */}
         <div className="lg:hidden min-h-screen flex flex-col">
           <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-6 pb-8">
             <img 
@@ -289,17 +472,14 @@ const Auth = () => {
     );
   }
 
-  // Form screen
   return (
     <div className="min-h-screen bg-[hsl(var(--auth-bg))]">
-      {/* Desktop Layout */}
       <div className="hidden lg:grid lg:grid-cols-2 min-h-screen">
-        {/* Left side - Branding */}
         <div className="bg-[hsl(var(--auth-bg))] text-white p-12 flex flex-col justify-center">
           <img 
             src={logo} 
             alt="Front Office" 
-            className="h-16 w-auto mb-12"
+            className="h-20 w-auto mb-12"
           />
           <h1 className="text-5xl font-bold mb-4 leading-tight">
             Välkommen till Front Office
@@ -328,23 +508,7 @@ const Auth = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">Alla kanaler på ett ställe</h3>
-                <p className="text-white/70 flex items-center gap-2 flex-wrap">
-                  Hantera WhatsApp, SMS, Instagram, Messenger och mycket mer från en enda plattform
-                </p>
-                <div className="flex gap-3 mt-3">
-                  <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <MessageSquare className="text-green-400" size={16} />
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <MessageSquare className="text-blue-400" size={16} />
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center">
-                    <InstagramIcon className="text-pink-400" size={16} />
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                    <MessageSquare className="text-indigo-400" size={16} />
-                  </div>
-                </div>
+                <p className="text-white/70">Hantera WhatsApp, SMS, Instagram, Messenger och mycket mer från en enda plattform</p>
               </div>
             </div>
 
@@ -358,281 +522,390 @@ const Auth = () => {
               </div>
             </div>
           </div>
+
+          <PartnerLogos />
         </div>
 
-        {/* Right side - Form */}
         <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background/50 to-primary/5">
           <Card className="w-full max-w-md shadow-2xl border-2 border-primary/10">
             <CardHeader className="space-y-4 text-center">
               <div className="flex justify-center mb-2">
                 <img 
-                  src={frontOfficeLogo} 
+                  src={logo} 
                   alt="Front Office Logo" 
-                  className="h-12 w-auto"
+                  className="h-16 w-auto"
                 />
-              </div>
-              <div className="space-y-2">
-                <CardTitle className="text-2xl font-bold">
-                  Kom igång med Front Office
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Fyll i dina uppgifter nedan så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
-                </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    E-postadress *
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="din@email.se"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                    className="h-11"
-                  />
-                </div>
+              <Tabs value={mode} onValueChange={(v) => setMode(v as 'login' | 'signup')} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="login">Logga in</TabsTrigger>
+                  <TabsTrigger value="signup">Kom igång</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="login">
+                  <div className="space-y-4">
+                    <div className="text-center space-y-2 mb-6">
+                      <h3 className="text-xl font-bold">Välkommen tillbaka</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Logga in med e-post eller telefonnummer
+                      </p>
+                    </div>
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone')}>
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="email">E-post</TabsTrigger>
+                          <TabsTrigger value="phone">Telefon</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="email" className="space-y-4 mt-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="login-email" className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              E-postadress
+                            </Label>
+                            <Input
+                              id="login-email"
+                              type="email"
+                              placeholder="din@email.se"
+                              value={contactInfo}
+                              onChange={(e) => setContactInfo(e.target.value)}
+                              required
+                              className="h-11"
+                            />
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="phone" className="space-y-4 mt-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="login-phone" className="flex items-center gap-2">
+                              <PhoneIcon className="h-4 w-4" />
+                              Telefonnummer
+                            </Label>
+                            <div className="flex gap-2">
+                              <Select value={countryCode} onValueChange={setCountryCode}>
+                                <SelectTrigger className="w-[100px] h-11">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="+46">🇸🇪 +46</SelectItem>
+                                  <SelectItem value="+47">🇳🇴 +47</SelectItem>
+                                  <SelectItem value="+45">🇩🇰 +45</SelectItem>
+                                  <SelectItem value="+358">🇫🇮 +358</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                id="login-phone"
+                                type="tel"
+                                placeholder="701234567"
+                                value={contactInfo}
+                                onChange={(e) => setContactInfo(e.target.value.replace(/\D/g, ''))}
+                                required
+                                className="h-11 flex-1"
+                              />
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                      
+                      <Button 
+                        type="submit" 
+                        className="w-full h-11"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
+                      </Button>
+                    </form>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="signup">
+                  <div className="space-y-4">
+                    <div className="text-center space-y-2 mb-6">
+                      <h3 className="text-xl font-bold">Kom igång med Front Office</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Fyll i dina uppgifter så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
+                      </p>
+                    </div>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          E-postadress *
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="din@email.se"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          required
+                          className="h-11"
+                        />
+                      </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="businessName" className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    Företagsnamn *
-                  </Label>
-                  <Input
-                    id="businessName"
-                    type="text"
-                    placeholder="Ditt företag"
-                    value={formData.businessName}
-                    onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                    required
-                    className="h-11"
-                  />
-                </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="businessName" className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          Företagsnamn *
+                        </Label>
+                        <Input
+                          id="businessName"
+                          type="text"
+                          placeholder="Ditt företag"
+                          value={formData.businessName}
+                          onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                          required
+                          className="h-11"
+                        />
+                      </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="businessType">Verksamhetstyp *</Label>
-                  <Select
-                    value={formData.businessType}
-                    onValueChange={(value) => setFormData({ ...formData, businessType: value })}
-                    required
-                  >
-                  <SelectTrigger id="businessType" className="h-11">
-                      <SelectValue placeholder="Välj typ av verksamhet" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      <SelectItem value="hälsa-vård">Hälsa & Vård</SelectItem>
-                      <SelectItem value="skönhet-wellness">Skönhet & Wellness</SelectItem>
-                      <SelectItem value="handel-detaljhandel">Handel & Detaljhandel</SelectItem>
-                      <SelectItem value="fordon-bilhandel">Fordon & Bilhandel</SelectItem>
-                      <SelectItem value="fastighet-förvaltning">Fastighet & Förvaltning</SelectItem>
-                      <SelectItem value="personliga-tjänster">Personliga tjänster</SelectItem>
-                      <SelectItem value="professionella-tjänster">Professionella tjänster</SelectItem>
-                      <SelectItem value="mat-dryck">Mat & Dryck</SelectItem>
-                      <SelectItem value="utbildning-träning">Utbildning & Träning</SelectItem>
-                      <SelectItem value="annat">Annat</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="businessType" className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          Bransch *
+                        </Label>
+                        <Select 
+                          value={formData.businessType} 
+                          onValueChange={(value) => setFormData({ ...formData, businessType: value })}
+                          required
+                        >
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Välj bransch" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="health">Hälsa & Vård</SelectItem>
+                            <SelectItem value="beauty">Skönhet & Wellness</SelectItem>
+                            <SelectItem value="retail">Handel & Detaljhandel</SelectItem>
+                            <SelectItem value="automotive">Fordon & Bilhandel</SelectItem>
+                            <SelectItem value="storage">Lager & Logistik</SelectItem>
+                            <SelectItem value="professional">Professionella Tjänster</SelectItem>
+                            <SelectItem value="hospitality">Hotell & Restaurang</SelectItem>
+                            <SelectItem value="fitness">Träning & Sport</SelectItem>
+                            <SelectItem value="education">Utbildning</SelectItem>
+                            <SelectItem value="other">Annat</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="flex items-center gap-2">
-                    <PhoneIcon className="h-4 w-4" />
-                    Telefonnummer
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+46 70 123 45 67"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="h-11"
-                  />
-                </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone" className="flex items-center gap-2">
+                          <PhoneIcon className="h-4 w-4" />
+                          Telefonnummer
+                        </Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          placeholder="+46 70 123 45 67"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          className="h-11"
+                        />
+                      </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="additionalInfo">Övrig information</Label>
-                  <Textarea
-                    id="additionalInfo"
-                    placeholder="Berätta gärna lite mer om din verksamhet och dina behov..."
-                    value={formData.additionalInfo}
-                    onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
-                    rows={3}
-                  />
-                </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="additionalInfo">
+                          Ytterligare information
+                        </Label>
+                        <Textarea
+                          id="additionalInfo"
+                          placeholder="Berätta gärna lite mer om dina behov..."
+                          value={formData.additionalInfo}
+                          onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
+                          className="min-h-[100px] resize-none"
+                        />
+                      </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-11"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
-                </Button>
-
-                <p className="text-xs text-muted-foreground text-center pt-2">
-                  Genom att skicka detta formulär godkänner du att vi kontaktar dig angående Front Office.
-                </p>
-              </form>
+                      <Button 
+                        type="submit" 
+                        className="w-full h-12 text-base font-semibold"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
+                      </Button>
+                    </form>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Mobile Layout */}
       <div className="lg:hidden min-h-screen flex flex-col">
         <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-6 pb-8">
           <img 
             src={logo} 
             alt="Front Office" 
-            className="h-14 w-auto mb-6"
+            className="h-16 w-auto mb-6"
           />
-          <h1 className="text-3xl font-bold mb-2 leading-tight">
-            Välkommen till Front Office
+          <h1 className="text-2xl font-bold mb-2 leading-tight">
+            {mode === 'login' ? 'Välkommen tillbaka' : 'Kom igång med Front Office'}
           </h1>
-          <p className="text-base text-yellow-accent font-semibold mb-1">
-            Din digitala assistent — dygnet runt
+          <p className="text-base text-yellow-accent font-semibold">
+            {mode === 'login' ? 'Logga in för att fortsätta' : 'Din digitala assistent — tillgänglig dygnet runt'}
           </p>
-          <p className="text-sm text-white/80 mb-4">
-            Automatisera kundkommunikation och spara tid varje dag
-          </p>
-          
-          <div className="grid grid-cols-3 gap-3">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-yellow-accent/20 flex items-center justify-center mb-2">
-                <Clock className="text-yellow-accent" size={20} />
-              </div>
-              <p className="text-xs font-semibold leading-tight">Spara 5+ timmar</p>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center mb-2">
-                <MessageSquare className="text-blue-400" size={20} />
-              </div>
-              <p className="text-xs font-semibold leading-tight">Alla kanaler</p>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-purple-400/20 flex items-center justify-center mb-2">
-                <CheckCircle className="text-purple-400" size={20} />
-              </div>
-              <p className="text-xs font-semibold leading-tight">Full kontroll</p>
-            </div>
-          </div>
-          
-          {/* Channel logos */}
-          <div className="mt-4 flex justify-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-              <MessageSquare className="text-green-400" size={14} />
-            </div>
-            <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <MessageSquare className="text-blue-400" size={14} />
-            </div>
-            <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center">
-              <InstagramIcon className="text-pink-400" size={14} />
-            </div>
-            <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
-              <MessageSquare className="text-indigo-400" size={14} />
-            </div>
-          </div>
         </div>
 
         <div className="flex-1 bg-background rounded-t-3xl -mt-4 p-6">
-          <Card className="w-full border-0 shadow-lg bg-card p-6 rounded-2xl">
-            <div className="mb-6 text-center">
-              <h2 className="text-xl font-bold mb-2">Kom igång</h2>
-              <p className="text-sm text-muted-foreground">
-                Fyll i dina uppgifter nedan så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
-              </p>
-            </div>
+          <Card className="w-full border-0 shadow-none">
+            <CardContent className="p-0">
+              <Tabs value={mode} onValueChange={(v) => setMode(v as 'login' | 'signup')} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="login">Logga in</TabsTrigger>
+                  <TabsTrigger value="signup">Kom igång</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="login">
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone')}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="email">E-post</TabsTrigger>
+                        <TabsTrigger value="phone">Telefon</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="email" className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="mobile-login-email">E-postadress</Label>
+                          <Input
+                            id="mobile-login-email"
+                            type="email"
+                            placeholder="din@email.se"
+                            value={contactInfo}
+                            onChange={(e) => setContactInfo(e.target.value)}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="phone" className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="mobile-login-phone">Telefonnummer</Label>
+                          <div className="flex gap-2">
+                            <Select value={countryCode} onValueChange={setCountryCode}>
+                              <SelectTrigger className="w-[100px] h-11">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="+46">🇸🇪 +46</SelectItem>
+                                <SelectItem value="+47">🇳🇴 +47</SelectItem>
+                                <SelectItem value="+45">🇩🇰 +45</SelectItem>
+                                <SelectItem value="+358">🇫🇮 +358</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              id="mobile-login-phone"
+                              type="tel"
+                              placeholder="701234567"
+                              value={contactInfo}
+                              onChange={(e) => setContactInfo(e.target.value.replace(/\D/g, ''))}
+                              required
+                              className="h-11 flex-1"
+                            />
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full h-11"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
+                    </Button>
+                  </form>
+                </TabsContent>
+                
+                <TabsContent value="signup">
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="mobile-email">E-postadress *</Label>
+                      <Input
+                        id="mobile-email"
+                        type="email"
+                        placeholder="din@email.se"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        required
+                        className="h-11"
+                      />
+                    </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email-mobile">E-postadress *</Label>
-                <Input
-                  id="email-mobile"
-                  type="email"
-                  placeholder="din@email.se"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mobile-businessName">Företagsnamn *</Label>
+                      <Input
+                        id="mobile-businessName"
+                        type="text"
+                        placeholder="Ditt företag"
+                        value={formData.businessName}
+                        onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                        required
+                        className="h-11"
+                      />
+                    </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="businessName-mobile">Företagsnamn *</Label>
-                <Input
-                  id="businessName-mobile"
-                  type="text"
-                  placeholder="Ditt företag"
-                  value={formData.businessName}
-                  onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                  required
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mobile-businessType">Bransch *</Label>
+                      <Select 
+                        value={formData.businessType} 
+                        onValueChange={(value) => setFormData({ ...formData, businessType: value })}
+                        required
+                      >
+                        <SelectTrigger className="h-11">
+                          <SelectValue placeholder="Välj bransch" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="health">Hälsa & Vård</SelectItem>
+                          <SelectItem value="beauty">Skönhet & Wellness</SelectItem>
+                          <SelectItem value="retail">Handel & Detaljhandel</SelectItem>
+                          <SelectItem value="automotive">Fordon & Bilhandel</SelectItem>
+                          <SelectItem value="storage">Lager & Logistik</SelectItem>
+                          <SelectItem value="professional">Professionella Tjänster</SelectItem>
+                          <SelectItem value="hospitality">Hotell & Restaurang</SelectItem>
+                          <SelectItem value="fitness">Träning & Sport</SelectItem>
+                          <SelectItem value="education">Utbildning</SelectItem>
+                          <SelectItem value="other">Annat</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="businessType-mobile">Verksamhetstyp *</Label>
-                <Select
-                  value={formData.businessType}
-                  onValueChange={(value) => setFormData({ ...formData, businessType: value })}
-                  required
-                >
-                  <SelectTrigger id="businessType-mobile">
-                    <SelectValue placeholder="Välj typ" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    <SelectItem value="hälsa-vård">Hälsa & Vård</SelectItem>
-                    <SelectItem value="skönhet-wellness">Skönhet & Wellness</SelectItem>
-                    <SelectItem value="handel-detaljhandel">Handel & Detaljhandel</SelectItem>
-                    <SelectItem value="fordon-bilhandel">Fordon & Bilhandel</SelectItem>
-                    <SelectItem value="fastighet-förvaltning">Fastighet & Förvaltning</SelectItem>
-                    <SelectItem value="personliga-tjänster">Personliga tjänster</SelectItem>
-                    <SelectItem value="professionella-tjänster">Professionella tjänster</SelectItem>
-                    <SelectItem value="mat-dryck">Mat & Dryck</SelectItem>
-                    <SelectItem value="utbildning-träning">Utbildning & Träning</SelectItem>
-                    <SelectItem value="annat">Annat</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mobile-phone">Telefonnummer</Label>
+                      <Input
+                        id="mobile-phone"
+                        type="tel"
+                        placeholder="+46 70 123 45 67"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className="h-11"
+                      />
+                    </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone-mobile">Telefonnummer</Label>
-                <Input
-                  id="phone-mobile"
-                  type="tel"
-                  placeholder="+46 70 123 45 67"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mobile-additionalInfo">Ytterligare information</Label>
+                      <Textarea
+                        id="mobile-additionalInfo"
+                        placeholder="Berätta gärna lite mer om dina behov..."
+                        value={formData.additionalInfo}
+                        onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
+                        className="min-h-[100px] resize-none"
+                      />
+                    </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="additionalInfo-mobile">Övrig information</Label>
-                <Textarea
-                  id="additionalInfo-mobile"
-                  placeholder="Berätta gärna om din verksamhet..."
-                  value={formData.additionalInfo}
-                  onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
-              </Button>
-
-              <p className="text-xs text-muted-foreground text-center">
-                Genom att skicka detta formulär godkänner du att vi kontaktar dig angående Front Office
-              </p>
-            </form>
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 text-base font-semibold"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
           </Card>
         </div>
       </div>
