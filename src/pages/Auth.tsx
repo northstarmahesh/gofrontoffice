@@ -546,8 +546,8 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="hidden lg:grid lg:grid-cols-2 min-h-screen relative">
-        {/* Logo positioned at the division */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+        {/* Logo positioned at top center between columns */}
+        <div className="absolute left-1/2 top-12 -translate-x-1/2 z-20">
           <div className="bg-white rounded-3xl shadow-2xl p-6">
             <img 
               src={logo} 
@@ -604,19 +604,9 @@ const Auth = () => {
             <Card className="w-full max-w-md shadow-xl border-2">
             <CardHeader className="text-center space-y-3 pb-6">
               {mode === 'login' ? (
-                <>
-                  <CardTitle className="text-2xl font-bold">Välkommen tillbaka</CardTitle>
-                  <CardDescription>
-                    Logga in med e-post eller telefonnummer
-                  </CardDescription>
-                </>
+                <CardTitle className="text-2xl font-bold">Logga in</CardTitle>
               ) : (
-                <>
-                  <CardTitle className="text-2xl font-bold">Kom igång med Front Office</CardTitle>
-                  <CardDescription>
-                    Fyll i dina uppgifter så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
-                  </CardDescription>
-                </>
+                <CardTitle className="text-2xl font-bold">Kom igång med Front Office</CardTitle>
               )}
             </CardHeader>
             <CardContent>
