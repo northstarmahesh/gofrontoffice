@@ -166,7 +166,7 @@ const Index = () => {
             <DropdownMenuContent align="end" className="w-56 bg-background z-[100]">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setCurrentView("clinic")}>
+              <DropdownMenuItem onClick={() => navigate("/team")} className="cursor-pointer">
                 <UsersIcon className="mr-2 h-4 w-4" />
                 <span>Team Mates</span>
               </DropdownMenuItem>

@@ -3,8 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClinicInfo } from "./clinic/ClinicInfo";
 import { ResourcesManager } from "./clinic/ResourcesManager";
-import { TeamManagement } from "./clinic/TeamManagement";
-import { TeamDetails } from "./clinic/TeamDetails";
 import { ClinicOnboarding } from "./clinic/ClinicOnboarding";
 import { IntegrationsTools } from "./clinic/IntegrationsTools";
 import { toast } from "sonner";
@@ -98,17 +96,11 @@ export const ClinicManagement = ({ initialTab }: { initialTab?: string }) => {
       </div>
 
       <Tabs value={defaultTab} onValueChange={setDefaultTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="team">Team</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="info">Info</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
           <TabsTrigger value="intelligence">Assistant Intelligence</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="team" className="mt-6 space-y-6">
-          <TeamDetails clinicId={clinicId!} />
-          <TeamManagement clinicId={clinicId!} />
-        </TabsContent>
 
         <TabsContent value="info" className="mt-6 space-y-6">
           <ClinicInfo 
