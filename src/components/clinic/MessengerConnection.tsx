@@ -37,6 +37,20 @@ export function MessengerConnection({
     setIsConnecting(true);
 
     try {
+      // Get a valid locationId - if not provided, use the first location for this clinic
+      let validLocationId = locationId && locationId.trim() !== "" ? locationId : null;
+      
+      if (!validLocationId) {
+        const { data: locations } = await supabase
+          .from('clinic_locations')
+          .select('id')
+          .eq('clinic_id', clinicId)
+          .limit(1)
+          .maybeSingle();
+        
+        validLocationId = locations?.id || null;
+      }
+
       // Check if integration exists
       const { data: existing } = await supabase
         .from('clinic_integrations')
@@ -52,7 +66,7 @@ export function MessengerConnection({
           .update({
             access_token: pageAccessToken,
             is_connected: true,
-            location_id: locationId,
+            location_id: validLocationId,
             updated_at: new Date().toISOString(),
           })
           .eq('id', existing.id);
@@ -64,7 +78,7 @@ export function MessengerConnection({
           .from('clinic_integrations')
           .insert({
             clinic_id: clinicId,
-            location_id: locationId,
+            location_id: validLocationId,
             integration_type: 'messenger',
             access_token: pageAccessToken,
             is_connected: true,
