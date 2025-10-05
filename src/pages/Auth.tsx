@@ -70,7 +70,6 @@ const Auth = () => {
 
     try {
       if (loginMethod === 'bankid') {
-        // TODO: Implement BankID authentication flow
         toast.info("BankID-integration kommer snart. Kontakta support för att aktivera denna funktion.");
         setIsSubmitting(false);
         return;
@@ -79,23 +78,13 @@ const Auth = () => {
       loginSchema.parse({ contact: contactInfo });
       
       if (loginMethod === 'email') {
-        // Try to sign in - if user doesn't exist, Supabase will create them with OTP
+        // Supabase will send a 6-digit code by default for email OTP
         const { error } = await supabase.auth.signInWithOtp({
           email: contactInfo,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            shouldCreateUser: false, // Don't auto-create, we'll redirect to signup
+            shouldCreateUser: true, // Auto-create user if doesn't exist
           },
         });
-
-        // If user doesn't exist, redirect to signup
-        if (error && error.message.includes('User not found')) {
-          toast.info("Ny användare! Låt oss sätta upp ditt konto.");
-          setFormData({ ...formData, email: contactInfo });
-          setMode('signup');
-          setIsSubmitting(false);
-          return;
-        }
 
         if (error) throw error;
         toast.success("Verifieringskod skickad till din e-post");
@@ -106,18 +95,9 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithOtp({
           phone: fullPhone,
           options: {
-            shouldCreateUser: false, // Don't auto-create, we'll redirect to signup
+            shouldCreateUser: true,
           },
         });
-
-        // If user doesn't exist, redirect to signup
-        if (error && error.message.includes('User not found')) {
-          toast.info("Ny användare! Låt oss sätta upp ditt konto.");
-          setFormData({ ...formData, phone: fullPhone });
-          setMode('signup');
-          setIsSubmitting(false);
-          return;
-        }
 
         if (error) throw error;
         toast.success("Verifieringskod skickad till ditt telefonnummer");
