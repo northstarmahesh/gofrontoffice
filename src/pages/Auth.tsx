@@ -617,102 +617,90 @@ const Auth = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <Tabs value={mode} onValueChange={(v) => setMode(v as 'login' | 'signup')} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login">Logga in</TabsTrigger>
-                  <TabsTrigger value="signup">Kom igång</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="login">
-                  <div className="space-y-4">
-                    <div className="text-center space-y-2 mb-6">
-                      <h3 className="text-xl font-bold">Välkommen tillbaka</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Logga in med e-post eller telefonnummer
-                      </p>
-                    </div>
-                    <form onSubmit={handleLogin} className="space-y-4">
-                      <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone')}>
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="email">E-post</TabsTrigger>
-                          <TabsTrigger value="phone">Telefon</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="email" className="space-y-4 mt-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="login-email" className="flex items-center gap-2">
-                              <Mail className="h-4 w-4" />
-                              E-postadress
-                            </Label>
+              {mode === 'login' ? (
+                <div className="space-y-4">
+                  <div className="text-center space-y-2 mb-6">
+                    <h3 className="text-xl font-bold">Välkommen tillbaka</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Logga in med e-post eller telefonnummer
+                    </p>
+                  </div>
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone')}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="email">E-post</TabsTrigger>
+                        <TabsTrigger value="phone">Telefon</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="email" className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="login-email" className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            E-postadress
+                          </Label>
+                          <Input
+                            id="login-email"
+                            type="email"
+                            placeholder="din@email.se"
+                            value={contactInfo}
+                            onChange={(e) => setContactInfo(e.target.value)}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="phone" className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="login-phone" className="flex items-center gap-2">
+                            <PhoneIcon className="h-4 w-4" />
+                            Telefonnummer
+                          </Label>
+                          <div className="flex gap-2">
+                            <Select value={countryCode} onValueChange={setCountryCode}>
+                              <SelectTrigger className="w-[100px] h-11">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="+46">🇸🇪 +46</SelectItem>
+                                <SelectItem value="+47">🇳🇴 +47</SelectItem>
+                                <SelectItem value="+45">🇩🇰 +45</SelectItem>
+                                <SelectItem value="+358">🇫🇮 +358</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <Input
-                              id="login-email"
-                              type="email"
-                              placeholder="din@email.se"
+                              id="login-phone"
+                              type="tel"
+                              placeholder="701234567"
                               value={contactInfo}
-                              onChange={(e) => setContactInfo(e.target.value)}
+                              onChange={(e) => setContactInfo(e.target.value.replace(/\D/g, ''))}
                               required
-                              className="h-11"
+                              className="h-11 flex-1"
                             />
                           </div>
-                        </TabsContent>
-                        
-                        <TabsContent value="phone" className="space-y-4 mt-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="login-phone" className="flex items-center gap-2">
-                              <PhoneIcon className="h-4 w-4" />
-                              Telefonnummer
-                            </Label>
-                            <div className="flex gap-2">
-                              <Select value={countryCode} onValueChange={setCountryCode}>
-                                <SelectTrigger className="w-[100px] h-11">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="+46">🇸🇪 +46</SelectItem>
-                                  <SelectItem value="+47">🇳🇴 +47</SelectItem>
-                                  <SelectItem value="+45">🇩🇰 +45</SelectItem>
-                                  <SelectItem value="+358">🇫🇮 +358</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Input
-                                id="login-phone"
-                                type="tel"
-                                placeholder="701234567"
-                                value={contactInfo}
-                                onChange={(e) => setContactInfo(e.target.value.replace(/\D/g, ''))}
-                                required
-                                className="h-11 flex-1"
-                              />
-                            </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                      
-                      <Button 
-                        type="submit" 
-                        className="w-full h-11"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
-                      </Button>
-                      <div className="flex items-center gap-2 my-4">
-                        <div className="flex-1 h-px bg-border" />
-                        <span className="text-xs text-muted-foreground">eller</span>
-                        <div className="flex-1 h-px bg-border" />
-                      </div>
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        className="w-full"
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full h-11"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
+                    </Button>
+                    <div className="text-center pt-4">
+                      <button
+                        type="button"
                         onClick={() => setMode('signup')}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
                       >
-                        Kom igång
-                      </Button>
-                    </form>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="signup">
+                        Ny användare? <span className="font-semibold">Kom igång här</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : (
                   <div className="space-y-4">
                     <div className="text-center space-y-2 mb-6">
                       <h3 className="text-xl font-bold">Kom igång med Front Office</h3>
@@ -818,8 +806,7 @@ const Auth = () => {
                       </Button>
                     </form>
                   </div>
-                </TabsContent>
-              </Tabs>
+              )}
             </CardContent>
           </Card>
           <div className="w-full max-w-md">
@@ -846,88 +833,76 @@ const Auth = () => {
         <div className="flex-1 bg-background rounded-t-3xl -mt-4 p-6">
           <Card className="w-full border-0 shadow-none">
             <CardContent className="p-0">
-              <Tabs value={mode} onValueChange={(v) => setMode(v as 'login' | 'signup')} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login">Logga in</TabsTrigger>
-                  <TabsTrigger value="signup">Kom igång</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="login">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone')}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="email">E-post</TabsTrigger>
-                        <TabsTrigger value="phone">Telefon</TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="email" className="space-y-4 mt-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="mobile-login-email">E-postadress</Label>
+              {mode === 'login' ? (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as 'email' | 'phone')}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="email">E-post</TabsTrigger>
+                      <TabsTrigger value="phone">Telefon</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="email" className="space-y-4 mt-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="mobile-login-email">E-postadress</Label>
+                        <Input
+                          id="mobile-login-email"
+                          type="email"
+                          placeholder="din@email.se"
+                          value={contactInfo}
+                          onChange={(e) => setContactInfo(e.target.value)}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="phone" className="space-y-4 mt-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="mobile-login-phone">Telefonnummer</Label>
+                        <div className="flex gap-2">
+                          <Select value={countryCode} onValueChange={setCountryCode}>
+                            <SelectTrigger className="w-[100px] h-11">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="+46">🇸🇪 +46</SelectItem>
+                              <SelectItem value="+47">🇳🇴 +47</SelectItem>
+                              <SelectItem value="+45">🇩🇰 +45</SelectItem>
+                              <SelectItem value="+358">🇫🇮 +358</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <Input
-                            id="mobile-login-email"
-                            type="email"
-                            placeholder="din@email.se"
+                            id="mobile-login-phone"
+                            type="tel"
+                            placeholder="701234567"
                             value={contactInfo}
-                            onChange={(e) => setContactInfo(e.target.value)}
+                            onChange={(e) => setContactInfo(e.target.value.replace(/\D/g, ''))}
                             required
-                            className="h-11"
+                            className="h-11 flex-1"
                           />
                         </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="phone" className="space-y-4 mt-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="mobile-login-phone">Telefonnummer</Label>
-                          <div className="flex gap-2">
-                            <Select value={countryCode} onValueChange={setCountryCode}>
-                              <SelectTrigger className="w-[100px] h-11">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="+46">🇸🇪 +46</SelectItem>
-                                <SelectItem value="+47">🇳🇴 +47</SelectItem>
-                                <SelectItem value="+45">🇩🇰 +45</SelectItem>
-                                <SelectItem value="+358">🇫🇮 +358</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              id="mobile-login-phone"
-                              type="tel"
-                              placeholder="701234567"
-                              value={contactInfo}
-                              onChange={(e) => setContactInfo(e.target.value.replace(/\D/g, ''))}
-                              required
-                              className="h-11 flex-1"
-                            />
-                          </div>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full h-11"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
-                    </Button>
-                    <div className="flex items-center gap-2 my-4">
-                      <div className="flex-1 h-px bg-border" />
-                      <span className="text-xs text-muted-foreground">eller</span>
-                      <div className="flex-1 h-px bg-border" />
-                    </div>
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      className="w-full"
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full h-11"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Skickar..." : "Skicka verifieringskod"}
+                  </Button>
+                  <div className="text-center pt-4">
+                    <button
+                      type="button"
                       onClick={() => setMode('signup')}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
-                      Kom igång
-                    </Button>
-                  </form>
-                </TabsContent>
-                
-                <TabsContent value="signup">
+                      Ny användare? <span className="font-semibold">Kom igång här</span>
+                    </button>
+                  </div>
+                </form>
+              ) : (
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="mobile-email">E-postadress *</Label>
@@ -1011,8 +986,7 @@ const Auth = () => {
                       {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
                     </Button>
                   </form>
-                </TabsContent>
-              </Tabs>
+              )}
             </CardContent>
           </Card>
         </div>
