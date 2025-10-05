@@ -513,9 +513,9 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       bgColor: "bg-primary/10",
     },
     {
-      label: "Time Saved",
-      value: "4.5h",
-      change: "Today",
+      label: "Time to Response",
+      value: "2.3m",
+      change: "-12%",
       icon: Clock,
       color: "text-primary",
       bgColor: "bg-primary/10",
@@ -697,12 +697,22 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
               {/* Original Message - Show for draft tasks */}
               {originalMessage && !task.callSummary && isInlineExpanded && (
                 <div className="space-y-2 p-4 rounded-lg bg-muted/50 border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="text-xs">Original Message</Badge>
-                    <Badge className={`flex items-center gap-1.5 border text-xs px-2 py-0.5 ${getChannelColor(task.source)}`}>
-                      <ChannelIcon className="h-3 w-3" />
-                      {getChannelDisplay(task.source)}
-                    </Badge>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">Original Message</Badge>
+                      <Badge className={`flex items-center gap-1.5 border text-xs px-2 py-0.5 ${getChannelColor(task.source)}`}>
+                        <ChannelIcon className="h-3 w-3" />
+                        {getChannelDisplay(task.source)}
+                      </Badge>
+                    </div>
+                    {task.message_history && task.message_history[0]?.created_at && (
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(task.message_history[0].created_at).toLocaleTimeString('sv-SE', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </span>
+                    )}
                   </div>
                   <p className={cn(
                     "text-sm text-foreground leading-relaxed whitespace-pre-wrap",
@@ -742,6 +752,29 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                   <Badge className={cn("bg-yellow-accent text-yellow-accent-foreground font-semibold", compactView ? "text-xs" : "text-xs")}>
                     ⚡ AI Draft - Action Required
                   </Badge>
+                  {task.message_history && task.message_history.length > 1 && (
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const originalTime = new Date(task.message_history[0].created_at);
+                        const draftTime = new Date(task.message_history[task.message_history.length - 1].created_at);
+                        const waitMinutes = Math.floor((draftTime.getTime() - originalTime.getTime()) / 60000);
+                        return (
+                          <>
+                            <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/30">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Väntat {waitMinutes}m
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {draftTime.toLocaleTimeString('sv-SE', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
                 <p className={cn(
                   "text-foreground leading-relaxed whitespace-pre-wrap font-medium",
@@ -753,9 +786,8 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             )}
           </div>
 
-          {/* Footer: Time and Actions */}
-          <div className="flex items-center justify-between pt-2 border-t" onClick={(e) => e.stopPropagation()}>
-            <span className="text-sm text-muted-foreground">{task.time}</span>
+          {/* Footer: Actions only (time moved to message panes) */}
+          <div className="flex items-center justify-end pt-2 border-t" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
               {hasDraft ? (
                 <>
