@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { TeamDetails } from "@/components/clinic/TeamDetails";
+import { TeamManagement } from "@/components/clinic/TeamManagement";
 import frontOfficeLogo from "@/assets/front-office-logo-yellow-full.png";
 
 const Team = () => {
@@ -127,13 +128,16 @@ const Team = () => {
           </div>
         </div>
 
-        {/* Team Details Component */}
+        {/* Team Management Component */}
         {loading ? (
           <Card className="p-8">
             <p className="text-center text-muted-foreground">Loading team data...</p>
           </Card>
         ) : clinicId ? (
-          <TeamDetails clinicId={clinicId} />
+          <div className="space-y-6">
+            <TeamManagement clinicId={clinicId} />
+            <TeamDetails clinicId={clinicId} />
+          </div>
         ) : (
           <Card className="p-8">
             <p className="text-center text-muted-foreground">No clinic found</p>

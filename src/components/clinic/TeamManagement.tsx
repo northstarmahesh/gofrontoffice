@@ -195,7 +195,7 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
                 required
               />
               <p className="text-xs text-muted-foreground">
-                User must already have an account
+                Enter the email address of a team member who already has an account. They must have signed up first before you can add them to your business.
               </p>
             </div>
 

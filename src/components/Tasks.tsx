@@ -68,6 +68,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       loadTasks();
       loadActivityLogs();
       loadAnalytics();
+      syncTaskContactsToDatabase();
     }
 
     // Set up realtime subscription for tasks
@@ -235,6 +236,79 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       });
     } catch (error) {
       console.error("Error loading analytics:", error);
+    }
+  };
+
+  const syncTaskContactsToDatabase = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicData?.clinic_id) return;
+
+      // Get all tasks with contacts
+      const allTasksWithContacts = [...humanTasks, ...dummyHumanTasks].filter(
+        task => task.contact_name && task.contact_info
+      );
+
+      // Sync each contact
+      for (const task of allTasksWithContacts) {
+        const { data: existingContact } = await supabase
+          .from("contacts")
+          .select("id")
+          .eq("clinic_id", clinicData.clinic_id)
+          .eq("phone", task.contact_info)
+          .maybeSingle();
+
+        if (!existingContact && task.contact_name && task.contact_info) {
+          await supabase
+            .from("contacts")
+            .insert({
+              clinic_id: clinicData.clinic_id,
+              name: task.contact_name,
+              phone: task.contact_info,
+              location_id: selectedLocation
+            });
+
+          // Also ensure activity logs exist
+          const { data: existingLog } = await supabase
+            .from("activity_logs")
+            .select("id")
+            .eq("contact_info", task.contact_info)
+            .eq("clinic_id", clinicData.clinic_id)
+            .maybeSingle();
+
+          if (!existingLog && task.message_history && task.message_history.length > 0) {
+            // Create activity logs from message history
+            for (const msg of task.message_history) {
+              await supabase
+                .from("activity_logs")
+                .insert({
+                  user_id: user.id,
+                  clinic_id: clinicData.clinic_id,
+                  location_id: selectedLocation,
+                  type: msg.type === 'draft' ? task.source : msg.type,
+                  title: msg.title,
+                  summary: msg.summary,
+                  contact_name: task.contact_name,
+                  contact_info: task.contact_info,
+                  status: msg.type === 'draft' ? 'pending' : 'completed',
+                  direction: msg.type === 'draft' ? 'outbound' : (msg as any).direction || 'inbound',
+                  duration: (msg as any).duration,
+                  created_at: msg.created_at
+                });
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error syncing task contacts:", error);
     }
   };
 

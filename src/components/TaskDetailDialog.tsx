@@ -160,10 +160,56 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
 
     setIsSending(true);
     try {
-      // Simulate sending message
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Get clinic_id from the task
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicData?.clinic_id) throw new Error("No clinic found");
+
+      // Create activity log for sent message
+      const { error: logError } = await supabase
+        .from("activity_logs")
+        .insert({
+          user_id: user.id,
+          clinic_id: clinicData.clinic_id,
+          type: task.source || "message",
+          title: `Sent ${task.source || "message"}`,
+          summary: message,
+          contact_name: task.contact_name || relatedLog?.contact_name,
+          contact_info: task.contact_info || relatedLog?.contact_info,
+          status: "completed",
+          direction: "outbound"
+        });
+
+      if (logError) throw logError;
+
+      // Ensure contact exists
+      if (relatedLog?.contact_name && relatedLog?.contact_info) {
+        const { data: existingContact } = await supabase
+          .from("contacts")
+          .select("id")
+          .eq("clinic_id", clinicData.clinic_id)
+          .eq("phone", relatedLog.contact_info)
+          .maybeSingle();
+
+        if (!existingContact) {
+          await supabase
+            .from("contacts")
+            .insert({
+              clinic_id: clinicData.clinic_id,
+              name: relatedLog.contact_name,
+              phone: relatedLog.contact_info
+            });
+        }
+      }
       
-      toast.success("Message sent successfully!");
+      toast.success("Message sent and logged successfully!");
       
       // Mark task as completed
       await handleMarkAsDone();
@@ -179,6 +225,12 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
     if (!task) return;
 
     try {
+      // Animate dialog close
+      const dialogElement = document.querySelector('[role="dialog"]');
+      if (dialogElement) {
+        dialogElement.classList.add('animate-out', 'fade-out-0', 'zoom-out-95', 'slide-out-to-top-2');
+      }
+
       const { error } = await supabase
         .from("tasks")
         .update({ 
@@ -190,7 +242,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
       if (error) throw error;
 
       // Show undo toast
-      const toastId = toast.success("Task marked as done", {
+      toast.success("Task completed and moved to activity logs", {
         duration: 10000,
         action: {
           label: "Undo",
@@ -200,11 +252,13 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
         }
       });
 
-      // Close dialog and refresh
-      onOpenChange(false);
-      if (onTaskComplete) {
-        onTaskComplete(task.id);
-      }
+      // Wait for animation before closing
+      setTimeout(() => {
+        onOpenChange(false);
+        if (onTaskComplete) {
+          onTaskComplete(task.id);
+        }
+      }, 200);
     } catch (error) {
       console.error("Error completing task:", error);
       toast.error("Failed to mark task as done");

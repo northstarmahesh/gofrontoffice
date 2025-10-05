@@ -1,7 +1,40 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Phone, MessageSquare, TrendingUp, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Phone, MessageSquare, TrendingUp, CheckCircle, CalendarIcon, Download } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import type { DateRange } from "react-day-picker";
 
 const Reports = () => {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    to: new Date(),
+  });
+
+  const handleExport = () => {
+    // Create CSV data
+    const csvData = [
+      ["Date", "Calls", "Messages"],
+      ...weeklyStats.map(stat => [stat.day, stat.calls, stat.messages])
+    ].map(row => row.join(",")).join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csvData], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `front-office-analytics-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    toast.success("Report exported successfully!");
+  };
+
   const weeklyStats = [
     { day: "Mon", calls: 8, messages: 15 },
     { day: "Tue", calls: 12, messages: 18 },
@@ -18,11 +51,46 @@ const Reports = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="mb-2 text-2xl font-bold text-foreground">Reports</h2>
-        <p className="text-sm text-muted-foreground">
-          Track your assistant's performance
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="mb-2 text-2xl font-bold text-foreground">Analytics</h2>
+          <p className="text-sm text-muted-foreground">
+            Track your assistant's performance
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
+                    </>
+                  ) : (
+                    format(dateRange.from, "MMM d, yyyy")
+                  )
+                ) : (
+                  "Pick a date range"
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
