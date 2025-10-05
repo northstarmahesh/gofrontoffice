@@ -804,14 +804,30 @@ const Auth = () => {
                           <PhoneIcon className="h-4 w-4" />
                           Telefonnummer
                         </Label>
-                        <Input
-                          id="phone"
-                          type="tel"
-                          placeholder="+46 70 123 45 67"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="h-11"
-                        />
+                        <div className="flex gap-2">
+                          <Select value={countryCode} onValueChange={setCountryCode}>
+                            <SelectTrigger className="w-[120px] h-11">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="+46">🇸🇪 +46</SelectItem>
+                              <SelectItem value="+47">🇳🇴 +47</SelectItem>
+                              <SelectItem value="+45">🇩🇰 +45</SelectItem>
+                              <SelectItem value="+358">🇫🇮 +358</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            id="phone"
+                            type="tel"
+                            placeholder="701234567"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })}
+                            className="h-11 flex-1"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          För test: +46 739288211 eller +46 707300605
+                        </p>
                       </div>
 
                       <div className="space-y-2">
@@ -825,6 +841,49 @@ const Auth = () => {
                           onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
                           className="min-h-[100px] resize-none"
                         />
+                      </div>
+
+                      {/* Social Media Connections */}
+                      <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+                        <div className="flex items-center gap-2">
+                          <Instagram className="h-5 w-5 text-primary" />
+                          <h3 className="font-semibold">Anslut kanaler (valfritt)</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Koppla Instagram och Messenger för att hantera alla meddelanden på ett ställe
+                        </p>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 bg-background rounded-md border">
+                            <div className="flex items-center gap-3">
+                              <Instagram className="h-5 w-5 text-pink-500" />
+                              <div>
+                                <p className="font-medium text-sm">Instagram DM</p>
+                                <p className="text-xs text-muted-foreground">Kräver OAuth-inloggning</p>
+                              </div>
+                            </div>
+                            <Button type="button" variant="outline" size="sm" disabled>
+                              Efter registrering
+                            </Button>
+                          </div>
+                          
+                          <div className="flex items-center justify-between p-3 bg-background rounded-md border">
+                            <div className="flex items-center gap-3">
+                              <MessageSquare className="h-5 w-5 text-blue-500" />
+                              <div>
+                                <p className="font-medium text-sm">Facebook Messenger</p>
+                                <p className="text-xs text-muted-foreground">Kräver OAuth-inloggning</p>
+                              </div>
+                            </div>
+                            <Button type="button" variant="outline" size="sm" disabled>
+                              Efter registrering
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground italic">
+                          Du kan ansluta dina sociala medier direkt efter att du har skapat ditt konto
+                        </p>
                       </div>
 
                     <Button 
@@ -1013,14 +1072,30 @@ const Auth = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="mobile-phone">Telefonnummer</Label>
-                      <Input
-                        id="mobile-phone"
-                        type="tel"
-                        placeholder="+46 70 123 45 67"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="h-11"
-                      />
+                      <div className="flex gap-2">
+                        <Select value={countryCode} onValueChange={setCountryCode}>
+                          <SelectTrigger className="w-[100px] h-11">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="+46">🇸🇪 +46</SelectItem>
+                            <SelectItem value="+47">🇳🇴 +47</SelectItem>
+                            <SelectItem value="+45">🇩🇰 +45</SelectItem>
+                            <SelectItem value="+358">🇫🇮 +358</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          id="mobile-phone"
+                          type="tel"
+                          placeholder="701234567"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })}
+                          className="h-11 flex-1"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        För test: +46 739288211 eller +46 707300605
+                      </p>
                     </div>
 
                     <div className="space-y-2">
@@ -1032,6 +1107,39 @@ const Auth = () => {
                         onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
                         className="min-h-[100px] resize-none"
                       />
+                    </div>
+
+                    {/* Social Media Connections */}
+                    <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        <Instagram className="h-4 w-4 text-primary" />
+                        <h3 className="font-semibold text-sm">Anslut kanaler (valfritt)</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Koppla Instagram och Messenger efter registrering
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2 bg-background rounded-md border">
+                          <div className="flex items-center gap-2">
+                            <Instagram className="h-4 w-4 text-pink-500" />
+                            <div>
+                              <p className="font-medium text-xs">Instagram DM</p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground">Efter reg.</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-2 bg-background rounded-md border">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4 text-blue-500" />
+                            <div>
+                              <p className="font-medium text-xs">Messenger</p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground">Efter reg.</span>
+                        </div>
+                      </div>
                     </div>
 
                     <Button 
