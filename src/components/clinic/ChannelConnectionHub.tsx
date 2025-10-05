@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MessengerConnection } from "./MessengerConnection";
+import { InstagramConnection } from "./InstagramConnection";
 
 interface ChannelConnectionHubProps {
   clinicId: string;
@@ -26,6 +27,7 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [messengerDialogOpen, setMessengerDialogOpen] = useState(false);
+  const [instagramDialogOpen, setInstagramDialogOpen] = useState(false);
 
   useEffect(() => {
     checkConnections();
@@ -76,16 +78,7 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
     
     try {
       if (channelId === "instagram") {
-        const { data, error } = await supabase.functions.invoke('instagram-oauth-start', {
-          body: { clinicId, locationId }
-        });
-
-        if (error) throw error;
-
-        if (data?.authUrl) {
-          window.open(data.authUrl, '_blank');
-          toast.success("Instagram connection started! Complete the authorization in the new window.");
-        }
+        setInstagramDialogOpen(true);
       } else if (channelId === "phone" || channelId === "sms" || channelId === "whatsapp") {
         toast.info("Set up Vonage", {
           description: "Visit dashboard.nexmo.com to configure your phone, SMS, and WhatsApp channels.",
@@ -177,6 +170,24 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
             onConnectionChange={() => {
               checkConnections();
               setMessengerDialogOpen(false);
+              if (onChannelsUpdated) onChannelsUpdated();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={instagramDialogOpen} onOpenChange={setInstagramDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Connect Instagram Direct Messages</DialogTitle>
+          </DialogHeader>
+          <InstagramConnection
+            clinicId={clinicId}
+            locationId={locationId || ""}
+            isConnected={connectionStatus.instagram}
+            onConnectionChange={() => {
+              checkConnections();
+              setInstagramDialogOpen(false);
               if (onChannelsUpdated) onChannelsUpdated();
             }}
           />
