@@ -701,14 +701,14 @@ const Auth = () => {
                   </form>
                 </div>
               ) : (
-                  <div className="space-y-4">
-                    <div className="text-center space-y-2 mb-6">
-                      <h3 className="text-xl font-bold">Kom igång med Front Office</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Fyll i dina uppgifter så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
-                      </p>
-                    </div>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-4">
+                  <div className="text-center space-y-2 mb-6">
+                    <h3 className="text-xl font-bold">Kom igång med Front Office</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Fyll i dina uppgifter så hjälper vi dig att boka ett kostnadsfritt konsultationssamtal
+                    </p>
+                  </div>
+                  <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="email" className="flex items-center gap-2">
                           <Mail className="h-4 w-4" />
@@ -797,15 +797,24 @@ const Auth = () => {
                         />
                       </div>
 
-                      <Button 
-                        type="submit" 
-                        className="w-full h-12 text-base font-semibold"
-                        disabled={isSubmitting}
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 text-base font-semibold"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
+                    </Button>
+                    <div className="text-center pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setMode('login')}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
                       >
-                        {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
-                      </Button>
-                    </form>
-                  </div>
+                        Har du redan ett konto? <span className="font-semibold">Logga in här</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -985,6 +994,15 @@ const Auth = () => {
                     >
                       {isSubmitting ? "Skickar..." : "Boka ett gratis konsultation"}
                     </Button>
+                    <div className="text-center pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setMode('login')}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Har du redan ett konto? <span className="font-semibold">Logga in här</span>
+                      </button>
+                    </div>
                   </form>
               )}
             </CardContent>
