@@ -547,7 +547,7 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="hidden lg:grid lg:grid-cols-2 min-h-screen relative">
         {/* Logo positioned at top center between columns */}
-        <div className="absolute left-1/2 top-8 -translate-x-1/2 z-20">
+        <div className="absolute left-1/2 top-12 -translate-x-1/2 z-20">
           <div className="bg-white rounded-2xl shadow-xl p-4">
             <img 
               src={logo} 
@@ -557,7 +557,7 @@ const Auth = () => {
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-8 lg:p-12 flex flex-col justify-center">
+        <div className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white p-8 lg:p-12 flex flex-col justify-center pt-32 lg:pt-12">
           <h1 className="text-3xl lg:text-4xl font-bold mb-6 leading-tight">
             Din digitala assistent — tillgänglig dygnet runt
           </h1>
