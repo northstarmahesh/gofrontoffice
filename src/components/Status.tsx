@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, Calendar, MapPin, ChevronDown } from "lucide-react";
+import { Phone, MessageSquare, Instagram, Facebook, Mail, Bot, TrendingUp, DollarSign, Clock, Calendar, MapPin, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     whatsapp: true,
     instagram: false,
     messenger: false,
+    email: false,
   });
   const [channelModes, setChannelModes] = useState({
     phone: "autopilot" as "autopilot" | "copilot",
@@ -39,6 +40,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     whatsapp: "autopilot" as "autopilot" | "copilot",
     instagram: "autopilot" as "autopilot" | "copilot",
     messenger: "autopilot" as "autopilot" | "copilot",
+    email: "autopilot" as "autopilot" | "copilot",
   });
   const [schedules, setSchedules] = useState<any[]>([]);
   const [connectionStatus, setConnectionStatus] = useState({
@@ -47,6 +49,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     whatsapp: false,
     instagram: false,
     messenger: false,
+    email: false,
   });
   const [connectedNumbers, setConnectedNumbers] = useState<{
     phone?: string;
@@ -150,6 +153,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
           whatsapp: data.whatsapp_enabled,
           instagram: data.instagram_enabled,
           messenger: data.messenger_enabled,
+          email: true, // Email is always available
         });
         setChannelModes({
           phone: globalMode,
@@ -157,6 +161,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
           whatsapp: globalMode,
           instagram: globalMode,
           messenger: globalMode,
+          email: globalMode,
         });
       } else {
         // Create default settings for this location
@@ -221,6 +226,27 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     if (!selectedLocation) return;
 
     try {
+      // Get clinic ID first to check if it's a demo account
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: clinicUsers } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      let isDemoAccount = false;
+      if (clinicUsers?.clinic_id) {
+        const { data: clinicData } = await supabase
+          .from("clinics")
+          .select("is_demo_account")
+          .eq("id", clinicUsers.clinic_id)
+          .maybeSingle();
+        
+        isDemoAccount = clinicData?.is_demo_account || false;
+      }
+
       // Check phone numbers
       const { data: phoneNumbers } = await supabase
         .from("clinic_phone_numbers")
@@ -232,11 +258,12 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       const currentLocation = locations.find(l => l.id === selectedLocation);
 
       const status = {
-        phone: false,
-        sms: false,
-        whatsapp: false,
-        instagram: currentLocation?.instagram_connected || false,
-        messenger: currentLocation?.facebook_connected || false,
+        phone: isDemoAccount || false,
+        sms: isDemoAccount || false,
+        whatsapp: isDemoAccount || false,
+        instagram: isDemoAccount || currentLocation?.instagram_connected || false,
+        messenger: isDemoAccount || currentLocation?.facebook_connected || false,
+        email: isDemoAccount || true, // Email always available for demo accounts
       };
 
       const numbers: { phone?: string; sms?: string; whatsapp?: string } = {};
@@ -852,6 +879,70 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                     ) : (
                       <>
                         <span className="font-medium text-foreground">Autopilot:</span> AI sends Messenger replies automatically without your review
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Email */}
+            <div className="flex flex-col gap-3 p-4 rounded-lg border bg-card">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-primary" />
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="email" className="text-sm font-semibold cursor-pointer">Email</Label>
+                      {!connectionStatus.email && (
+                        <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20 text-xs">
+                          Not Connected
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <Switch
+                  id="email"
+                  checked={channels.email}
+                  onCheckedChange={() => handleChannelToggle("email")}
+                  disabled={!connectionStatus.email}
+                />
+              </div>
+              {!connectionStatus.email ? (
+                <div className="pl-8 text-sm text-muted-foreground bg-muted/30 p-3 rounded">
+                  <p className="font-medium text-foreground mb-1">Email Always Available</p>
+                  <p>Email is enabled for all accounts and contacts.</p>
+                </div>
+              ) : channels.email && (
+                <div className="pl-8 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={channelModes.email === "copilot" ? "default" : "outline"}
+                      onClick={() => channelModes.email === "autopilot" && handleChannelModeToggle("email")}
+                      className="flex-1"
+                    >
+                      Co-pilot
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={channelModes.email === "autopilot" ? "default" : "outline"}
+                      onClick={() => channelModes.email === "copilot" && handleChannelModeToggle("email")}
+                      className="flex-1"
+                    >
+                      Autopilot
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                    {channelModes.email === "copilot" ? (
+                      <>
+                        <span className="font-medium text-foreground">Co-pilot:</span> AI drafts email replies as{" "}
+                        <button onClick={onNavigateToTasks} className="text-primary hover:underline">tasks</button> for you to approve before sending
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-medium text-foreground">Autopilot:</span> AI sends email replies automatically without your review
                       </>
                     )}
                   </div>

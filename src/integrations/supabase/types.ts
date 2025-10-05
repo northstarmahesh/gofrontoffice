@@ -491,6 +491,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
+          is_demo_account: boolean | null
           logo_url: string | null
           name: string
           phone: string | null
@@ -510,6 +511,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          is_demo_account?: boolean | null
           logo_url?: string | null
           name: string
           phone?: string | null
@@ -529,6 +531,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          is_demo_account?: boolean | null
           logo_url?: string | null
           name?: string
           phone?: string | null

@@ -164,6 +164,15 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
 
       if (!clinicUsers?.clinic_id) return;
 
+      // Check if this is a demo account
+      const { data: clinicData } = await supabase
+        .from("clinics")
+        .select("is_demo_account")
+        .eq("id", clinicUsers.clinic_id)
+        .maybeSingle();
+
+      const isDemoAccount = clinicData?.is_demo_account || false;
+
       // Get locations and their connections
       const { data: locations } = await supabase
         .from("clinic_locations")
@@ -180,8 +189,8 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         .eq("is_verified", true)
         .eq("is_active", true);
 
-      const hasSms = phoneNumbers?.some(p => p.channels?.includes('sms'));
-      const hasWhatsApp = phoneNumbers?.some(p => p.channels?.includes('whatsapp'));
+      const hasSms = isDemoAccount || phoneNumbers?.some(p => p.channels?.includes('sms'));
+      const hasWhatsApp = isDemoAccount || phoneNumbers?.some(p => p.channels?.includes('whatsapp'));
 
       // Check which channels this contact has used
       const usedChannels = new Set(
@@ -191,30 +200,37 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
           if (type.includes('instagram')) return 'instagram';
           if (type.includes('messenger') || type.includes('facebook')) return 'messenger';
           if (type.includes('sms')) return 'sms';
+          if (type.includes('email') || type.includes('mail')) return 'email';
           return null;
         }).filter(Boolean)
       );
 
+      // For demo accounts, mark all channels as connected and used
       setAvailableChannels([
         { 
           channel: 'sms', 
           isConnected: hasSms || false,
-          hasUsed: usedChannels.has('sms')
+          hasUsed: isDemoAccount || usedChannels.has('sms')
         },
         { 
           channel: 'whatsapp', 
           isConnected: hasWhatsApp || false,
-          hasUsed: usedChannels.has('whatsapp')
+          hasUsed: isDemoAccount || usedChannels.has('whatsapp')
         },
         { 
           channel: 'instagram', 
-          isConnected: location?.instagram_connected || false,
-          hasUsed: usedChannels.has('instagram')
+          isConnected: isDemoAccount || location?.instagram_connected || false,
+          hasUsed: isDemoAccount || usedChannels.has('instagram')
         },
         { 
           channel: 'messenger', 
-          isConnected: location?.facebook_connected || false,
-          hasUsed: usedChannels.has('messenger')
+          isConnected: isDemoAccount || location?.facebook_connected || false,
+          hasUsed: isDemoAccount || usedChannels.has('messenger')
+        },
+        { 
+          channel: 'email', 
+          isConnected: isDemoAccount || (contact?.email || editForm.email) ? true : false,
+          hasUsed: isDemoAccount || usedChannels.has('email') || (contact?.email || editForm.email) ? true : false
         },
       ]);
     } catch (error) {
@@ -724,6 +740,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                                   case 'whatsapp': return <span className="text-xs">WhatsApp</span>;
                                   case 'instagram': return <Instagram className="h-4 w-4" />;
                                   case 'messenger': return <Facebook className="h-4 w-4" />;
+                                  case 'email': return <Mail className="h-4 w-4" />;
                                 }
                               };
 
