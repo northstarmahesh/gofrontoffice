@@ -5,15 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, AlertCircle, ArrowRight, Calendar, MapPin, ChevronDown } from "lucide-react";
+import { Phone, MessageSquare, Instagram, Facebook, Bot, TrendingUp, DollarSign, Clock, Calendar, MapPin, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
-import ActivityLogs from "./ActivityLogs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 interface StatusProps {
   onNavigateToTasks?: () => void;
@@ -29,7 +26,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [aiSystemOpen, setAiSystemOpen] = useState(true);
-  const [activityLogsOpen, setActivityLogsOpen] = useState(true);
   const [channels, setChannels] = useState({
     phone: true,
     sms: true,
@@ -45,7 +41,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     messenger: "autopilot" as "autopilot" | "copilot",
   });
   const [schedules, setSchedules] = useState<any[]>([]);
-  const [pendingTasks, setPendingTasks] = useState<any[]>([]);
   const [connectionStatus, setConnectionStatus] = useState({
     phone: false,
     sms: false,
@@ -61,7 +56,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
 
   useEffect(() => {
     loadLocations();
-    loadPendingTasks();
   }, []);
 
   useEffect(() => {
@@ -273,26 +267,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     }
   };
 
-  const loadPendingTasks = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (error) throw error;
-      setPendingTasks(data || []);
-    } catch (error) {
-      console.error("Error loading pending tasks:", error);
-    }
-  };
-
   const updateSettings = async (updates: any) => {
     if (!selectedLocation) return;
     
@@ -437,17 +411,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     );
   }
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return <Badge className="border-destructive/30 bg-destructive/10 text-destructive"><AlertCircle className="mr-1 h-3 w-3" />High</Badge>;
-      case "medium":
-        return <Badge className="border-warning/30 bg-warning/10 text-warning">Medium</Badge>;
-      default:
-        return <Badge className="border-muted-foreground/30 bg-muted text-muted-foreground">Low</Badge>;
-    }
-  };
-
   if (locations.length === 0 && !loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -510,51 +473,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                   })}
                 </div>
               </div>
-
-      {/* Needs Attention Section */}
-      {pendingTasks.length > 0 && (
-        <Card className="border-2 border-yellow-accent p-6 shadow-lg bg-gradient-to-br from-yellow-accent/10 to-yellow-accent/5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xl font-bold text-foreground">Needs Your Attention</h3>
-              <p className="text-sm text-muted-foreground">Tasks requiring immediate action</p>
-            </div>
-            <Badge variant="outline" className="text-2xl font-bold px-4 py-2 bg-yellow-accent border-yellow-accent text-secondary">
-              {pendingTasks.length}
-            </Badge>
-          </div>
-          <div className="space-y-2">
-            {pendingTasks.map((task) => (
-              <Card
-                key={task.id}
-                className="cursor-pointer border-0 p-4 shadow-sm transition-all hover:shadow-md bg-background"
-                onClick={onNavigateToTasks}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="text-sm font-semibold text-foreground">{task.title}</h4>
-                      {getPriorityBadge(task.priority)}
-                    </div>
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-1">{task.description}</p>
-                    )}
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </Card>
-            ))}
-            <Button 
-              variant="outline" 
-              className="w-full mt-2"
-              onClick={onNavigateToTasks}
-            >
-              View All Tasks
-            </Button>
-          </div>
-        </Card>
-      )}
-
 
       {/* AI Response System - Collapsible */}
       <Card className="border-2 border-primary/20 p-6 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
@@ -1017,62 +935,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
             <Button onClick={handleScheduleSave} className="w-full mt-4">
               Save Schedule
             </Button>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Activity Logs - Collapsible */}
-      <Card className="border-2 border-primary/20 p-6 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
-        <Collapsible open={activityLogsOpen} onOpenChange={setActivityLogsOpen}>
-          <CollapsibleTrigger className="w-full">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-primary/20 p-3 border-2 border-primary/30">
-                  <MessageSquare className="h-6 w-6 text-primary" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-xl font-bold text-foreground">Activity Logs</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {activityLogsOpen ? "Assistant activity and message history" : "Click to expand activity logs"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-[200px] justify-start text-left font-normal",
-                        "border-primary/20"
-                      )}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Calendar className="mr-2 h-4 w-4" />
-                      {format(new Date(), "PPP")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarComponent
-                      mode="single"
-                      selected={new Date()}
-                      onSelect={(date) => {
-                        if (date) {
-                          console.log("Date selected:", date);
-                        }
-                      }}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${activityLogsOpen ? "rotate-180" : ""}`} />
-              </div>
-            </div>
-          </CollapsibleTrigger>
-
-          <CollapsibleContent className="mt-6">
-            <ActivityLogs onNavigateToContact={onNavigateToTasks} />
           </CollapsibleContent>
         </Collapsible>
       </Card>
