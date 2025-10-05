@@ -4,636 +4,580 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
-
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import logo from "@/assets/front-office-logo-white-full.png";
-import { Phone, MessageSquare, Calendar, AlarmClock, MessageCircle, Target } from "lucide-react";
+import frontOfficeLogo from "@/assets/front-office-logo-auth.png";
+import { CheckCircle2, Calendar, Building2, Mail, Phone as PhoneIcon, MessageSquare, Clock, Target } from "lucide-react";
+import { z } from "zod";
+
+const leadSchema = z.object({
+  email: z.string().email("Ogiltig e-postadress"),
+  businessName: z.string().min(2, "Företagsnamn måste vara minst 2 tecken"),
+  businessType: z.string().min(1, "Vänligen välj verksamhetstyp"),
+  phone: z.string().optional(),
+  additionalInfo: z.string().optional(),
+});
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<"email" | "auth" | "code">("email");
-  const [isLogin, setIsLogin] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
-  const [awaitingVerification, setAwaitingVerification] = useState(false);
+  const [step, setStep] = useState<'form' | 'booking' | 'success'>('form');
+  const [formData, setFormData] = useState({
+    email: '',
+    businessName: '',
+    businessType: '',
+    phone: '',
+    additionalInfo: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Check if user is already logged in - redirect to main app
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && !awaitingVerification) {
+      if (session) {
         navigate("/");
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only redirect if we're not waiting for email verification
-      if (session && !awaitingVerification) {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
         navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, awaitingVerification]);
+  }, [navigate]);
 
-  const handleEmailContinue = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast.error("Please enter your email");
-      return;
-    }
+    setIsSubmitting(true);
 
-    // Keep the current isLogin state
-    setStep("auth");
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password || !fullName) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
-    setLoading(true);
-    setAwaitingVerification(true);
-    
     try {
-      // Sign up the user
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/`,
-        },
+      // Validate form data
+      const validatedData = leadSchema.parse({
+        email: formData.email,
+        businessName: formData.businessName,
+        businessType: formData.businessType,
+        phone: formData.phone || undefined,
+        additionalInfo: formData.additionalInfo || undefined,
       });
+
+      // Submit to database
+      const { error } = await supabase
+        .from('onboarding_leads')
+        .insert({
+          email: validatedData.email,
+          business_name: validatedData.businessName,
+          business_type: validatedData.businessType,
+          phone: validatedData.phone,
+          additional_info: validatedData.additionalInfo,
+        });
 
       if (error) {
-        // Handle case where user already exists
-        if (error.message.includes('already registered') || 
-            error.message.includes('already exists') ||
-            error.message.includes('User already registered')) {
-          toast.info("This email is already registered. Switching to sign in...");
-          setIsLogin(true);
-          setFullName("");
-          setAwaitingVerification(false);
-          setLoading(false);
-          return;
+        if (error.code === '23505') { // Unique constraint violation
+          toast.error("Denna e-postadress är redan registrerad");
+        } else {
+          throw error;
         }
-        throw error;
+        return;
       }
 
-      // Send 6-digit verification code using edge function
-      const { data: codeData, error: codeError } = await supabase.functions.invoke(
-        'send-email-verification',
-        {
-          body: { email }
-        }
-      );
-
-      if (codeError) {
-        console.error("Failed to send verification code:", codeError);
-        toast.error("Account created but failed to send verification code");
+      toast.success("Tack! Boka nu ditt onboarding-samtal");
+      setStep('booking');
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast.error(firstError.message);
       } else {
-        console.log("Verification code sent:", codeData);
-        toast.success("Check your email for the 6-digit verification code!");
+        console.error('Error submitting lead:', error);
+        toast.error("Något gick fel. Försök igen senare.");
       }
-
-      setStep("code");
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      toast.error(error.message || "Failed to sign up");
-      setAwaitingVerification(false);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      toast.error("Please enter email and password");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      toast.success("Welcome back!");
-      navigate("/");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to log in");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSendCode = async () => {
-    if (!email) {
-      toast.error("Please enter your email");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        'send-email-verification',
-        {
-          body: { email }
-        }
-      );
-
-      if (error) throw error;
-
-      console.log("Verification code sent:", data);
-      toast.success("Check your email for the 6-digit verification code!");
-      setStep("code");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to send code");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !verificationCode) {
-      toast.error("Please enter the verification code");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Verify the code using edge function
-      const { data, error } = await supabase.functions.invoke(
-        'verify-email-otp',
-        {
-          body: { email, code: verificationCode }
-        }
-      );
-
-      if (error) throw error;
-
-      if (!data.verified) {
-        throw new Error(data.error || "Invalid verification code");
-      }
-
-      setAwaitingVerification(false);
-      toast.success("Successfully verified! Redirecting...");
-      
-      // Sign in the user after verification
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        toast.error("Verification successful but sign-in failed. Please try logging in.");
-      } else {
-        navigate("/");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Invalid verification code");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderAuthForms = () => (
-    <>
-      {/* Card Header */}
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-3">
-          {step === "email" 
-            ? "Get Started"
-            : step === "code"
-              ? "Verify Your Email"
-              : isLogin 
-                ? "Welcome Back" 
-                : "Create Your Account"}
-        </h2>
-        <p className="text-base text-muted-foreground">
-          {step === "email" 
-            ? "Enter your email to begin"
-            : step === "code"
-              ? "Check your inbox for the 6-digit code"
-              : isLogin 
-                ? "Sign in to access your dashboard" 
-                : "Choose a secure password to continue"}
-        </p>
-      </div>
-
-      {/* Email Step */}
-      {step === "email" && (
-        <form onSubmit={handleEmailContinue} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="your.name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              autoFocus
-              className="h-11 text-base"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full h-11 text-base"
-            disabled={loading}
-          >
-            Continue
-          </Button>
-
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">
-              Already have an account?{" "}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(true);
-                setStep("auth");
-              }}
-              className="font-medium text-yellow-accent hover:text-yellow-accent/80 hover:underline transition-colors"
-              disabled={loading}
-            >
-              Sign in
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Auth Step - Login or Signup */}
-      {step === "auth" && (
-        <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="email-auth">Email Address</Label>
-            <Input
-              id="email-auth"
-              type="email"
-              placeholder="your.name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              className="h-11 text-base"
-            />
-          </div>
-
-          {!isLogin && (
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Jane Smith"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                disabled={loading}
-                autoFocus
-                className="h-11 text-base"
-              />
+  // Success screen
+  if (step === 'success') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl border-2 border-green-500/20">
+          <CardHeader className="text-center space-y-4 pb-8">
+            <div className="flex justify-center">
+              <div className="h-20 w-20 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle2 className="h-12 w-12 text-green-500" />
+              </div>
             </div>
-          )}
+            <CardTitle className="text-3xl font-bold">Tack!</CardTitle>
+            <CardDescription className="text-lg">
+              Vi har tagit emot din intresseanmälan och ser fram emot att träffa dig på ditt onboarding-samtal.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted/30 rounded-lg p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Du kommer att få en bekräftelse via e-post med mer information.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              autoFocus={isLogin}
-              className="h-11 text-base"
+  // Booking screen
+  if (step === 'booking') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
+        {/* Desktop Layout */}
+        <div className="hidden lg:grid lg:grid-cols-2 min-h-screen">
+          {/* Left side - Branding */}
+          <div className="bg-[hsl(var(--auth-bg))] text-white p-12 flex flex-col justify-center">
+            <img 
+              src={logo} 
+              alt="Front Office" 
+              className="h-16 w-auto mb-12"
             />
+            <h1 className="text-5xl font-bold mb-4 leading-tight">
+              Välkommen till Front Office
+            </h1>
+            <p className="text-2xl text-yellow-accent font-semibold mb-8">
+              Ditt nya digitala team
+            </p>
+            <p className="text-lg text-white/80 mb-12">
+              Vi hjälper dig att automatisera kundkommunikation och boka fler möten — helt på autopilot.
+            </p>
+
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-yellow-accent/20 flex items-center justify-center flex-shrink-0">
+                  <Clock className="text-yellow-accent" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Spara 5+ timmar per vecka</h3>
+                  <p className="text-white/70">Låt AI hantera repetitiva frågor</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center flex-shrink-0">
+                  <MessageSquare className="text-blue-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Alla kanaler, ett ställe</h3>
+                  <p className="text-white/70">WhatsApp, SMS, Instagram & mer</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-purple-400/20 flex items-center justify-center flex-shrink-0">
+                  <Target className="text-purple-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Du har full kontroll</h3>
+                  <p className="text-white/70">Granska och godkänn alla svar</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <Button
-            type="submit"
-            className="w-full h-11 text-base"
-            disabled={loading}
-          >
-            {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
-          </Button>
-        </form>
-      )}
-
-      {/* Code Verification Step */}
-      {step === "code" && (
-        <form onSubmit={handleVerifyCode} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="code">Verification Code</Label>
-            <Input
-              id="code"
-              type="text"
-              placeholder="Enter 6-digit code"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value)}
-              disabled={loading}
-              autoFocus
-              maxLength={6}
-              className="h-11 text-base text-center tracking-widest"
-            />
+          {/* Right side - Booking */}
+          <div className="flex items-center justify-center p-12">
+            <Card className="w-full max-w-2xl shadow-2xl border-2 border-primary/10">
+              <CardHeader className="text-center space-y-4">
+                <div className="flex justify-center mb-2">
+                  <img 
+                    src={frontOfficeLogo} 
+                    alt="Front Office Logo" 
+                    className="h-12 w-auto"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
+                    <Calendar className="h-6 w-6" />
+                    Boka ditt onboarding-samtal
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    Välj en tid som passar dig så hjälper vi dig komma igång
+                  </CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <iframe 
+                  src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln?gv=true" 
+                  style={{ border: 0 }} 
+                  width="100%" 
+                  height="600" 
+                  frameBorder="0"
+                  title="Book Onboarding Call"
+                />
+              </CardContent>
+              <div className="p-6 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setStep('success');
+                  }}
+                  className="w-full"
+                >
+                  Jag har bokat min tid
+                </Button>
+              </div>
+            </Card>
           </div>
-
-          <Button
-            type="submit"
-            className="w-full h-11 text-base"
-            disabled={loading}
-          >
-            {loading ? "Verifying..." : "Verify Code"}
-          </Button>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={handleSendCode}
-              className="text-sm text-muted-foreground hover:text-foreground"
-              disabled={loading}
-            >
-              Resend code
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Toggle between login/signup */}
-      {step === "auth" && (
-        <div className="mt-6 text-center text-sm">
-          <span className="text-muted-foreground">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-          </span>
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setPassword("");
-              setFullName("");
-            }}
-            className="font-medium text-primary hover:underline"
-            disabled={loading}
-          >
-            {isLogin ? "Create an account" : "Sign in"}
-          </button>
         </div>
-      )}
-    </>
-  );
 
+        {/* Mobile Layout */}
+        <div className="lg:hidden min-h-screen flex flex-col">
+          <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-6 pb-8">
+            <img 
+              src={logo} 
+              alt="Front Office" 
+              className="h-14 w-auto mb-6"
+            />
+            <h1 className="text-3xl font-bold mb-2 leading-tight">
+              Boka ditt onboarding-samtal
+            </h1>
+            <p className="text-lg text-yellow-accent font-semibold mb-2">
+              Vi hjälper dig komma igång
+            </p>
+          </div>
+
+          <div className="flex-1 bg-background rounded-t-3xl -mt-4 p-6">
+            <Card className="w-full border-0 shadow-lg">
+              <CardContent className="p-0">
+                <iframe 
+                  src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1CquC8x_Kjq5WnMC_alUbWUwnabOexZ5JOW7-iSuqFnZUSOuF2UioDrBm1xP5rIz0KQiosFnln?gv=true" 
+                  style={{ border: 0 }} 
+                  width="100%" 
+                  height="600" 
+                  frameBorder="0"
+                  title="Book Onboarding Call"
+                />
+              </CardContent>
+              <div className="p-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep('success')}
+                  className="w-full"
+                >
+                  Jag har bokat min tid
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Form screen
   return (
     <div className="min-h-screen bg-[hsl(var(--auth-bg))]">
-      {/* Mobile Layout - Single Column */}
+      {/* Desktop Layout */}
+      <div className="hidden lg:grid lg:grid-cols-2 min-h-screen">
+        {/* Left side - Branding */}
+        <div className="bg-[hsl(var(--auth-bg))] text-white p-12 flex flex-col justify-center">
+          <img 
+            src={logo} 
+            alt="Front Office" 
+            className="h-16 w-auto mb-12"
+          />
+          <h1 className="text-5xl font-bold mb-4 leading-tight">
+            Välkommen till Front Office
+          </h1>
+          <p className="text-2xl text-yellow-accent font-semibold mb-8">
+            Din digitala assistent — 24/7
+          </p>
+          <p className="text-lg text-white/80 mb-12">
+            Vi onboardar för närvarande kunder manuellt för att garantera bästa möjliga upplevelse.
+          </p>
+
+          <div className="space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-yellow-accent/20 flex items-center justify-center flex-shrink-0">
+                <Clock className="text-yellow-accent" size={24} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Spara 5+ timmar per vecka</h3>
+                <p className="text-white/70">Automatisera repetitiva kundsamtal</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center flex-shrink-0">
+                <MessageSquare className="text-blue-400" size={24} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Alla kanaler på ett ställe</h3>
+                <p className="text-white/70">WhatsApp, SMS, Instagram, Messenger</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-purple-400/20 flex items-center justify-center flex-shrink-0">
+                <Target className="text-purple-400" size={24} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Full kontroll</h3>
+                <p className="text-white/70">Granska och godkänn alla AI-svar</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right side - Form */}
+        <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background/50 to-primary/5">
+          <Card className="w-full max-w-md shadow-2xl border-2 border-primary/10">
+            <CardHeader className="space-y-4 text-center">
+              <div className="flex justify-center mb-2">
+                <img 
+                  src={frontOfficeLogo} 
+                  alt="Front Office Logo" 
+                  className="h-12 w-auto"
+                />
+              </div>
+              <div className="space-y-2">
+                <CardTitle className="text-2xl font-bold">
+                  Kom igång med Front Office
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Fyll i dina uppgifter så bokar vi ett onboarding-samtal
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    E-postadress *
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="din@email.se"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="businessName" className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Företagsnamn *
+                  </Label>
+                  <Input
+                    id="businessName"
+                    type="text"
+                    placeholder="Din klinik/salon"
+                    value={formData.businessName}
+                    onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                    required
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="businessType">Verksamhetstyp *</Label>
+                  <Select
+                    value={formData.businessType}
+                    onValueChange={(value) => setFormData({ ...formData, businessType: value })}
+                    required
+                  >
+                    <SelectTrigger id="businessType" className="h-11">
+                      <SelectValue placeholder="Välj typ av verksamhet" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="skönhetssalong">Skönhetssalong</SelectItem>
+                      <SelectItem value="hårsalong">Hårsalong</SelectItem>
+                      <SelectItem value="nagelstudio">Nagelstudio</SelectItem>
+                      <SelectItem value="spa">Spa & Wellness</SelectItem>
+                      <SelectItem value="tandklinik">Tandklinik</SelectItem>
+                      <SelectItem value="hudvårdsklinik">Hudvårdsklinik</SelectItem>
+                      <SelectItem value="annat">Annat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="flex items-center gap-2">
+                    <PhoneIcon className="h-4 w-4" />
+                    Telefonnummer
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+46 70 123 45 67"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="additionalInfo">Övrig information</Label>
+                  <Textarea
+                    id="additionalInfo"
+                    placeholder="Berätta gärna lite mer om din verksamhet och dina behov..."
+                    value={formData.additionalInfo}
+                    onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-11"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Skickar..." : "Fortsätt till bokning"}
+                </Button>
+
+                <p className="text-xs text-muted-foreground text-center pt-2">
+                  Genom att skicka detta formulär godkänner du att vi kontaktar dig angående Front Office.
+                </p>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Mobile Layout */}
       <div className="lg:hidden min-h-screen flex flex-col">
-        {/* Mobile Header */}
         <div className="bg-[hsl(var(--auth-bg))] text-white px-6 pt-6 pb-8">
           <img 
             src={logo} 
             alt="Front Office" 
             className="h-14 w-auto mb-6"
           />
-          <h1 className="text-4xl font-bold mb-2 leading-tight">
-            Your Digital Assistant
+          <h1 className="text-3xl font-bold mb-2 leading-tight">
+            Välkommen till Front Office
           </h1>
-          <p className="text-xl text-yellow-accent font-semibold mb-6">
-            24x7 Available. Always Ready.
+          <p className="text-lg text-yellow-accent font-semibold mb-4">
+            Din digitala assistent — 24/7
           </p>
           
-          {/* Key Benefits - Mobile - 3 Column Grid */}
           <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mb-2">
-                <AlarmClock className="text-red-400" size={20} />
+              <div className="w-12 h-12 rounded-full bg-yellow-accent/20 flex items-center justify-center mb-2">
+                <Clock className="text-yellow-accent" size={20} />
               </div>
-              <p className="text-xs font-semibold leading-tight">Save 5+ Hours</p>
+              <p className="text-xs font-semibold leading-tight">Spara 5+ timmar</p>
             </div>
 
             <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-2">
-                <MessageCircle className="text-blue-400" size={20} />
+              <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center mb-2">
+                <MessageSquare className="text-blue-400" size={20} />
               </div>
-              <p className="text-xs font-semibold leading-tight">All Channels</p>
+              <p className="text-xs font-semibold leading-tight">Alla kanaler</p>
             </div>
 
             <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-2">
+              <div className="w-12 h-12 rounded-full bg-purple-400/20 flex items-center justify-center mb-2">
                 <Target className="text-purple-400" size={20} />
               </div>
-              <p className="text-xs font-semibold leading-tight">You Control</p>
+              <p className="text-xs font-semibold leading-tight">Full kontroll</p>
             </div>
           </div>
         </div>
 
-        {/* Mobile Auth Card */}
         <div className="flex-1 bg-background rounded-t-3xl -mt-4 p-6">
           <Card className="w-full border-0 shadow-lg bg-card p-6 rounded-2xl">
-            {renderAuthForms()}
-          </Card>
-
-          {/* Testimonials - Mobile */}
-          <div className="mt-8">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              plugins={[
-                Autoplay({
-                  delay: 5000,
-                }),
-              ]}
-              className="w-full"
-            >
-              <CarouselContent>
-                <CarouselItem>
-                  <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
-                    <div className="flex gap-0.5 mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} className="text-yellow-accent text-xs">⭐</span>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground italic mb-3">
-                      "Our booking rate increased by 60% after switching to Front Office. Perfect replies every time!"
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                        💉
-                      </div>
-                      <div>
-                        <p className="font-medium text-xs">Lisa Andersson</p>
-                        <p className="text-[10px] text-muted-foreground">Stockholm Botox Clinic</p>
-                      </div>
-                    </div>
-                  </div>
-                </CarouselItem>
-
-                <CarouselItem>
-                  <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
-                    <div className="flex gap-0.5 mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} className="text-yellow-accent text-xs">⭐</span>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground italic mb-3">
-                      "Handles 80% of requests perfectly. Daily summaries keep me in the loop!"
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                        🦷
-                      </div>
-                      <div>
-                        <p className="font-medium text-xs">Dr. Anna Bergström</p>
-                        <p className="text-[10px] text-muted-foreground">Solna Dental Clinic</p>
-                      </div>
-                    </div>
-                  </div>
-                </CarouselItem>
-
-                <CarouselItem>
-                  <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
-                    <div className="flex gap-0.5 mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} className="text-yellow-accent text-xs">⭐</span>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground italic mb-3">
-                      "Front Office actually works. Flexible and trustworthy!"
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
-                        🏥
-                      </div>
-                      <div>
-                        <p className="font-medium text-xs">Dr. Erik Johansson</p>
-                        <p className="text-[10px] text-muted-foreground">HealthCare Plus</p>
-                      </div>
-                    </div>
-                  </div>
-                </CarouselItem>
-              </CarouselContent>
-            </Carousel>
-          </div>
-
-          {/* Help Link */}
-          <div className="text-center mt-6">
-            <a 
-              href="tel:+46707300605" 
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Need help? Call us at +46 70 730 06 05
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop Layout - 2 Columns */}
-      <div className="hidden lg:flex min-h-screen">
-        {/* Left Column - Value Proposition */}
-        <div className="w-1/2 flex flex-col justify-center p-12 xl:p-16 text-white">
-          <div className="max-w-xl">
-            <div className="mb-8">
-              <img 
-                src={logo} 
-                alt="Front Office" 
-                className="h-32 w-auto"
-              />
+            <div className="mb-6 text-center">
+              <h2 className="text-xl font-bold mb-2">Kom igång</h2>
+              <p className="text-sm text-muted-foreground">
+                Fyll i dina uppgifter så bokar vi ett onboarding-samtal
+              </p>
             </div>
 
-            <h1 className="text-4xl xl:text-5xl font-bold mb-2 leading-tight">
-              Meet Your New Digital Assistant
-            </h1>
-            <p className="text-2xl text-yellow-accent font-semibold mb-8">
-              24x7 Available. No Vacation Needed.
-            </p>
-
-            <div className="space-y-6 mb-8">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                  <AlarmClock className="text-red-400" size={24} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-1">Save 5+ Hours/Week</h3>
-                  <p className="text-sm text-white/80">No more boring admin tasks or answering repetitive questions</p>
-                </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email-mobile">E-postadress *</Label>
+                <Input
+                  id="email-mobile"
+                  type="email"
+                  placeholder="din@email.se"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="text-blue-400" size={24} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-1">Multiple Channels, 1 Assistant</h3>
-                  <p className="text-sm text-white/80">Your assistant can email, sms, speak, text and integrate with your business systems.</p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="businessName-mobile">Företagsnamn *</Label>
+                <Input
+                  id="businessName-mobile"
+                  type="text"
+                  placeholder="Din klinik/salon"
+                  value={formData.businessName}
+                  onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                  required
+                />
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                  <Target className="text-purple-400" size={24} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-1">Always In Control</h3>
-                  <p className="text-sm text-white/80">Your brand, your words, your assistant.</p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="businessType-mobile">Verksamhetstyp *</Label>
+                <Select
+                  value={formData.businessType}
+                  onValueChange={(value) => setFormData({ ...formData, businessType: value })}
+                  required
+                >
+                  <SelectTrigger id="businessType-mobile">
+                    <SelectValue placeholder="Välj typ" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="skönhetssalong">Skönhetssalong</SelectItem>
+                    <SelectItem value="hårsalong">Hårsalong</SelectItem>
+                    <SelectItem value="nagelstudio">Nagelstudio</SelectItem>
+                    <SelectItem value="spa">Spa & Wellness</SelectItem>
+                    <SelectItem value="tandklinik">Tandklinik</SelectItem>
+                    <SelectItem value="hudvårdsklinik">Hudvårdsklinik</SelectItem>
+                    <SelectItem value="annat">Annat</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
 
-            <div>
-              <p className="text-sm text-white/60 mb-4">Integrates seamlessly with</p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="px-4 py-2 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-purple-400/50 shadow-lg">
-                  <span className="text-sm text-white font-medium">Instagram</span>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-blue-500/20 border border-blue-500/30">
-                  <span className="text-sm text-white font-medium">Facebook</span>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30 flex items-center gap-2">
-                  <Phone size={16} className="text-green-400" />
-                  <span className="text-sm text-white font-medium">Phone</span>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-blue-400/20 border border-blue-400/30 flex items-center gap-2">
-                  <MessageSquare size={16} className="text-blue-400" />
-                  <span className="text-sm text-white font-medium">SMS</span>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-green-400/20 border border-green-400/30">
-                  <span className="text-sm text-white font-medium">WhatsApp</span>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center gap-2">
-                  <Calendar size={16} className="text-orange-400" />
-                  <span className="text-sm text-white font-medium">Bokadirekt</span>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-cyan-500/20 border border-cyan-500/30">
-                  <span className="text-sm text-white font-medium">ClinicBuddy</span>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone-mobile">Telefonnummer</Label>
+                <Input
+                  id="phone-mobile"
+                  type="tel"
+                  placeholder="+46 70 123 45 67"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Right Column - Auth Card */}
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background/95 backdrop-blur-sm">
-          <Card className="w-full max-w-md border-0 p-8 shadow-2xl">
-            {renderAuthForms()}
+              <div className="space-y-2">
+                <Label htmlFor="additionalInfo-mobile">Övrig information</Label>
+                <Textarea
+                  id="additionalInfo-mobile"
+                  placeholder="Berätta gärna om din verksamhet..."
+                  value={formData.additionalInfo}
+                  onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
+                  rows={3}
+                />
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Skickar..." : "Fortsätt till bokning"}
+              </Button>
+
+              <p className="text-xs text-muted-foreground text-center">
+                Vi kontaktar dig för att boka ett onboarding-samtal
+              </p>
+            </form>
           </Card>
         </div>
       </div>
