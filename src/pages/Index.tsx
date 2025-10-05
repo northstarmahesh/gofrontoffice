@@ -28,6 +28,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
   const [selectedContactName, setSelectedContactName] = useState<string | undefined>(undefined);
+  const [clinicTab, setClinicTab] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     checkAuthAndClinic();
@@ -123,11 +124,14 @@ const Index = () => {
       case "status":
         return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
       case "contacts":
-        return <Contacts selectedContactName={selectedContactName} />;
+        return <Contacts selectedContactName={selectedContactName} onNavigateToTools={() => {
+          setClinicTab("tools");
+          setCurrentView("clinic");
+        }} />;
       case "tasks":
         return <Tasks onNavigateToContact={handleNavigateToContact} />;
       case "clinic":
-        return <ClinicManagement />;
+        return <ClinicManagement initialTab={clinicTab} />;
       default:
         return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
     }

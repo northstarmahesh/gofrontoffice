@@ -8,15 +8,21 @@ import { ClinicOnboarding } from "./clinic/ClinicOnboarding";
 import { IntegrationsTools } from "./clinic/IntegrationsTools";
 import { toast } from "sonner";
 
-export const ClinicManagement = () => {
+export const ClinicManagement = ({ initialTab }: { initialTab?: string }) => {
   const [clinicId, setClinicId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState(false);
-  const [defaultTab, setDefaultTab] = useState<string>("info");
+  const [defaultTab, setDefaultTab] = useState<string>(initialTab || "info");
 
   useEffect(() => {
     loadUserClinic();
   }, []);
+
+  useEffect(() => {
+    if (initialTab) {
+      setDefaultTab(initialTab);
+    }
+  }, [initialTab]);
 
   const loadUserClinic = async () => {
     try {

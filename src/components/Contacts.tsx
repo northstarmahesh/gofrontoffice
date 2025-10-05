@@ -23,9 +23,10 @@ interface Contact {
 
 interface ContactsProps {
   selectedContactName?: string;
+  onNavigateToTools?: () => void;
 }
 
-export const Contacts = ({ selectedContactName }: ContactsProps) => {
+export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsProps) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -229,7 +230,15 @@ export const Contacts = ({ selectedContactName }: ContactsProps) => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Contacts</h2>
-          <p className="text-muted-foreground">Manage your business contact list</p>
+          <p className="text-muted-foreground">
+            Manage your business contact list or{" "}
+            <button
+              onClick={onNavigateToTools}
+              className="text-primary hover:underline font-medium"
+            >
+              connect your CRM directly
+            </button>
+          </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
