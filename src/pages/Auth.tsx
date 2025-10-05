@@ -132,6 +132,8 @@ const Auth = () => {
           body: { email: contactInfo, code: otp }
         });
 
+        console.log('Email verification result:', verifyResult, 'Error:', verifyError);
+
         if (verifyError || !verifyResult?.verified) {
           toast.error("Ogiltig verifieringskod");
           setIsSubmitting(false);
@@ -147,11 +149,23 @@ const Auth = () => {
 
           if (signInError) {
             console.error("Sign in error:", signInError);
-            throw signInError;
+            toast.error("Kunde inte logga in");
+            setIsSubmitting(false);
+            return;
           }
+
+          console.log('Session set successfully, redirecting...');
+          toast.success("Inloggning lyckades!");
+          
+          // Explicit redirect after successful session establishment
+          setTimeout(() => {
+            navigate("/");
+          }, 500);
+        } else {
+          toast.error("Kunde inte hämta inloggningsuppgifter");
+          setIsSubmitting(false);
+          return;
         }
-        
-        toast.success("Inloggning lyckades!");
       } else {
         // Phone verification using custom edge function
         const fullPhone = `${countryCode}${contactInfo}`;
@@ -159,6 +173,8 @@ const Auth = () => {
           body: { phone: fullPhone, code: otp }
         });
 
+        console.log('Phone verification result:', verifyResult, 'Error:', verifyError);
+
         if (verifyError || !verifyResult?.verified) {
           toast.error("Ogiltig verifieringskod");
           setIsSubmitting(false);
@@ -174,11 +190,23 @@ const Auth = () => {
 
           if (signInError) {
             console.error("Sign in error:", signInError);
-            throw signInError;
+            toast.error("Kunde inte logga in");
+            setIsSubmitting(false);
+            return;
           }
+
+          console.log('Session set successfully, redirecting...');
+          toast.success("Inloggning lyckades!");
+          
+          // Explicit redirect after successful session establishment
+          setTimeout(() => {
+            navigate("/");
+          }, 500);
+        } else {
+          toast.error("Kunde inte hämta inloggningsuppgifter");
+          setIsSubmitting(false);
+          return;
         }
-        
-        toast.success("Inloggning lyckades!");
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -187,7 +215,6 @@ const Auth = () => {
         console.error('OTP verification error:', error);
         toast.error("Ogiltig verifieringskod");
       }
-    } finally {
       setIsSubmitting(false);
     }
   };
