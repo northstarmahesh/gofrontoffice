@@ -43,25 +43,33 @@ const Auth = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
-    supabase.auth.getSession().then(({
-      data: {
-        session
+    let mounted = true;
+
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted && session) {
+          navigate("/", { replace: true });
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
       }
-    }) => {
-      if (session) {
-        navigate("/");
+    };
+
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      
+      if (event === 'SIGNED_IN' && session) {
+        navigate("/", { replace: true });
       }
     });
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        navigate("/");
-      }
-    });
-    return () => subscription.unsubscribe();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

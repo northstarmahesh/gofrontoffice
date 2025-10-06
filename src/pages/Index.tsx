@@ -31,31 +31,51 @@ const Index = () => {
   const [clinicTab, setClinicTab] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    // Check session immediately on mount
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        setLoading(false);
-        return;
-      }
+    let mounted = true;
 
-      setUser(session.user);
-      await checkClinicStatus(session.user.id);
-      setLoading(false);
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (!session) {
+          navigate("/auth", { replace: true });
+          setLoading(false);
+          return;
+        }
+
+        setUser(session.user);
+        await checkClinicStatus(session.user.id);
+        if (mounted) {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Auth error:", error);
+        if (mounted) {
+          setLoading(false);
+          navigate("/auth", { replace: true });
+        }
+      }
     };
 
     initAuth();
 
-    // Set up auth listener for future changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      
       if (event === 'SIGNED_OUT') {
-        navigate("/auth");
+        navigate("/auth", { replace: true });
+      } else if (event === 'SIGNED_IN' && session) {
+        setUser(session.user);
+        checkClinicStatus(session.user.id);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
 
