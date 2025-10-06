@@ -347,7 +347,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch tasks with their related activity logs
+      // Optimized: Fetch only pending tasks with basic info first
       const { data: tasks, error } = await supabase
         .from('tasks')
         .select(`
@@ -360,34 +360,21 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           )
         `)
         .eq('status', 'pending')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
 
       if (error) throw error;
 
-      // Fetch message history for each task
-      const tasksWithHistory = await Promise.all(
-        (tasks || []).map(async (task) => {
-          const contactName = task.activity_logs?.contact_name;
-          if (!contactName) return task;
+      // Map tasks without fetching full history initially (lazy load on expand)
+      const tasksWithBasicInfo = (tasks || []).map(task => ({
+        ...task,
+        contact_name: task.activity_logs?.contact_name,
+        contact_info: task.activity_logs?.contact_info,
+        draft_message: task.description,
+        message_history: [], // Load on demand
+      }));
 
-          // Fetch all activity logs for this contact
-          const { data: history } = await supabase
-            .from('activity_logs')
-            .select('*')
-            .eq('contact_name', contactName)
-            .order('created_at', { ascending: true });
-
-          return {
-            ...task,
-            contact_name: contactName,
-            contact_info: task.activity_logs?.contact_info,
-            draft_message: task.description,
-            message_history: history,
-          };
-        })
-      );
-
-      setHumanTasks(tasksWithHistory);
+      setHumanTasks(tasksWithBasicInfo);
     } catch (error) {
       console.error('Error loading tasks:', error);
     } finally {

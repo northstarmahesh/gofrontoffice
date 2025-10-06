@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Phone, MessageSquare, Clock, Search, Instagram, Mail, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import ContactDetailDialog from "./ContactDetailDialog";
@@ -30,6 +31,10 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
   const [channelFilter, setChannelFilter] = useState("all");
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
   const [selectedContact, setSelectedContact] = useState<{
     name: string;
     info: string;
@@ -39,63 +44,63 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   useEffect(() => {
-    loadActivityLogs();
+    loadActivityLogs(true);
   }, []);
 
-  const loadActivityLogs = async () => {
-    setLoading(true);
-    try {
-      console.log("Loading activity logs...");
-      
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log("Current user:", user?.email, "Error:", userError);
+  useEffect(() => {
+    if (channelFilter !== "all" || searchQuery) {
+      loadActivityLogs(true);
+    }
+  }, [channelFilter]);
 
+  const loadActivityLogs = async (reset: boolean = false) => {
+    if (reset) {
+      setLoading(true);
+      setPage(0);
+      setLogs([]);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log("No user found - not authenticated");
         setLogs([]);
         return;
       }
 
-      const { data: clinicData, error: clinicError } = await supabase
+      const { data: clinicData } = await supabase
         .from("clinic_users")
         .select("clinic_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      console.log("Clinic data:", clinicData, "Error:", clinicError);
-
-      if (clinicError) {
-        console.error("Error fetching clinic:", clinicError);
-        toast.error("Failed to load clinic information");
-        setLogs([]);
-        return;
-      }
-
       if (!clinicData?.clinic_id) {
-        console.log("No clinic found for user", user.email);
-        // Don't show error toast here - user might be in onboarding
         setLogs([]);
         return;
       }
 
-      console.log("Fetching logs for clinic:", clinicData.clinic_id);
-      const { data, error } = await supabase
+      const currentPage = reset ? 0 : page;
+      let query = supabase
         .from("activity_logs")
-        .select("*")
+        .select("*", { count: 'exact' })
         .eq("clinic_id", clinicData.clinic_id)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
 
-      console.log("Activity logs fetched:", data?.length, "logs", "Error:", error);
+      // Apply channel filter
+      if (channelFilter !== "all") {
+        query = query.eq("type", channelFilter);
+      }
+
+      const { data, error, count } = await query;
+
       if (error) {
         console.error("Error fetching logs:", error);
         toast.error("Failed to load activity logs");
-        setLogs([]);
         return;
       }
       
-      // Remove duplicates on the client side as a safety measure
       const uniqueLogs = Array.from(
         new Map(
           (data || []).map(log => [
@@ -105,13 +110,20 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         ).values()
       );
       
-      setLogs(uniqueLogs);
+      if (reset) {
+        setLogs(uniqueLogs);
+      } else {
+        setLogs(prev => [...prev, ...uniqueLogs]);
+      }
+
+      setHasMore((count ?? 0) > (currentPage + 1) * PAGE_SIZE);
+      setPage(currentPage + 1);
     } catch (error) {
       console.error("Error loading activity logs:", error);
       toast.error("Failed to load activity logs");
-      setLogs([]);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -280,8 +292,9 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
           <p className="text-muted-foreground">No activity logs found</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {Object.entries(groupedLogs).map(([date, dateLogs]) => (
+        <>
+          <div className="space-y-4">
+            {Object.entries(groupedLogs).map(([date, dateLogs]) => (
             <div key={date} className="space-y-2">
               <h3 className="text-sm font-semibold text-foreground">{date}</h3>
               <div className="space-y-2">
@@ -377,7 +390,21 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+
+          {/* Load More Button */}
+          {hasMore && !searchQuery && (
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="outline"
+                onClick={() => loadActivityLogs(false)}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Loading..." : "Load More"}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

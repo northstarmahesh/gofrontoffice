@@ -38,6 +38,10 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 25;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,8 +56,14 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
 
   useEffect(() => {
     loadLocations();
-    loadContacts();
+    loadContacts(true);
   }, []);
+
+  useEffect(() => {
+    if (selectedLocation) {
+      loadContacts(true);
+    }
+  }, [selectedLocation]);
 
   useEffect(() => {
     if (selectedContactName && contacts.length > 0) {
@@ -91,58 +101,66 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
     }
   };
 
-  const loadContacts = async () => {
-    setLoading(true);
+  const loadContacts = async (reset: boolean = false) => {
+    if (reset) {
+      setLoading(true);
+      setPage(0);
+      setContacts([]);
+    } else {
+      setLoadingMore(true);
+    }
     
     try {
-      // First get clinic_id for current user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        console.error('No user found');
-        setLoading(false);
+        setContacts([]);
         return;
       }
 
-      const { data: clinicData, error: clinicError } = await supabase
+      const { data: clinicData } = await supabase
         .from("clinic_users")
         .select("clinic_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (clinicError) {
-        console.error("Error getting clinic:", clinicError);
-        setLoading(false);
+      if (!clinicData?.clinic_id) {
+        setContacts([]);
         return;
       }
 
-      if (!clinicData) {
-        console.error("No business found for user");
-        toast.error("No business found for your account");
-        setLoading(false);
-        return;
-      }
-
-      // Load contacts for this clinic
+      const currentPage = reset ? 0 : page;
       let query = supabase
         .from("contacts")
-        .select("*")
+        .select("*", { count: 'exact' })
         .eq("clinic_id", clinicData.clinic_id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
 
-      const { data, error } = await query;
+      if (selectedLocation !== "all") {
+        query = query.eq("location_id", selectedLocation);
+      }
+
+      const { data, error, count } = await query;
 
       if (error) {
         console.error("Error loading contacts:", error);
         toast.error("Failed to load contacts");
       } else {
-        setContacts(data || []);
+        if (reset) {
+          setContacts(data || []);
+        } else {
+          setContacts(prev => [...prev, ...(data || [])]);
+        }
+        setHasMore((count ?? 0) > (currentPage + 1) * PAGE_SIZE);
+        setPage(currentPage + 1);
       }
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to load contacts");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -436,6 +454,17 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
               ))}
             </div>
           )}
+              {hasMore && !searchQuery && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => loadContacts(false)}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? "Loading..." : "Load More"}
+                  </Button>
+                </div>
+              )}
               </TabsContent>
               {locations.map((location) => (
                 <TabsContent key={location.id} value={location.id} className="mt-0">
@@ -515,9 +544,20 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
                           </div>
                         </div>
                       ))}
-                    </div>
-                  )}
-                </TabsContent>
+                     </div>
+                   )}
+                   {hasMore && !searchQuery && (
+                     <div className="flex justify-center pt-4">
+                       <Button
+                         variant="outline"
+                         onClick={() => loadContacts(false)}
+                         disabled={loadingMore}
+                       >
+                         {loadingMore ? "Loading..." : "Load More"}
+                       </Button>
+                     </div>
+                   )}
+                 </TabsContent>
               ))}
             </Tabs>
           ) : (
@@ -598,6 +638,17 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          {hasMore && !searchQuery && (
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="outline"
+                onClick={() => loadContacts(false)}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Loading..." : "Load More"}
+              </Button>
             </div>
           )}
             </>
