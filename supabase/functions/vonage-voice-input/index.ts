@@ -54,10 +54,10 @@ serve(async (req) => {
 
     const autoPilotEnabled = settings?.auto_pilot_enabled ?? true;
 
-    // Get clinic info
+    // Get clinic info and custom prompt
     const { data: clinic } = await supabase
       .from('clinics')
-      .select('name')
+      .select('name, phone, email, address, assistant_prompt, assistant_voice')
       .eq('id', phoneData.clinic_id)
       .single();
 
@@ -69,10 +69,17 @@ serve(async (req) => {
 
     const knowledgeContent = knowledgeBase?.map(kb => kb.content).join('\n\n') || '';
 
-    // Generate AI response
-    const systemPrompt = `You are a helpful AI assistant for ${clinic?.name || 'a clinic'}. 
+    // Build system prompt with custom instructions
+    const basePrompt = clinic?.assistant_prompt || `You are a helpful AI assistant for ${clinic?.name || 'a clinic'}.`;
+    const systemPrompt = `${basePrompt}
+
 You are speaking on the phone, so keep responses brief and conversational.
-Based on the caller's question, provide helpful information.
+
+Clinic Information:
+- Name: ${clinic?.name}
+- Phone: ${clinic?.phone}
+- Email: ${clinic?.email}
+- Address: ${clinic?.address}
 
 Knowledge Base:
 ${knowledgeContent || 'No additional information available.'}

@@ -113,6 +113,13 @@ serve(async (req) => {
                   continue;
                 }
 
+                // Get clinic info and custom prompt
+                const { data: clinic } = await supabase
+                  .from('clinics')
+                  .select('name, phone, email, address, assistant_prompt')
+                  .eq('id', integration.clinic_id)
+                  .single();
+
                 // Get clinic knowledge base for context
                 const { data: knowledgeBase } = await supabase
                   .from('clinic_knowledge_base')
@@ -123,11 +130,20 @@ serve(async (req) => {
                   ?.map(kb => `${kb.title}: ${kb.content}`)
                   .join('\n\n') || '';
 
-                // Generate AI response
-                const systemPrompt = `You are a helpful AI assistant for a medical clinic responding to Instagram direct messages. 
-Be friendly, professional, and concise. Use the following clinic information to answer questions:
+                // Build system prompt with custom instructions
+                const basePrompt = clinic?.assistant_prompt || `You are a helpful AI assistant for ${clinic?.name || 'a clinic'}.`;
+                const systemPrompt = `${basePrompt}
 
-${context}
+You are responding via Instagram DM, so be friendly, professional, and concise.
+
+Clinic Information:
+- Name: ${clinic?.name}
+- Phone: ${clinic?.phone}
+- Email: ${clinic?.email}
+- Address: ${clinic?.address}
+
+Knowledge Base:
+${context || 'No additional information available.'}
 
 Keep responses brief and suitable for Instagram DM format.`;
 

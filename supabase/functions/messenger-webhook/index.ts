@@ -101,6 +101,13 @@ Deno.serve(async (req) => {
               continue;
             }
 
+            // Get clinic info and custom prompt
+            const { data: clinic } = await supabase
+              .from('clinics')
+              .select('name, phone, email, address, assistant_prompt')
+              .eq('clinic_id', integration.clinic_id)
+              .single();
+
             // Get clinic knowledge base for context
             const { data: knowledgeBase } = await supabase
               .from('clinic_knowledge_base')
@@ -111,10 +118,27 @@ Deno.serve(async (req) => {
               ?.map(kb => `${kb.title}: ${kb.content}`)
               .join('\n\n') || 'No additional knowledge available.';
 
+            // Build system prompt with custom instructions
+            const basePrompt = clinic?.assistant_prompt || `You are a helpful AI assistant for ${clinic?.name || 'a clinic'}.`;
+            const systemPrompt = `${basePrompt}
+
+You are responding via Facebook Messenger, so be conversational and friendly.
+
+Clinic Information:
+- Name: ${clinic?.name}
+- Phone: ${clinic?.phone}
+- Email: ${clinic?.email}
+- Address: ${clinic?.address}
+
+Knowledge Base:
+${knowledgeContext}
+
+Respond professionally and helpfully to customer inquiries on Messenger.`;
+
             // Generate AI response using Lovable AI
             const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
             
-            const aiResponse = await fetch('https://api.lovable.app/v1/chat/completions', {
+            const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -125,7 +149,7 @@ Deno.serve(async (req) => {
                 messages: [
                   {
                     role: 'system',
-                    content: `You are a helpful assistant for a health and beauty clinic. Use this knowledge to answer questions:\n\n${knowledgeContext}\n\nRespond professionally and helpfully to customer inquiries on Messenger.`
+                    content: systemPrompt
                   },
                   {
                     role: 'user',
