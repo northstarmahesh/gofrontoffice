@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,23 @@ const serviceCategories = [
 
 export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
+  const [locationId, setLocationId] = useState<string | undefined>(undefined);
+
+  // Fetch the user's location for this clinic
+  useEffect(() => {
+    const fetchLocation = async () => {
+      const { data } = await supabase
+        .from('clinic_locations')
+        .select('id')
+        .eq('clinic_id', clinicId)
+        .maybeSingle();
+      
+      if (data) {
+        setLocationId(data.id);
+      }
+    };
+    fetchLocation();
+  }, [clinicId]);
 
   const handleConnect = async (serviceId: string, serviceName: string) => {
     setConnectingTo(serviceId);
@@ -106,7 +123,7 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
       <ChannelConnectionHub clinicId={clinicId} />
 
       {/* Bokadirekt Integration */}
-      <BokadirektIntegration clinicId={clinicId} />
+      <BokadirektIntegration clinicId={clinicId} locationId={locationId} />
 
       {/* Divider */}
       <div className="relative">
