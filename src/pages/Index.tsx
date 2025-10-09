@@ -33,9 +33,10 @@ const Index = () => {
 
   useEffect(() => {
     let mounted = true;
+    let refreshTimer: NodeJS.Timeout;
 
     // Set up auth state listener FIRST (critical for catching all auth events)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
       console.log('Auth state changed:', event, 'Has session:', !!session);
@@ -46,19 +47,51 @@ const Index = () => {
       
       if (event === 'SIGNED_OUT' || !session) {
         navigate("/auth", { replace: true });
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        console.log('Token refreshed successfully');
+        setSession(session);
+        setUser(session.user);
       } else if (session?.user) {
-        checkClinicStatus(session.user.id);
+        await checkClinicStatus(session.user.id);
       }
     });
+
+    // Set up periodic session check (every 30 seconds)
+    const checkSessionPeriodically = async () => {
+      if (!mounted) return;
+      
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session check error:', error);
+          return;
+        }
+        
+        if (!session && mounted) {
+          console.log('No session found during periodic check');
+          navigate("/auth", { replace: true });
+        }
+      } catch (error) {
+        console.error('Error during session check:', error);
+      }
+    };
 
     // THEN check for existing session
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!mounted) return;
         
-        console.log('Initial session check:', !!session);
+        console.log('Initial session check:', !!session, 'Error:', error);
+        
+        if (error) {
+          console.error('Session fetch error:', error);
+          navigate("/auth", { replace: true });
+          setLoading(false);
+          return;
+        }
         
         if (!session) {
           navigate("/auth", { replace: true });
@@ -70,8 +103,11 @@ const Index = () => {
         setSession(session);
         setUser(session.user);
         await checkClinicStatus(session.user.id);
+        
         if (mounted) {
           setLoading(false);
+          // Start periodic session checks
+          refreshTimer = setInterval(checkSessionPeriodically, 30000); // Check every 30 seconds
         }
       } catch (error) {
         console.error("Auth error:", error);
@@ -86,6 +122,7 @@ const Index = () => {
 
     return () => {
       mounted = false;
+      if (refreshTimer) clearInterval(refreshTimer);
       subscription.unsubscribe();
     };
   }, [navigate]);
