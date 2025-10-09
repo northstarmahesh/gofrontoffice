@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar, Mail, Users, Clock, DollarSign, ExternalLink, Instagram, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,6 +38,7 @@ const serviceCategories = [
     icon: Clock,
     services: [
       { id: "clinicbuddy", name: "Clinicbuddy", description: "Healthcare appointment system" },
+      { id: "bokadirekt", name: "Bokadirekt", description: "Swedish booking platform" },
       { id: "google-sheets", name: "Google Sheets", description: "Spreadsheet-based booking" },
       { id: "airtable", name: "Airtable", description: "Flexible booking database" },
     ]
@@ -54,6 +56,7 @@ const serviceCategories = [
 export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
   const [locationId, setLocationId] = useState<string | undefined>(undefined);
+  const [showBokadirektDialog, setShowBokadirektDialog] = useState(false);
 
   // Fetch the user's location for this clinic
   useEffect(() => {
@@ -72,6 +75,12 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
   }, [clinicId]);
 
   const handleConnect = async (serviceId: string, serviceName: string) => {
+    // Special handling for Bokadirekt
+    if (serviceId === "bokadirekt") {
+      setShowBokadirektDialog(true);
+      return;
+    }
+
     setConnectingTo(serviceId);
     
     try {
@@ -118,84 +127,75 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Communication Channels - Primary Section */}
-      <ChannelConnectionHub clinicId={clinicId} />
+    <>
+      <div className="space-y-8">
+        {/* Communication Channels - Primary Section */}
+        <ChannelConnectionHub clinicId={clinicId} />
 
-      {/* Bokadirekt Integration - Highlighted */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium text-primary">
-          <Clock className="h-4 w-4" />
-          <span>Swedish Booking Integration</span>
-        </div>
-        <BokadirektIntegration clinicId={clinicId} locationId={locationId} />
-      </div>
-
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Business Integrations
-          </span>
-        </div>
-      </div>
-
-      {/* Service Categories - Secondary Section */}
-      <div className="space-y-6">
-        {serviceCategories.map((category) => {
-          const CategoryIcon = category.icon;
-          
-          return (
-            <Card key={category.category}>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <CategoryIcon className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{category.category}</CardTitle>
-                    <CardDescription>Connect your {category.category.toLowerCase()} services</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {category.services.map((service) => (
-                    <div
-                      key={service.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-sm truncate">{service.name}</h4>
-                          <Badge variant="outline" className="bg-muted text-xs shrink-0">
-                            Not Connected
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {service.description}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleConnect(service.id, service.name)}
-                        disabled={connectingTo === service.id}
-                        className="ml-3 shrink-0"
-                      >
-                        {connectingTo === service.id ? "..." : "Connect"}
-                      </Button>
+        {/* Service Categories - Secondary Section */}
+        <div className="space-y-6">
+          {serviceCategories.map((category) => {
+            const CategoryIcon = category.icon;
+            
+            return (
+              <Card key={category.category}>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-primary/10">
+                      <CategoryIcon className="h-6 w-6 text-primary" />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                    <div>
+                      <CardTitle className="text-lg">{category.category}</CardTitle>
+                      <CardDescription>Connect your {category.category.toLowerCase()} services</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {category.services.map((service) => (
+                      <div
+                        key={service.id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-sm truncate">{service.name}</h4>
+                            <Badge variant="outline" className="bg-muted text-xs shrink-0">
+                              Not Connected
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {service.description}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleConnect(service.id, service.name)}
+                          disabled={connectingTo === service.id}
+                          className="ml-3 shrink-0"
+                        >
+                          {connectingTo === service.id ? "..." : "Connect"}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
-    </div>
+
+      {/* Bokadirekt Dialog */}
+      <Dialog open={showBokadirektDialog} onOpenChange={setShowBokadirektDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Bokadirekt Integration</DialogTitle>
+          </DialogHeader>
+          <BokadirektIntegration clinicId={clinicId} locationId={locationId} />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
