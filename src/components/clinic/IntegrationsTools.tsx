@@ -122,8 +122,14 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
       {/* Communication Channels - Primary Section */}
       <ChannelConnectionHub clinicId={clinicId} />
 
-      {/* Bokadirekt Integration */}
-      <BokadirektIntegration clinicId={clinicId} locationId={locationId} />
+      {/* Bokadirekt Integration - Highlighted */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-primary">
+          <Clock className="h-4 w-4" />
+          <span>Swedish Booking Integration</span>
+        </div>
+        <BokadirektIntegration clinicId={clinicId} locationId={locationId} />
+      </div>
 
       {/* Divider */}
       <div className="relative">

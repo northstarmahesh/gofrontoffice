@@ -136,13 +136,13 @@ export const BokadirektIntegration = ({ clinicId, locationId }: BokadirektIntegr
   }
 
   return (
-    <Card>
+    <Card className="border-2 border-primary/20 bg-primary/5">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <Calendar className="h-6 w-6 text-primary" />
           Bokadirekt Integration
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-base">
           Hantera dina Bokadirekt-kalenderlänkar. AI-assistenten kan kontrollera lediga tider från dessa kalendrar.
         </CardDescription>
       </CardHeader>
