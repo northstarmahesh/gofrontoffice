@@ -25,6 +25,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<View>("tasks");
   const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<any>(null); // CRITICAL: Store session, not just user
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
   const [selectedContactName, setSelectedContactName] = useState<string | undefined>(undefined);
@@ -33,11 +34,31 @@ const Index = () => {
   useEffect(() => {
     let mounted = true;
 
+    // Set up auth state listener FIRST (critical for catching all auth events)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      
+      console.log('Auth state changed:', event, 'Has session:', !!session);
+      
+      // Always update both session and user together
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate("/auth", { replace: true });
+      } else if (session?.user) {
+        checkClinicStatus(session.user.id);
+      }
+    });
+
+    // THEN check for existing session
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!mounted) return;
+        
+        console.log('Initial session check:', !!session);
         
         if (!session) {
           navigate("/auth", { replace: true });
@@ -45,6 +66,8 @@ const Index = () => {
           return;
         }
 
+        // Store both session and user
+        setSession(session);
         setUser(session.user);
         await checkClinicStatus(session.user.id);
         if (mounted) {
@@ -60,17 +83,6 @@ const Index = () => {
     };
 
     initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-      
-      if (event === 'SIGNED_OUT') {
-        navigate("/auth", { replace: true });
-      } else if (event === 'SIGNED_IN' && session) {
-        setUser(session.user);
-        checkClinicStatus(session.user.id);
-      }
-    });
 
     return () => {
       mounted = false;
