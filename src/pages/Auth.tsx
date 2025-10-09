@@ -152,11 +152,40 @@ const Auth = () => {
           return;
         }
 
-        // Use the magic link to establish session
+        // Extract tokens from the sign-in link and establish session directly
         if (verifyResult.sign_in_link) {
-          console.log('Redirecting to magic link for session establishment');
-          window.location.href = verifyResult.sign_in_link;
-          // Don't set isSubmitting to false - we're navigating away
+          try {
+            const url = new URL(verifyResult.sign_in_link);
+            const accessToken = url.searchParams.get('access_token');
+            const refreshToken = url.searchParams.get('refresh_token');
+            
+            if (accessToken && refreshToken) {
+              const { error: sessionError } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+              });
+              
+              if (sessionError) throw sessionError;
+              
+              // Verify session is established
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session) {
+                console.log('Email session established successfully');
+                toast.success("Inloggning lyckades!");
+                navigate("/");
+              } else {
+                toast.error("Session kunde inte etableras");
+                setIsSubmitting(false);
+              }
+            } else {
+              // Fallback to redirect if tokens not in URL
+              window.location.href = verifyResult.sign_in_link;
+            }
+          } catch (error) {
+            console.error('Session setup error:', error);
+            toast.error("Kunde inte etablera session");
+            setIsSubmitting(false);
+          }
         } else {
           toast.error("Kunde inte etablera session");
           setIsSubmitting(false);

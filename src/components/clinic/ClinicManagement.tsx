@@ -22,6 +22,7 @@ import { KnowledgeBase } from "./KnowledgeBase";
 import { ClinicInfo } from "./ClinicInfo";
 import VonageConnection from "./VonageConnection";
 import { MessengerConnection } from "./MessengerConnection";
+import { IntegrationsTools } from "./IntegrationsTools";
 
 interface ChannelStatus {
   instagram: boolean;
@@ -210,8 +211,9 @@ const ClinicManagement = () => {
       </Card>
 
       <Tabs defaultValue="channels" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="channels">Channels</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="vonage">Vonage Setup</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
@@ -405,6 +407,10 @@ const ClinicManagement = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="integrations">
+          <IntegrationsTools clinicId={clinicId} />
         </TabsContent>
 
         <TabsContent value="vonage">
