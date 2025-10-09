@@ -32,3 +32,6 @@ verify_jwt = true
 
 [functions.messenger-webhook]
 verify_jwt = false
+
+[functions.check-bokadirekt-availability]
+verify_jwt = false

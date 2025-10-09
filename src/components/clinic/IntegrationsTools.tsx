@@ -6,6 +6,7 @@ import { Calendar, Mail, Users, Clock, DollarSign, ExternalLink, Instagram, Mess
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChannelConnectionHub } from "./ChannelConnectionHub";
+import { BokadirektIntegration } from "./BokadirektIntegration";
 
 interface IntegrationsToolsProps {
   clinicId: string;
@@ -104,6 +105,9 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
     <div className="space-y-8">
       {/* Communication Channels - Primary Section */}
       <ChannelConnectionHub clinicId={clinicId} />
+
+      {/* Bokadirekt Integration */}
+      <BokadirektIntegration clinicId={clinicId} />
 
       {/* Divider */}
       <div className="relative">

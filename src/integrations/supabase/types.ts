@@ -200,6 +200,57 @@ export type Database = {
           },
         ]
       }
+      bokadirekt_calendars: {
+        Row: {
+          calendar_url: string
+          clinic_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          location_id: string | null
+          service_description: string | null
+          service_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          calendar_url: string
+          clinic_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id?: string | null
+          service_description?: string | null
+          service_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          calendar_url?: string
+          clinic_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id?: string | null
+          service_description?: string | null
+          service_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bokadirekt_calendars_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bokadirekt_calendars_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_integrations: {
         Row: {
           access_token: string | null
