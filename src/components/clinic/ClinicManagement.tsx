@@ -410,7 +410,13 @@ const ClinicManagement = () => {
         </TabsContent>
 
         <TabsContent value="integrations">
-          <IntegrationsTools clinicId={clinicId} />
+          {clinicId ? (
+            <IntegrationsTools clinicId={clinicId} />
+          ) : (
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="vonage">

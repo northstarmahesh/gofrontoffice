@@ -57,29 +57,45 @@ export const BokadirektIntegration = ({ clinicId, locationId, isDialog = false }
   // Add calendar mutation
   const addCalendarMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
+      console.log('Adding calendar with data:', {
+        clinic_id: clinicId,
+        location_id: locationId,
+        ...newCalendar
+      });
+
+      const { data, error } = await supabase
         .from('bokadirekt_calendars')
         .insert({
           clinic_id: clinicId,
           location_id: locationId,
           ...newCalendar
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      console.log('Insert result:', { data, error });
+
+      if (error) {
+        console.error('Insert error:', error);
+        throw error;
+      }
+      
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bokadirekt-calendars'] });
       toast({
-        title: "Kalender tillagd",
-        description: "Bokadirekt-kalendern har lagts till framgångsrikt."
+        title: "Calendar added",
+        description: "Bokadirekt calendar has been added successfully."
       });
       setNewCalendar({ calendar_url: "", service_name: "", service_description: "" });
       setIsAdding(false);
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       toast({
-        title: "Fel",
-        description: error.message,
+        title: "Error",
+        description: error.message || "Failed to add calendar. Please try again.",
         variant: "destructive"
       });
     }
@@ -120,15 +136,25 @@ export const BokadirektIntegration = ({ clinicId, locationId, isDialog = false }
   });
 
   const handleAddCalendar = () => {
-    if (!newCalendar.calendar_url || !newCalendar.service_name) {
+    if (!clinicId) {
       toast({
-        title: "Obligatoriska fält",
-        description: "Vänligen fyll i kalender-URL och tjänstnamn.",
+        title: "Error",
+        description: "Clinic ID is missing. Please refresh the page.",
         variant: "destructive"
       });
       return;
     }
 
+    if (!newCalendar.calendar_url || !newCalendar.service_name) {
+      toast({
+        title: "Required fields",
+        description: "Please fill in calendar URL and service name.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log('Attempting to add calendar...');
     addCalendarMutation.mutate();
   };
 
