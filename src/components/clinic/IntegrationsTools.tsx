@@ -191,9 +191,15 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
       <Dialog open={showBokadirektDialog} onOpenChange={setShowBokadirektDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Bokadirekt Integration</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Bokadirekt Integration
+            </DialogTitle>
           </DialogHeader>
-          <BokadirektIntegration clinicId={clinicId} locationId={locationId} />
+          <div className="text-sm text-muted-foreground mb-4">
+            Hantera dina Bokadirekt-kalenderlänkar. AI-assistenten kan kontrollera lediga tider från dessa kalendrar.
+          </div>
+          <BokadirektIntegration clinicId={clinicId} locationId={locationId} isDialog={true} />
         </DialogContent>
       </Dialog>
     </>

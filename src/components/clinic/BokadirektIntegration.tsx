@@ -21,9 +21,10 @@ interface BokadirektCalendar {
 interface BokadirektIntegrationProps {
   clinicId: string;
   locationId?: string;
+  isDialog?: boolean;
 }
 
-export const BokadirektIntegration = ({ clinicId, locationId }: BokadirektIntegrationProps) => {
+export const BokadirektIntegration = ({ clinicId, locationId, isDialog = false }: BokadirektIntegrationProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
@@ -135,18 +136,8 @@ export const BokadirektIntegration = ({ clinicId, locationId }: BokadirektIntegr
     return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   }
 
-  return (
-    <Card className="border-2 border-primary/20 bg-primary/5">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <Calendar className="h-6 w-6 text-primary" />
-          Bokadirekt Integration
-        </CardTitle>
-        <CardDescription className="text-base">
-          Hantera dina Bokadirekt-kalenderlänkar. AI-assistenten kan kontrollera lediga tider från dessa kalendrar.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+  const content = (
+    <div className="space-y-4">
         {calendars.length > 0 && (
           <div className="space-y-3">
             {calendars.map((calendar) => (
@@ -251,6 +242,26 @@ export const BokadirektIntegration = ({ clinicId, locationId }: BokadirektIntegr
             </div>
           </div>
         )}
+      </div>
+  );
+
+  if (isDialog) {
+    return content;
+  }
+
+  return (
+    <Card className="border-2 border-primary/20 bg-primary/5">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <Calendar className="h-6 w-6 text-primary" />
+          Bokadirekt Integration
+        </CardTitle>
+        <CardDescription className="text-base">
+          Hantera dina Bokadirekt-kalenderlänkar. AI-assistenten kan kontrollera lediga tider från dessa kalendrar.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {content}
       </CardContent>
     </Card>
   );
