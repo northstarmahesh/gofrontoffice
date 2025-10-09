@@ -152,30 +152,13 @@ const Auth = () => {
           return;
         }
 
-        // Sign in with the user object returned from verification
-        if (verifyResult.user) {
-          // The magic link will handle the session establishment
-          // Just wait a moment for it to be set up
-          await new Promise(resolve => setTimeout(resolve, 1000));
-
-          // Check if session is established
-          const {
-            data: {
-              session
-            }
-          } = await supabase.auth.getSession();
-          if (session) {
-            toast.success("Inloggning lyckades!");
-            navigate("/");
-          } else if (verifyResult.sign_in_link) {
-            // Fallback: use the sign-in link
-            window.location.href = verifyResult.sign_in_link;
-          } else {
-            toast.error("Kunde inte etablera session");
-            setIsSubmitting(false);
-          }
+        // Use the magic link to establish session
+        if (verifyResult.sign_in_link) {
+          console.log('Redirecting to magic link for session establishment');
+          window.location.href = verifyResult.sign_in_link;
+          // Don't set isSubmitting to false - we're navigating away
         } else {
-          toast.error("Kunde inte verifiera användare");
+          toast.error("Kunde inte etablera session");
           setIsSubmitting(false);
         }
       } else {
@@ -213,9 +196,18 @@ const Auth = () => {
           }
 
           // Wait for session to be properly established
-          await new Promise(resolve => setTimeout(resolve, 500));
-          toast.success("Inloggning lyckades!");
-          navigate("/");
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Verify session is established
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            console.log('Session established successfully');
+            toast.success("Inloggning lyckades!");
+            navigate("/");
+          } else {
+            toast.error("Session kunde inte etableras");
+            setIsSubmitting(false);
+          }
         } else {
           toast.error("Kunde inte hämta inloggningsuppgifter");
           setIsSubmitting(false);
