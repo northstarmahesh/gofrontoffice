@@ -37,7 +37,6 @@ const serviceCategories = [
     icon: Clock,
     services: [
       { id: "clinicbuddy", name: "Clinicbuddy", description: "Healthcare appointment system" },
-      { id: "bokadirekt", name: "Bokadirekt", description: "Swedish booking platform" },
       { id: "google-sheets", name: "Google Sheets", description: "Spreadsheet-based booking" },
       { id: "airtable", name: "Airtable", description: "Flexible booking database" },
     ]
