@@ -992,6 +992,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_email_platform_admin: {
+        Args: { check_email: string }
+        Returns: boolean
+      }
       is_platform_admin: {
         Args: { _user_id: string }
         Returns: boolean

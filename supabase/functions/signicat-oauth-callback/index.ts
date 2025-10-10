@@ -91,7 +91,7 @@ serve(async (req) => {
       throw userError;
     }
 
-    // Generate session token
+    // Get the user ID
     const userId = userData?.user?.id || (await supabase
       .from('profiles')
       .select('id')
@@ -102,6 +102,16 @@ serve(async (req) => {
       throw new Error('Could not find or create user');
     }
 
+    // Check if user is a platform admin
+    const { data: adminCheck } = await supabase
+      .from('platform_admins')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    console.log('Admin check result:', adminCheck ? 'User is admin' : 'User is not admin');
+
+    // Generate session token
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: email,
@@ -113,8 +123,12 @@ serve(async (req) => {
     }
 
     // Redirect to app with session
+    // If user is admin, redirect to /admin, otherwise to /
     const appUrl = url.origin.replace('functions/v1/signicat-oauth-callback', '');
-    const redirectUrl = `${appUrl}/#access_token=${sessionData.properties.hashed_token}&type=magiclink`;
+    const redirectPath = adminCheck ? 'admin' : '';
+    const redirectUrl = `${appUrl}/#access_token=${sessionData.properties.hashed_token}&type=magiclink${redirectPath ? `&redirect=${redirectPath}` : ''}`;
+
+    console.log('Redirecting to:', redirectUrl);
 
     return new Response(null, {
       status: 302,

@@ -19,130 +19,121 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Healthcare-inspired color palette */
-    --background: 210 20% 98%;
-    --foreground: 203 38% 26%; /* Teal for text */
+    /* Front Office brand colors - White & Orange */
+    --background: 0 0% 100%; /* Pure white */
+    --foreground: 0 0% 13%; /* Almost black */
 
     --card: 0 0% 100%;
-    --card-foreground: 203 38% 26%; /* Teal for card text */
+    --card-foreground: 0 0% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 203 38% 26%;
+    --popover-foreground: 0 0% 13%;
 
-    /* Teal primary - trustworthy and professional */
-    --primary: 203 38% 26%;
+    /* Orange primary - Front Office brand */
+    --primary: 20 100% 55%; /* #FF6B18 orange */
     --primary-foreground: 0 0% 100%;
-    --primary-light: 203 38% 35%;
-    --primary-glow: 203 38% 40%;
+    --primary-light: 20 100% 65%;
+    --primary-glow: 20 100% 70%;
 
-    /* Black/dark grey for secondary buttons */
-    --secondary: 0 0% 15%;
+    /* Dark grey for secondary buttons */
+    --secondary: 0 0% 25%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 203 38% 96%; /* Light teal tint */
-    --muted-foreground: 203 38% 40%; /* Medium teal */
+    --muted: 0 0% 96%; /* Light grey */
+    --muted-foreground: 0 0% 40%; /* Medium grey */
 
-    /* Light grey accent */
-    --accent: 203 38% 95%; /* Very light teal */
-    --accent-foreground: 203 38% 26%; /* Teal text */
+    /* Very light grey accent */
+    --accent: 0 0% 95%;
+    --accent-foreground: 0 0% 13%;
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 203 38% 88%; /* Light teal border */
-    --input: 203 38% 90%;
-    --ring: 48 97% 63%; /* Yellow ring for focus */
+    --border: 0 0% 88%; /* Light grey border */
+    --input: 0 0% 90%;
+    --ring: 20 100% 55%; /* Orange ring for focus */
 
     --radius: 0.75rem;
     
     /* Custom design tokens */
-    --success: 203 38% 26%; /* Use teal for success */
-    --warning: 48 97% 63%; /* Use yellow for warnings */
-    --info: 203 38% 26%; /* Use teal for info */
-    --auth-bg: 198 30% 31%;
-    --yellow-accent: 48 97% 63%; /* Yellow from logo */
+    --success: 142 76% 36%; /* Green for success */
+    --warning: 20 100% 55%; /* Orange for warnings */
+    --info: 20 100% 55%; /* Orange for info */
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(203 38% 26%), hsl(203 38% 35%));
-    --gradient-soft: linear-gradient(180deg, hsl(203 38% 98%), hsl(203 38% 95%)); /* Teal tint */
-    --gradient-accent: linear-gradient(135deg, hsl(48 97% 63%), hsl(48 97% 73%));
+    /* Gradients with orange */
+    --gradient-primary: linear-gradient(135deg, hsl(20 100% 55%), hsl(20 100% 65%));
+    --gradient-soft: linear-gradient(180deg, hsl(20 100% 98%), hsl(20 100% 95%));
+    --gradient-accent: linear-gradient(135deg, hsl(20 100% 55%), hsl(20 100% 70%));
     
     /* Shadows */
-    --shadow-soft: 0 2px 8px -2px hsl(215 25% 15% / 0.08);
-    --shadow-medium: 0 4px 16px -4px hsl(215 25% 15% / 0.12);
-    --shadow-glow: 0 0 24px hsl(203 38% 40% / 0.3);
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.08);
+    --shadow-medium: 0 4px 16px -4px hsl(0 0% 0% / 0.12);
+    --shadow-glow: 0 0 24px hsl(20 100% 55% / 0.3);
     
     /* Transitions */
     --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 203 38% 26%;
+    --sidebar-foreground: 0 0% 13%;
+    --sidebar-primary: 20 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 13%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 20 100% 55%;
   }
 
   .dark {
-    --background: 203 38% 8%; /* Dark teal background */
-    --foreground: 203 38% 95%;
+    --background: 0 0% 10%; /* Dark background */
+    --foreground: 0 0% 95%;
 
-    --card: 203 38% 10%;
-    --card-foreground: 203 38% 95%;
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 203 38% 10%;
-    --popover-foreground: 203 38% 95%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 203 38% 35%;
+    --primary: 20 100% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 203 38% 40%;
-    --primary-glow: 203 38% 45%;
+    --primary-light: 20 100% 65%;
+    --primary-glow: 20 100% 70%;
 
-    --secondary: 0 0% 20%;
+    --secondary: 0 0% 25%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 203 38% 15%;
-    --muted-foreground: 203 38% 60%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 203 38% 20%;
-    --accent-foreground: 203 38% 95%;
+    --accent: 0 0% 25%;
+    --accent-foreground: 0 0% 95%;
 
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 203 38% 20%;
-    --input: 203 38% 18%;
-    --ring: 48 97% 63%; /* Yellow ring */
+    --border: 0 0% 25%;
+    --input: 0 0% 20%;
+    --ring: 20 100% 55%; /* Orange ring */
     
-    --success: 203 38% 35%;
-    --warning: 48 97% 63%;
-    --info: 203 38% 35%;
+    --success: 142 76% 36%;
+    --warning: 20 100% 55%;
+    --info: 20 100% 55%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(203 38% 30%), hsl(203 38% 40%));
-    --gradient-soft: linear-gradient(180deg, hsl(203 38% 8%), hsl(203 38% 10%));
-    --gradient-accent: linear-gradient(135deg, hsl(48 97% 63%), hsl(48 97% 73%));
+    --gradient-primary: linear-gradient(135deg, hsl(20 100% 50%), hsl(20 100% 60%));
+    --gradient-soft: linear-gradient(180deg, hsl(0 0% 10%), hsl(0 0% 13%));
+    --gradient-accent: linear-gradient(135deg, hsl(20 100% 55%), hsl(20 100% 70%));
     
     --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
     --shadow-medium: 0 4px 16px -4px hsl(0 0% 0% / 0.4);
-    --shadow-glow: 0 0 24px hsl(203 38% 45% / 0.4);
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 203 38% 26%;
+    --shadow-glow: 0 0 24px hsl(20 100% 55% / 0.4);
+    --sidebar-background: 0 0% 10%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 20 100% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 203 38% 30%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 20 100% 55%;
   }
 }
 
