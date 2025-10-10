@@ -184,25 +184,29 @@ export const TeamInvitationDialog = ({ clinicId, open, onOpenChange, onInviteSen
               <Label>Behörigheter</Label>
               <div className="space-y-3">
                 {[
-                  { key: 'can_manage_integrations', label: 'Hantera integrationer' },
-                  { key: 'can_edit_prompts', label: 'Redigera AI-prompter' },
-                  { key: 'can_toggle_assistant', label: 'Aktivera/avaktivera assistent' },
-                  { key: 'can_change_ai_mode', label: 'Ändra AI-läge' },
-                  { key: 'can_edit_schedule', label: 'Redigera schema' },
-                  { key: 'can_view_billing', label: 'Visa fakturering' },
-                  { key: 'can_manage_team', label: 'Hantera team' },
-                ].map(({ key, label }) => (
-                  <div key={key} className="flex items-center space-x-2">
+                  { key: 'can_manage_integrations', label: 'Hantera integrationer', description: 'Koppla in kanaler som WhatsApp, Instagram' },
+                  { key: 'can_edit_prompts', label: 'Redigera assistent-prompter', description: 'Ändra hur assistenten svarar kunder' },
+                  { key: 'can_toggle_assistant', label: 'Aktivera/avaktivera assistent', description: 'Slå på/av automatiska svar' },
+                  { key: 'can_change_ai_mode', label: 'Ändra assistentläge', description: 'Växla mellan autopilot och copilot' },
+                  { key: 'can_edit_schedule', label: 'Redigera schema', description: 'Ändra när assistenten är aktiv' },
+                  { key: 'can_view_billing', label: 'Visa fakturering', description: 'Se krediter och kostnader' },
+                  { key: 'can_manage_team', label: 'Hantera team', description: 'Bjuda in och ta bort teammedlemmar' },
+                ].map(({ key, label, description }) => (
+                  <div key={key} className="flex items-start space-x-2">
                     <Checkbox
                       id={key}
                       checked={permissions[key as keyof typeof permissions]}
                       onCheckedChange={(checked) =>
                         setPermissions({ ...permissions, [key]: checked })
                       }
+                      className="mt-1"
                     />
-                    <Label htmlFor={key} className="font-normal cursor-pointer">
-                      {label}
-                    </Label>
+                    <div className="flex flex-col">
+                      <Label htmlFor={key} className="font-normal cursor-pointer">
+                        {label}
+                      </Label>
+                      <span className="text-xs text-muted-foreground">{description}</span>
+                    </div>
                   </div>
                 ))}
               </div>
