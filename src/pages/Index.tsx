@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Settings, CreditCard, Users as UsersIcon, ChevronDown } from "lucide-react";
+import { LogOut, Settings, CreditCard, Users as UsersIcon, ChevronDown, AlertTriangle, Power } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import frontOfficeLogo from "@/assets/front-office-logo-yellow-full.png";
 import Status from "@/components/Status";
 import ClinicManagement from "@/components/ClinicManagement";
@@ -30,6 +32,9 @@ const Index = () => {
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
   const [selectedContactName, setSelectedContactName] = useState<string | undefined>(undefined);
   const [clinicTab, setClinicTab] = useState<string | undefined>(undefined);
+  const [systemEnabled, setSystemEnabled] = useState<boolean>(true);
+  const [showEnableDialog, setShowEnableDialog] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
 
   useEffect(() => {
     let mounted = true;
@@ -117,6 +122,8 @@ const Index = () => {
 
       if (data) {
         setHasClinic(true);
+        // Load AI system status
+        await loadSystemStatus(userId, data.clinic_id);
       } else {
         setHasClinic(false);
         setCurrentView("clinic"); // Show clinic setup
@@ -125,6 +132,57 @@ const Index = () => {
       console.error("Error checking clinic:", error);
       setHasClinic(false);
       setCurrentView("clinic");
+    }
+  };
+
+  const loadSystemStatus = async (userId: string, clinicId: string) => {
+    try {
+      // Get the first location for this clinic
+      const { data: locations } = await supabase
+        .from("clinic_locations")
+        .select("id")
+        .eq("clinic_id", clinicId)
+        .limit(1);
+
+      if (locations && locations.length > 0) {
+        const locationId = locations[0].id;
+        setSelectedLocation(locationId);
+
+        // Get assistant settings for this location
+        const { data: settings } = await supabase
+          .from("assistant_settings")
+          .select("system_enabled")
+          .eq("location_id", locationId)
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (settings) {
+          setSystemEnabled(settings.system_enabled ?? true);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading system status:", error);
+    }
+  };
+
+  const handleEnableSystem = async () => {
+    if (!user || !selectedLocation) return;
+
+    try {
+      const { error } = await supabase
+        .from("assistant_settings")
+        .update({ system_enabled: true })
+        .eq("location_id", selectedLocation)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setSystemEnabled(true);
+      setShowEnableDialog(false);
+      toast.success("AI Assistant system activated");
+    } catch (error) {
+      console.error("Error enabling system:", error);
+      toast.error("Failed to enable system");
     }
   };
 
@@ -190,6 +248,27 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/30 pb-20">
+      {/* Global AI System OFF Banner */}
+      {!systemEnabled && hasClinic && (
+        <Alert className="rounded-none border-x-0 border-t-0 border-b-2 border-amber-500 bg-amber-500/10">
+          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertDescription className="flex items-center justify-between ml-2">
+            <span className="text-sm font-medium text-amber-900 dark:text-amber-200">
+              <Power className="inline h-4 w-4 mr-1" />
+              AI Assistant is currently OFF - No automatic responses are being sent
+            </span>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setShowEnableDialog(true)}
+              className="ml-4 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white"
+            >
+              Turn On Assistant
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-50 border-b-2 border-yellow-accent/20 bg-card/95 backdrop-blur-md shadow-sm">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
@@ -242,6 +321,30 @@ const Index = () => {
 
       {/* Bottom Navigation - Hidden during onboarding */}
       {hasClinic && <Navigation currentView={currentView} onViewChange={setCurrentView} />}
+
+      {/* Confirmation Dialog for Enabling System */}
+      <AlertDialog open={showEnableDialog} onOpenChange={setShowEnableDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Activate AI Assistant?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>This will enable automatic AI responses across all configured channels.</p>
+              <p className="font-medium text-foreground">
+                The AI will start handling customer communication immediately based on your current settings.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can turn off the system or adjust individual channel settings at any time in the Status tab.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEnableSystem} className="bg-green-600 hover:bg-green-700">
+              Activate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
