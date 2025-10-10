@@ -59,14 +59,14 @@ const UsageBilling = () => {
 
       setTransactions(trans || []);
 
-      // Generate mock monthly usage data (replace with real data)
+      // Generate mock monthly usage data with month-on-month comparison
       const mockMonthlyData = [
-        { month: "Jan", credits: 85, phone: 40, text: 45, simple: 60, advanced: 25 },
-        { month: "Feb", credits: 120, phone: 55, text: 65, simple: 80, advanced: 40 },
-        { month: "Mar", credits: 95, phone: 45, text: 50, simple: 65, advanced: 30 },
-        { month: "Apr", credits: 110, phone: 50, text: 60, simple: 75, advanced: 35 },
-        { month: "May", credits: 140, phone: 65, text: 75, simple: 90, advanced: 50 },
-        { month: "Jun", credits: 105, phone: 48, text: 57, simple: 70, advanced: 35 },
+        { month: "Jan", credits: 85, prevMonth: 0, phone: 40, text: 45, simple: 60, advanced: 25 },
+        { month: "Feb", credits: 120, prevMonth: 85, phone: 55, text: 65, simple: 80, advanced: 40 },
+        { month: "Mar", credits: 95, prevMonth: 120, phone: 45, text: 50, simple: 65, advanced: 30 },
+        { month: "Apr", credits: 110, prevMonth: 95, phone: 50, text: 60, simple: 75, advanced: 35 },
+        { month: "May", credits: 140, prevMonth: 110, phone: 65, text: 75, simple: 90, advanced: 50 },
+        { month: "Jun", credits: 105, prevMonth: 140, phone: 48, text: 57, simple: 70, advanced: 35 },
       ];
       setMonthlyUsage(mockMonthlyData);
 
@@ -90,15 +90,31 @@ const UsageBilling = () => {
     if (!billingData) return;
     
     try {
-      const { error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const newValue = !billingData.auto_topup_enabled;
+
+      // Update billing_usage table
+      const { error: billingError } = await supabase
         .from("billing_usage")
-        .update({ auto_topup_enabled: !billingData.auto_topup_enabled })
+        .update({ auto_topup_enabled: newValue })
         .eq("id", billingData.id);
 
-      if (error) throw error;
+      if (billingError) throw billingError;
 
-      setBillingData({ ...billingData, auto_topup_enabled: !billingData.auto_topup_enabled });
-      toast.success("Auto top-up settings updated");
+      // Also update notification_settings table to keep in sync
+      const { error: notifError } = await supabase
+        .from("notification_settings")
+        .upsert({
+          user_id: user.id,
+          auto_topup_enabled: newValue,
+        });
+
+      if (notifError) throw notifError;
+
+      setBillingData({ ...billingData, auto_topup_enabled: newValue });
+      toast.success("Auto top-up settings updated across all settings");
     } catch (error) {
       console.error("Error updating settings:", error);
       toast.error("Failed to update settings");
@@ -149,6 +165,44 @@ const UsageBilling = () => {
 
           {/* Usage Tab */}
           <TabsContent value="usage" className="space-y-6">
+            {/* Credit Packages - Moved to Top */}
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Extra Credit Packages</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Purchase additional credits when needed. <strong>Unused credits automatically roll over to the next month.</strong>
+              </p>
+              <div className="grid gap-4 md:grid-cols-3">
+                {creditPackages.map((pkg) => (
+                  <Card
+                    key={pkg.id}
+                    className={`p-6 relative ${
+                      pkg.is_popular ? "border-primary border-2" : ""
+                    }`}
+                  >
+                    {pkg.is_popular && (
+                      <Badge className="absolute top-4 right-4 bg-yellow-accent text-primary">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        Populär
+                      </Badge>
+                    )}
+                    <div className="text-center space-y-4">
+                      <div>
+                        <div className="text-3xl font-bold">{pkg.credits}</div>
+                        <div className="text-sm text-muted-foreground">krediter</div>
+                      </div>
+                      <div className="text-2xl font-bold">{pkg.price_kr} kr</div>
+                      <Button
+                        onClick={() => purchasePackage(pkg)}
+                        variant={pkg.is_popular ? "default" : "outline"}
+                        className="w-full"
+                      >
+                        Purchase
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </Card>
 
             {/* Credit Balance */}
             <Card className="p-6">
@@ -199,15 +253,40 @@ const UsageBilling = () => {
             {/* Monthly Usage Graph */}
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Credit Usage Over Time</h2>
+              <p className="text-sm text-muted-foreground mb-4">Compare current month vs previous month usage</p>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={monthlyUsage}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
+                <BarChart data={monthlyUsage}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="hsl(var(--foreground))"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--foreground))"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="credits" stroke="#3b82f6" strokeWidth={2} name="Total Credits" />
-                </LineChart>
+                  <Bar 
+                    dataKey="prevMonth" 
+                    fill="hsl(var(--muted))" 
+                    name="Previous Month"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="credits" 
+                    fill="hsl(var(--primary))" 
+                    name="Current Month"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
               </ResponsiveContainer>
             </Card>
 
@@ -217,28 +296,53 @@ const UsageBilling = () => {
               <Card className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Channel Breakdown</h2>
                 <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={monthlyUsage.slice(-1)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
+                  <BarChart data={monthlyUsage.slice(-2)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="month" 
+                      stroke="hsl(var(--foreground))"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--foreground))"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
                     <Legend />
-                    <Bar dataKey="phone" fill="#3b82f6" name="Phone">
-                      <Cell fill="#3b82f6" />
-                    </Bar>
-                    <Bar dataKey="text" fill="#10b981" name="Text/Messaging">
-                      <Cell fill="#10b981" />
-                    </Bar>
+                    <Bar 
+                      dataKey="phone" 
+                      fill="hsl(var(--primary))" 
+                      name="Phone"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="text" 
+                      fill="hsl(var(--yellow-accent))" 
+                      name="Text/Messaging"
+                      radius={[4, 4, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
                 <div className="mt-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm">Phone: {monthlyUsage[monthlyUsage.length - 1]?.phone || 0} credits</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" style={{ color: 'hsl(var(--primary))' }} />
+                      <span className="text-sm font-medium">Phone</span>
+                    </div>
+                    <span className="text-sm">{monthlyUsage[monthlyUsage.length - 1]?.phone || 0} credits</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Text: {monthlyUsage[monthlyUsage.length - 1]?.text || 0} credits</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" style={{ color: 'hsl(var(--yellow-accent))' }} />
+                      <span className="text-sm font-medium">Text</span>
+                    </div>
+                    <span className="text-sm">{monthlyUsage[monthlyUsage.length - 1]?.text || 0} credits</span>
                   </div>
                 </div>
               </Card>
@@ -247,75 +351,58 @@ const UsageBilling = () => {
               <Card className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Task Complexity</h2>
                 <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={usageBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, value }) => `${name}: ${value}`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {usageBreakdown.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
+                  <BarChart data={monthlyUsage.slice(-2)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="month" 
+                      stroke="hsl(var(--foreground))"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--foreground))"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="simple" 
+                      fill="hsl(var(--chart-1))" 
+                      name="Simple Tasks"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="advanced" 
+                      fill="hsl(var(--chart-2))" 
+                      name="Advanced Tasks"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
                 </ResponsiveContainer>
                 <div className="mt-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Simple Tasks: {monthlyUsage[monthlyUsage.length - 1]?.simple || 0} credits</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" style={{ color: 'hsl(var(--chart-1))' }} />
+                      <span className="text-sm font-medium">Simple Tasks</span>
+                    </div>
+                    <span className="text-sm">{monthlyUsage[monthlyUsage.length - 1]?.simple || 0} credits</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm">Advanced Tasks: {monthlyUsage[monthlyUsage.length - 1]?.advanced || 0} credits</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" style={{ color: 'hsl(var(--chart-2))' }} />
+                      <span className="text-sm font-medium">Advanced Tasks</span>
+                    </div>
+                    <span className="text-sm">{monthlyUsage[monthlyUsage.length - 1]?.advanced || 0} credits</span>
                   </div>
                 </div>
               </Card>
             </div>
 
-            {/* Credit Packages */}
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Extra Credit Packages</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Purchase additional credits when needed. Unused credits automatically roll over to the next month.
-              </p>
-              <div className="grid gap-4 md:grid-cols-3">
-                {creditPackages.map((pkg) => (
-                  <Card
-                    key={pkg.id}
-                    className={`p-6 relative ${
-                      pkg.is_popular ? "border-primary border-2" : ""
-                    }`}
-                  >
-                    {pkg.is_popular && (
-                      <Badge className="absolute top-4 right-4">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        Populär
-                      </Badge>
-                    )}
-                    <div className="text-center space-y-4">
-                      <div>
-                        <div className="text-3xl font-bold">{pkg.credits}</div>
-                        <div className="text-sm text-muted-foreground">krediter</div>
-                      </div>
-                      <div className="text-2xl font-bold">{pkg.price_kr} kr</div>
-                      <Button
-                        onClick={() => purchasePackage(pkg)}
-                        variant={pkg.is_popular ? "default" : "outline"}
-                        className="w-full"
-                      >
-                        Purchase
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </Card>
 
             {/* Credit Usage Info */}
             <Card className="p-6">
