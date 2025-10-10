@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Users, UserPlus, Trash2, Shield } from "lucide-react";
+import { Users, UserPlus, Trash2, Shield, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { TeamPermissionsDialog } from "./TeamPermissionsDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,8 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<"admin" | "staff">("staff");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   useEffect(() => {
     loadTeamMembers();
@@ -170,6 +173,11 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
     );
   };
 
+  const handleOpenPermissions = (member: TeamMember) => {
+    setSelectedMember(member);
+    setPermissionsDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -255,6 +263,16 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
                   </div>
                   <div className="flex items-center gap-3">
                     {getRoleBadge(member.role)}
+                    {member.role !== "owner" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenPermissions(member)}
+                      >
+                        <Settings className="h-4 w-4 mr-1" />
+                        Permissions
+                      </Button>
+                    )}
                     {member.role !== "owner" && member.user_id !== currentUserId && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -289,6 +307,17 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {selectedMember && (
+        <TeamPermissionsDialog
+          open={permissionsDialogOpen}
+          onOpenChange={setPermissionsDialogOpen}
+          clinicUserId={selectedMember.id}
+          memberName={selectedMember.full_name || selectedMember.email}
+          memberRole={selectedMember.role}
+          onPermissionsUpdated={loadTeamMembers}
+        />
+      )}
     </div>
   );
 };

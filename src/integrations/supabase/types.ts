@@ -1186,6 +1186,56 @@ export type Database = {
           },
         ]
       }
+      team_member_permissions: {
+        Row: {
+          can_change_ai_mode: boolean | null
+          can_edit_prompts: boolean | null
+          can_edit_schedule: boolean | null
+          can_manage_integrations: boolean | null
+          can_manage_team: boolean | null
+          can_toggle_assistant: boolean | null
+          can_view_billing: boolean | null
+          clinic_user_id: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          can_change_ai_mode?: boolean | null
+          can_edit_prompts?: boolean | null
+          can_edit_schedule?: boolean | null
+          can_manage_integrations?: boolean | null
+          can_manage_team?: boolean | null
+          can_toggle_assistant?: boolean | null
+          can_view_billing?: boolean | null
+          clinic_user_id: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          can_change_ai_mode?: boolean | null
+          can_edit_prompts?: boolean | null
+          can_edit_schedule?: boolean | null
+          can_manage_integrations?: boolean | null
+          can_manage_team?: boolean | null
+          can_toggle_assistant?: boolean | null
+          can_view_billing?: boolean | null
+          clinic_user_id?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_permissions_clinic_user_id_fkey"
+            columns: ["clinic_user_id"]
+            isOneToOne: true
+            referencedRelation: "clinic_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1201,6 +1251,10 @@ export type Database = {
       }
       user_belongs_to_clinic: {
         Args: { _clinic_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_has_permission: {
+        Args: { _clinic_id: string; _permission: string; _user_id: string }
         Returns: boolean
       }
       user_is_clinic_admin: {

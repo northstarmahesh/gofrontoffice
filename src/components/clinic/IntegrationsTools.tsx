@@ -3,11 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Mail, Users, Clock, DollarSign, ExternalLink, Instagram, MessageCircle } from "lucide-react";
+import { Calendar, Mail, Users, Clock, DollarSign, ExternalLink, Instagram, MessageCircle, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChannelConnectionHub } from "./ChannelConnectionHub";
 import { BokadirektIntegration } from "./BokadirektIntegration";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface IntegrationsToolsProps {
   clinicId: string;
@@ -57,6 +59,7 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
   const [locationId, setLocationId] = useState<string | undefined>(undefined);
   const [showBokadirektDialog, setShowBokadirektDialog] = useState(false);
+  const { permissions, loading: permissionsLoading, isAdmin } = useUserPermissions(clinicId);
 
   // Fetch the user's location for this clinic
   useEffect(() => {
@@ -75,6 +78,12 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
   }, [clinicId]);
 
   const handleConnect = async (serviceId: string, serviceName: string) => {
+    // Check permissions
+    if (!isAdmin && !permissions.can_manage_integrations) {
+      toast.error("You don't have permission to manage integrations");
+      return;
+    }
+
     // Special handling for Bokadirekt
     if (serviceId === "bokadirekt") {
       setShowBokadirektDialog(true);
@@ -168,15 +177,36 @@ export const IntegrationsTools = ({ clinicId }: IntegrationsToolsProps) => {
                             {service.description}
                           </p>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleConnect(service.id, service.name)}
-                          disabled={connectingTo === service.id}
-                          className="ml-3 shrink-0"
-                        >
-                          {connectingTo === service.id ? "..." : "Connect"}
-                        </Button>
+                        {!isAdmin && !permissions.can_manage_integrations ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled
+                                  className="ml-3 shrink-0"
+                                >
+                                  <Lock className="h-3 w-3 mr-1" />
+                                  Connect
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>You don't have permission to manage integrations</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleConnect(service.id, service.name)}
+                            disabled={connectingTo === service.id}
+                            className="ml-3 shrink-0"
+                          >
+                            {connectingTo === service.id ? "..." : "Connect"}
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>

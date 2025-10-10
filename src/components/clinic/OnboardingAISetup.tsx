@@ -5,10 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Bot, User, Volume2, ExternalLink } from "lucide-react";
+import { Bot, User, Volume2, ExternalLink, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OnboardingAISetupProps {
   clinicId: string;
@@ -86,6 +88,7 @@ export const OnboardingAISetup = ({
   const [assistantPrompt, setAssistantPrompt] = useState("");
   const [selectedVoice, setSelectedVoice] = useState("alloy");
   const [locationId, setLocationId] = useState<string | null>(null);
+  const { permissions, isAdmin } = useUserPermissions(clinicId);
 
   useEffect(() => {
     loadLocationAndSettings();
@@ -202,7 +205,17 @@ export const OnboardingAISetup = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <RadioGroup value={aiMode} onValueChange={(value) => setAiMode(value as "autopilot" | "copilot")}>
+          <RadioGroup 
+            value={aiMode} 
+            onValueChange={(value) => {
+              if (!isAdmin && !permissions.can_change_ai_mode) {
+                toast.error("You don't have permission to change AI mode");
+                return;
+              }
+              setAiMode(value as "autopilot" | "copilot");
+            }}
+            disabled={!isAdmin && !permissions.can_change_ai_mode}
+          >
             <div className="space-y-3">
               <Card className={`cursor-pointer transition-all ${aiMode === "copilot" ? "border-primary border-2" : "border"}`}>
                 <CardContent className="pt-4 pb-4">
@@ -253,7 +266,15 @@ export const OnboardingAISetup = ({
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="prompt">System Prompt</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="prompt">System Prompt</Label>
+              {!isAdmin && !permissions.can_edit_prompts && (
+                <Badge variant="outline" className="gap-1">
+                  <Lock className="h-3 w-3" />
+                  Read Only
+                </Badge>
+              )}
+            </div>
             <Textarea
               id="prompt"
               value={assistantPrompt}
@@ -261,10 +282,17 @@ export const OnboardingAISetup = ({
               rows={8}
               className="text-sm"
               placeholder="Enter instructions for your AI assistant..."
+              disabled={!isAdmin && !permissions.can_edit_prompts}
             />
-            <p className="text-xs text-muted-foreground">
-              This prompt has been pre-filled based on your business type. Feel free to customize it!
-            </p>
+            {!isAdmin && !permissions.can_edit_prompts ? (
+              <p className="text-xs text-muted-foreground text-amber-600">
+                You don't have permission to edit AI prompts. Contact an admin to make changes.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                This prompt has been pre-filled based on your business type. Feel free to customize it!
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

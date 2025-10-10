@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Phone, MessageSquare, Instagram, Facebook, Mail, Bot, TrendingUp, DollarSign, Clock, Calendar as CalendarIcon, MapPin, ChevronDown, Power, AlertTriangle, Download } from "lucide-react";
+import { Phone, MessageSquare, Instagram, Facebook, Mail, Bot, TrendingUp, DollarSign, Clock, Calendar as CalendarIcon, MapPin, ChevronDown, Power, AlertTriangle, Download, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 interface StatusProps {
   onNavigateToTasks?: () => void;
   onNavigateToClinic?: () => void;
@@ -29,6 +30,8 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [clinicId, setClinicId] = useState<string | null>(null);
+  const { permissions, isAdmin } = useUserPermissions(clinicId);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [aiSystemOpen, setAiSystemOpen] = useState(true);
   const [systemEnabled, setSystemEnabled] = useState(true);
@@ -115,6 +118,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
         .single();
 
       if (clinicUsers?.clinic_id) {
+        setClinicId(clinicUsers.clinic_id);
         const { data: locationData } = await supabase
           .from("clinic_locations")
           .select("*")
@@ -360,6 +364,11 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
   };
 
   const handleChannelModeToggle = async (channel: keyof typeof channelModes) => {
+    if (!isAdmin && !permissions.can_change_ai_mode) {
+      toast.error("You don't have permission to change AI mode");
+      return;
+    }
+
     const newMode = channelModes[channel] === "autopilot" ? "copilot" : "autopilot";
     setChannelModes((prev) => ({ ...prev, [channel]: newMode }));
     
@@ -422,6 +431,11 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
   };
 
   const handleSystemToggle = async (newValue: boolean) => {
+    if (!isAdmin && !permissions.can_toggle_assistant) {
+      toast.error("You don't have permission to enable/disable the assistant");
+      return;
+    }
+
     if (newValue) {
       setShowEnableDialog(true);
     } else {
@@ -577,12 +591,19 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                           ? "AI is handling customer communication according to your settings" 
                           : "All automatic AI responses are paused"}
                       </p>
+                      {!isAdmin && !permissions.can_toggle_assistant && (
+                        <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                          <Lock className="h-3 w-3" />
+                          Contact an admin to enable/disable the assistant
+                        </p>
+                      )}
                     </div>
                   </div>
                   <Switch
                     checked={systemEnabled}
                     onCheckedChange={handleSystemToggle}
                     className="data-[state=checked]:bg-green-600 scale-150"
+                    disabled={!isAdmin && !permissions.can_toggle_assistant}
                   />
                 </div>
               </Card>
