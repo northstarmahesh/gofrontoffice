@@ -8,9 +8,17 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, CreditCard, TrendingUp, Sparkles, Phone, MessageSquare, Zap, Clock } from "lucide-react";
+import { Settings, LogOut, Users as UsersIcon, ChevronDown, Bell, CreditCard, TrendingUp, Sparkles, Phone, MessageSquare, Zap, Clock } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const UsageBilling = () => {
   const navigate = useNavigate();
@@ -174,18 +182,58 @@ const UsageBilling = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-
-        <div className="flex items-center gap-3 mb-8">
-          <CreditCard className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Usage & Billing</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <CreditCard className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">Usage & Billing</h1>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 hover:bg-accent"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Account</span>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-background z-[100]">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/")} className="cursor-pointer">
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Home</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/team")} className="cursor-pointer">
+                <UsersIcon className="mr-2 h-4 w-4" />
+                <span>Team</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Password management coming soon")}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Password & Login</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/notifications")} className="cursor-pointer">
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Notifications</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer font-semibold text-primary">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Usage & Billing</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={async () => {
+                await supabase.auth.signOut();
+                toast.success("Logged out successfully");
+                navigate("/auth");
+              }}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <Tabs defaultValue="usage" className="space-y-6">
