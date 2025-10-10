@@ -33,8 +33,8 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Exchange code for tokens
-    const tokenResponse = await fetch('https://id.signicat.com/oidc/token', {
+    // Exchange code for tokens (using preprod for sandbox clients)
+    const tokenResponse = await fetch('https://preprod.signicat.com/oidc/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -56,8 +56,8 @@ serve(async (req) => {
     const tokens = await tokenResponse.json();
     console.log('Tokens received successfully');
 
-    // Get user info from Signicat
-    const userInfoResponse = await fetch('https://id.signicat.com/oidc/userinfo', {
+    // Get user info from Signicat (using preprod for sandbox clients)
+    const userInfoResponse = await fetch('https://preprod.signicat.com/oidc/userinfo', {
       headers: {
         'Authorization': `Bearer ${tokens.access_token}`,
       },
