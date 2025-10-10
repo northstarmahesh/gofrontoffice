@@ -34,7 +34,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Exchange code for tokens (using sandbox subdomain)
-    const tokenResponse = await fetch('https://front-office.sandbox.signicat.com/auth/open/token', {
+    const tokenResponse = await fetch('https://front-office.sandbox.signicat.com/auth/open/connect/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -57,7 +57,7 @@ serve(async (req) => {
     console.log('Tokens received successfully');
 
     // Get user info from Signicat (using sandbox subdomain)
-    const userInfoResponse = await fetch('https://front-office.sandbox.signicat.com/auth/open/userinfo', {
+    const userInfoResponse = await fetch('https://front-office.sandbox.signicat.com/auth/open/connect/userinfo', {
       headers: {
         'Authorization': `Bearer ${tokens.access_token}`,
       },

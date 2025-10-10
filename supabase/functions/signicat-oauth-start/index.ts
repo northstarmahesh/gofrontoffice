@@ -22,7 +22,7 @@ serve(async (req) => {
     const state = Math.random().toString(36).substring(7);
     
     // Build authorization URL (using sandbox subdomain)
-    const authUrl = new URL('https://front-office.sandbox.signicat.com/auth/open/authorize');
+    const authUrl = new URL('https://front-office.sandbox.signicat.com/auth/open/connect/authorize');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
     authUrl.searchParams.set('response_type', 'code');
