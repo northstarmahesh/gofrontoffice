@@ -64,6 +64,8 @@ serve(async (req: Request) => {
     const { data: { users } } = await supabase.auth.admin.listUsers();
     const existingUser = users?.find(u => u.email === email);
 
+    let userId: string;
+
     if (!existingUser) {
       // Create new user with email confirmed
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
@@ -80,55 +82,44 @@ serve(async (req: Request) => {
       }
 
       console.log("Created new user:", newUser.user.id);
-      
-      // Generate sign-in link for new user
-      const { data: signInLink, error: linkError } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email
-      });
-
-      if (linkError) {
-        console.error("Link error:", linkError);
-        throw new Error("Failed to generate sign-in link");
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          verified: true,
-          user: newUser.user,
-          sign_in_link: signInLink.properties.action_link
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      userId = newUser.user.id;
     } else {
       console.log("User already exists:", existingUser.id);
-      
-      // Generate sign-in link for existing user
-      const { data: signInLink, error: linkError } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email
-      });
-
-      if (linkError) {
-        console.error("Link error:", linkError);
-        throw new Error("Failed to generate sign-in link");
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          verified: true,
-          user: existingUser,
-          sign_in_link: signInLink.properties.action_link
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      userId = existingUser.id;
     }
+
+    // Generate tokens using the magiclink approach (workaround to get tokens)
+    const { data: signInLink, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email
+    });
+
+    if (linkError) {
+      console.error("Link error:", linkError);
+      throw new Error("Failed to generate tokens");
+    }
+
+    // Extract tokens from the magic link URL
+    const magicLinkUrl = new URL(signInLink.properties.action_link);
+    const accessToken = magicLinkUrl.searchParams.get('access_token');
+    const refreshToken = magicLinkUrl.searchParams.get('refresh_token');
+
+    if (!accessToken || !refreshToken) {
+      throw new Error("Failed to extract tokens from magic link");
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        verified: true,
+        user_id: userId,
+        access_token: accessToken,
+        refresh_token: refreshToken
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (error: any) {
     console.error("Error:", error);
     return new Response(
