@@ -36,13 +36,35 @@ const UsageBilling = () => {
       }
 
       // Load billing data
-      const { data: billingData } = await supabase
+      const { data: billing } = await supabase
         .from("billing_usage")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      setBillingData(billingData);
+      // If no billing record exists, create one
+      if (!billing) {
+        const { data: clinicUser } = await supabase
+          .from("clinic_users")
+          .select("clinic_id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (clinicUser) {
+          const { data: newBilling } = await supabase
+            .from("billing_usage")
+            .insert({
+              user_id: user.id,
+              clinic_id: clinicUser.clinic_id,
+            })
+            .select()
+            .single();
+
+          setBillingData(newBilling);
+        }
+      } else {
+        setBillingData(billing);
+      }
 
       // Load credit packages
       const { data: packages } = await supabase
@@ -335,14 +357,14 @@ const UsageBilling = () => {
                       <Bar 
                         dataKey="phoneSimple" 
                         stackId="phone"
-                        fill="hsl(var(--chart-1))" 
+                        fill="#fb923c" 
                         name="Simple"
                         radius={[0, 0, 0, 0]}
                       />
                       <Bar 
                         dataKey="phoneAdvanced" 
                         stackId="phone"
-                        fill="hsl(var(--chart-5))" 
+                        fill="#000000" 
                         name="Advanced"
                         radius={[4, 4, 0, 0]}
                       />
@@ -379,14 +401,14 @@ const UsageBilling = () => {
                       <Bar 
                         dataKey="textSimple" 
                         stackId="text"
-                        fill="hsl(var(--chart-3))" 
+                        fill="#fb923c" 
                         name="Simple"
                         radius={[0, 0, 0, 0]}
                       />
                       <Bar 
                         dataKey="textAdvanced" 
                         stackId="text"
-                        fill="hsl(var(--yellow-accent))" 
+                        fill="#000000" 
                         name="Advanced"
                         radius={[4, 4, 0, 0]}
                       />
@@ -552,18 +574,18 @@ const UsageBilling = () => {
                   <div className="text-2xl font-bold text-primary">{selectedPackage?.price_kr} kr</div>
                 </div>
                 <div className="text-sm space-y-2">
-                  <p className="flex items-start gap-2">
+                  <div className="flex items-start gap-2">
                     <span className="text-green-600 font-bold">✓</span>
                     <span>This amount will be <strong>added to your next invoice</strong></span>
-                  </p>
-                  <p className="flex items-start gap-2">
+                  </div>
+                  <div className="flex items-start gap-2">
                     <span className="text-green-600 font-bold">✓</span>
                     <span><strong>Unused credits automatically roll over</strong> to the next month</span>
-                  </p>
-                  <p className="flex items-start gap-2">
+                  </div>
+                  <div className="flex items-start gap-2">
                     <span className="text-green-600 font-bold">✓</span>
                     <span>Credits are added <strong>immediately</strong> after confirmation</span>
-                  </p>
+                  </div>
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
