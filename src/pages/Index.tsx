@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Settings, CreditCard, Users as UsersIcon, ChevronDown, AlertTriangle, Power } from "lucide-react";
+import { LogOut, Settings, CreditCard, Users as UsersIcon, ChevronDown, AlertTriangle, Power, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -35,6 +35,7 @@ const Index = () => {
   const [disabledLocations, setDisabledLocations] = useState<Array<{ id: string; name: string }>>([]);
   const [showEnableDialog, setShowEnableDialog] = useState(false);
   const [selectedLocationToEnable, setSelectedLocationToEnable] = useState<string>("");
+  const [dismissedBanners, setDismissedBanners] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let mounted = true;
@@ -201,6 +202,15 @@ const Index = () => {
     setShowEnableDialog(true);
   };
 
+  const dismissBanner = (locationId: string) => {
+    setDismissedBanners(prev => new Set([...prev, locationId]));
+  };
+
+  // Get visible disabled locations (not dismissed in this session)
+  const visibleDisabledLocations = disabledLocations.filter(
+    loc => !dismissedBanners.has(loc.id)
+  );
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Logged out successfully");
@@ -264,15 +274,15 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/30 pb-20">
       {/* Global AI System OFF Banner - Shows per location */}
-      {disabledLocations.length > 0 && hasClinic && (
+      {visibleDisabledLocations.length > 0 && hasClinic && (
         <div className="space-y-0">
-          {disabledLocations.map((location) => (
-            <Alert key={location.id} className="rounded-none border-x-0 border-t-0 border-b border-amber-500 bg-amber-500/10">
+          {visibleDisabledLocations.map((location) => (
+            <Alert key={location.id} className="rounded-none border-x-0 border-t-0 border-b border-amber-500 bg-amber-500/10 relative pr-12">
               <AlertTriangle className="h-5 w-5 text-amber-600" />
               <AlertDescription className="flex items-center justify-between ml-2">
                 <span className="text-sm font-medium text-amber-900 dark:text-amber-200">
                   <Power className="inline h-4 w-4 mr-1" />
-                  AI Assistant is OFF for <strong className="font-bold">{location.name}</strong> - No automatic responses are being sent
+                  AI Assistant is currently OFF for <strong className="font-bold">{location.name}</strong> - No automatic responses are being sent
                 </span>
                 <Button 
                   size="sm" 
@@ -280,9 +290,18 @@ const Index = () => {
                   onClick={() => openEnableDialog(location.id)}
                   className="ml-4 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white whitespace-nowrap"
                 >
-                  Turn On
+                  Turn On Assistant
                 </Button>
               </AlertDescription>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => dismissBanner(location.id)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-amber-700 hover:text-amber-900 hover:bg-amber-500/20"
+                aria-label="Dismiss banner"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </Alert>
           ))}
         </div>
