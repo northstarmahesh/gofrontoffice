@@ -8,7 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { Bell, Mail, MessageSquare, Settings } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Bell, Mail, MessageSquare, Settings, LogOut, CreditCard, Users as UsersIcon, ChevronDown } from "lucide-react";
 const Notifications = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -97,9 +105,53 @@ const Notifications = () => {
             <Bell className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold">Notification Settings</h1>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <Settings className="h-5 w-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 hover:bg-accent"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Account</span>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-background z-[100]">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/")} className="cursor-pointer">
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Home</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/team")} className="cursor-pointer">
+                <UsersIcon className="mr-2 h-4 w-4" />
+                <span>Team</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Password management coming soon")}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Password & Login</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer font-semibold text-primary">
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Notifications</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/usage-billing")} className="cursor-pointer">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Usage & Billing</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={async () => {
+                await supabase.auth.signOut();
+                toast.success("Logged out successfully");
+                navigate("/auth");
+              }}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="space-y-6">
