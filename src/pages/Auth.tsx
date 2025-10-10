@@ -3,13 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { z } from "zod";
 import logo from "@/assets/front-office-logo-main.png";
 import { CheckCircle, Building2, Phone as PhoneIcon, MessageSquare, Instagram, Chrome, Send, Calendar } from "lucide-react";
+
+const authSchema = z.object({
+  email: z.string().trim().email({ message: "Ogiltig e-postadress" }).max(255),
+  password: z.string().min(6, { message: "Lösenordet måste vara minst 6 tecken" }).max(100),
+});
 
 const Auth = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
 
   useEffect(() => {
     let mounted = true;
@@ -40,6 +53,54 @@ const Auth = () => {
       subscription.unsubscribe();
     };
   }, [navigate]);
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const validation = authSchema.safeParse({ email, password });
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (authMode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email: validation.data.email,
+          password: validation.data.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`
+          }
+        });
+
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast.error("E-postadressen är redan registrerad. Försök logga in istället.");
+          } else {
+            toast.error(error.message);
+          }
+        } else {
+          toast.success("Kontot har skapats! Du är nu inloggad.");
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: validation.data.email,
+          password: validation.data.password,
+        });
+
+        if (error) {
+          toast.error("Felaktig e-postadress eller lösenord");
+        } else {
+          toast.success("Inloggad!");
+        }
+      }
+    } catch (error) {
+      toast.error("Något gick fel. Försök igen.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleBankIDLogin = async () => {
     setIsSubmitting(true);
@@ -95,23 +156,122 @@ const Auth = () => {
           {/* Login Card */}
           <Card className="max-w-xl mx-auto shadow-2xl border-2 border-primary/20 bg-white">
             <CardContent className="p-10 md:p-12">
-              <div className="space-y-8">
-                <div className="text-center space-y-4">
-                  <h2 className="text-3xl font-bold">Logga in med BankID</h2>
-                  <p className="text-lg text-muted-foreground">
-                    Säker inloggning för alla användare
-                  </p>
-                </div>
+              <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "login" | "signup")} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-8">
+                  <TabsTrigger value="login">Logga in</TabsTrigger>
+                  <TabsTrigger value="signup">Skapa konto</TabsTrigger>
+                </TabsList>
                 
-                <Button
-                  type="button"
-                  onClick={handleBankIDLogin}
-                  className="w-full h-16 text-xl font-semibold"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Startar BankID..." : "Logga in med BankID"}
-                </Button>
-              </div>
+                <TabsContent value="login" className="space-y-6">
+                  <form onSubmit={handleEmailAuth} className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-post</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="din@email.se"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Lösenord</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full h-12 text-lg font-semibold"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Loggar in..." : "Logga in"}
+                    </Button>
+                  </form>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <Separator />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-muted-foreground">eller</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleBankIDLogin}
+                    variant="outline"
+                    className="w-full h-12 text-lg font-semibold"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Startar BankID..." : "Logga in med BankID"}
+                  </Button>
+                </TabsContent>
+
+                <TabsContent value="signup" className="space-y-6">
+                  <form onSubmit={handleEmailAuth} className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">E-post</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="din@email.se"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Lösenord</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="Minst 6 tecken"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full h-12 text-lg font-semibold"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Skapar konto..." : "Skapa konto"}
+                    </Button>
+                  </form>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <Separator />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-muted-foreground">eller</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleBankIDLogin}
+                    variant="outline"
+                    className="w-full h-12 text-lg font-semibold"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Startar BankID..." : "Skapa konto med BankID"}
+                  </Button>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
