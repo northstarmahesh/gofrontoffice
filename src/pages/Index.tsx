@@ -102,7 +102,18 @@ const Index = () => {
         // Store both session and user
         setSession(session);
         setUser(session.user);
-        await checkClinicStatus(session.user.id);
+        
+        // Check clinic status with timeout to prevent hanging
+        try {
+          await Promise.race([
+            checkClinicStatus(session.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+          ]);
+        } catch (error) {
+          console.error("Clinic check failed or timed out:", error);
+          setHasClinic(false);
+          setCurrentView("clinic");
+        }
         
         if (mounted) {
           setLoading(false);
@@ -130,11 +141,18 @@ const Index = () => {
 
   const checkClinicStatus = async (userId: string) => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("clinic_users")
         .select("clinic_id")
         .eq("user_id", userId)
         .maybeSingle();
+
+      if (error) {
+        console.error("Error checking clinic:", error);
+        setHasClinic(false);
+        setCurrentView("clinic");
+        return;
+      }
 
       if (data) {
         setHasClinic(true);
@@ -144,6 +162,8 @@ const Index = () => {
       }
     } catch (error) {
       console.error("Error checking clinic:", error);
+      setHasClinic(false);
+      setCurrentView("clinic");
     }
   };
 
