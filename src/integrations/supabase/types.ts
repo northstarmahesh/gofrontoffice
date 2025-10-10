@@ -203,6 +203,65 @@ export type Database = {
           },
         ]
       }
+      billing_usage: {
+        Row: {
+          auto_topup_enabled: boolean | null
+          billing_start_date: string
+          clinic_id: string
+          created_at: string | null
+          credits_used_this_month: number | null
+          current_credits: number | null
+          id: string
+          included_monthly_credits: number | null
+          monthly_fee: number | null
+          next_billing_date: string
+          setup_fee_amount: number | null
+          setup_fee_paid: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_topup_enabled?: boolean | null
+          billing_start_date?: string
+          clinic_id: string
+          created_at?: string | null
+          credits_used_this_month?: number | null
+          current_credits?: number | null
+          id?: string
+          included_monthly_credits?: number | null
+          monthly_fee?: number | null
+          next_billing_date?: string
+          setup_fee_amount?: number | null
+          setup_fee_paid?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_topup_enabled?: boolean | null
+          billing_start_date?: string
+          clinic_id?: string
+          created_at?: string | null
+          credits_used_this_month?: number | null
+          current_credits?: number | null
+          id?: string
+          included_monthly_credits?: number | null
+          monthly_fee?: number | null
+          next_billing_date?: string
+          setup_fee_amount?: number | null
+          setup_fee_paid?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_usage_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bokadirekt_calendars: {
         Row: {
           calendar_url: string
@@ -663,6 +722,90 @@ export type Database = {
           },
         ]
       }
+      credit_packages: {
+        Row: {
+          created_at: string | null
+          credits: number
+          display_order: number | null
+          id: string
+          is_popular: boolean | null
+          name: string
+          price_kr: number
+        }
+        Insert: {
+          created_at?: string | null
+          credits: number
+          display_order?: number | null
+          id?: string
+          is_popular?: boolean | null
+          name: string
+          price_kr: number
+        }
+        Update: {
+          created_at?: string | null
+          credits?: number
+          display_order?: number | null
+          id?: string
+          is_popular?: boolean | null
+          name?: string
+          price_kr?: number
+        }
+        Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          clinic_id: string
+          created_at: string | null
+          credits_amount: number
+          description: string | null
+          id: string
+          price_kr: number | null
+          related_log_id: string | null
+          task_type: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string | null
+          credits_amount: number
+          description?: string | null
+          id?: string
+          price_kr?: number | null
+          related_log_id?: string | null
+          task_type?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string | null
+          credits_amount?: number
+          description?: string | null
+          id?: string
+          price_kr?: number | null
+          related_log_id?: string | null
+          task_type?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_related_log_id_fkey"
+            columns: ["related_log_id"]
+            isOneToOne: false
+            referencedRelation: "activity_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       draft_replies: {
         Row: {
           approved_at: string | null
@@ -741,6 +884,59 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      notification_settings: {
+        Row: {
+          analytics_frequency: string
+          auto_topup_enabled: boolean | null
+          created_at: string | null
+          credit_limit_alert_enabled: boolean | null
+          credit_limit_threshold: number | null
+          email_enabled: boolean | null
+          id: string
+          location_id: string | null
+          pending_tasks_time: string
+          sms_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analytics_frequency?: string
+          auto_topup_enabled?: boolean | null
+          created_at?: string | null
+          credit_limit_alert_enabled?: boolean | null
+          credit_limit_threshold?: number | null
+          email_enabled?: boolean | null
+          id?: string
+          location_id?: string | null
+          pending_tasks_time?: string
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analytics_frequency?: string
+          auto_topup_enabled?: boolean | null
+          created_at?: string | null
+          credit_limit_alert_enabled?: boolean | null
+          credit_limit_threshold?: number | null
+          email_enabled?: boolean | null
+          id?: string
+          location_id?: string | null
+          pending_tasks_time?: string
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_settings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       onboarding_leads: {
         Row: {

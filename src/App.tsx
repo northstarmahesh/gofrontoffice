@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Team from "./pages/Team";
+import Notifications from "./pages/Notifications";
+import UsageBilling from "./pages/UsageBilling";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ function App() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/team" element={<Team />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/usage-billing" element={<UsageBilling />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
         </TooltipProvider>

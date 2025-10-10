@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Settings, CreditCard, Users as UsersIcon, ChevronDown, AlertTriangle, Power, X } from "lucide-react";
+import { LogOut, Settings, CreditCard, Users as UsersIcon, ChevronDown, AlertTriangle, Power, X, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -341,6 +341,15 @@ const Index = () => {
               <DropdownMenuItem onClick={() => toast.info("Password management coming soon")}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Password & Login</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/notifications")} className="cursor-pointer">
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Notifications</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/usage-billing")} className="cursor-pointer">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Usage & Billing</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
