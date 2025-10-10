@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { ArrowLeft, Bell, Mail, MessageSquare } from "lucide-react";
+import { Bell, Mail, MessageSquare, Settings } from "lucide-react";
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -100,18 +100,18 @@ const Notifications = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-4xl mx-auto py-8 px-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-
-        <div className="flex items-center gap-3 mb-8">
-          <Bell className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Notification Settings</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Bell className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">Notification Settings</h1>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
         </div>
 
         <div className="space-y-6">
@@ -119,7 +119,7 @@ const Notifications = () => {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-2">Pending Tasks Notifications</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Select one or more times to receive daily reminders about pending tasks
+              Get reminders about tasks that need your attention - like following up on customer inquiries, missed calls, or unresolved conversations. Choose when you'd like to receive these daily summaries.
             </p>
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
@@ -189,7 +189,7 @@ const Notifications = () => {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-2">Analytics & Credit Usage Reports</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Choose how often you want to receive analytics summaries (can select multiple)
+              Receive summaries of your clinic's activity - total conversations, response times, customer satisfaction, and credit consumption. Stay informed about how your clinic is performing and track your usage.
             </p>
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
