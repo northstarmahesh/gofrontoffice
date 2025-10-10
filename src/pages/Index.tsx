@@ -32,9 +32,9 @@ const Index = () => {
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
   const [selectedContactName, setSelectedContactName] = useState<string | undefined>(undefined);
   const [clinicTab, setClinicTab] = useState<string | undefined>(undefined);
-  const [systemEnabled, setSystemEnabled] = useState<boolean>(true);
+  const [disabledLocations, setDisabledLocations] = useState<Array<{ id: string; name: string }>>([]);
   const [showEnableDialog, setShowEnableDialog] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [selectedLocationToEnable, setSelectedLocationToEnable] = useState<string>("");
 
   useEffect(() => {
     let mounted = true;
@@ -137,28 +137,35 @@ const Index = () => {
 
   const loadSystemStatus = async (userId: string, clinicId: string) => {
     try {
-      // Get the first location for this clinic
+      // Get all locations for this clinic
       const { data: locations } = await supabase
         .from("clinic_locations")
-        .select("id")
-        .eq("clinic_id", clinicId)
-        .limit(1);
+        .select("id, name")
+        .eq("clinic_id", clinicId);
 
       if (locations && locations.length > 0) {
-        const locationId = locations[0].id;
-        setSelectedLocation(locationId);
+        const locationsWithDisabledAI: Array<{ id: string; name: string }> = [];
 
-        // Get assistant settings for this location
-        const { data: settings } = await supabase
-          .from("assistant_settings")
-          .select("system_enabled")
-          .eq("location_id", locationId)
-          .eq("user_id", userId)
-          .maybeSingle();
+        // Check each location's AI system status
+        for (const location of locations) {
+          const { data: settings } = await supabase
+            .from("assistant_settings")
+            .select("system_enabled")
+            .eq("location_id", location.id)
+            .eq("user_id", userId)
+            .maybeSingle();
 
-        if (settings) {
-          setSystemEnabled(settings.system_enabled ?? true);
+          const isEnabled = settings?.system_enabled ?? true;
+          
+          if (!isEnabled) {
+            locationsWithDisabledAI.push({
+              id: location.id,
+              name: location.name
+            });
+          }
         }
+
+        setDisabledLocations(locationsWithDisabledAI);
       }
     } catch (error) {
       console.error("Error loading system status:", error);
@@ -166,24 +173,32 @@ const Index = () => {
   };
 
   const handleEnableSystem = async () => {
-    if (!user || !selectedLocation) return;
+    if (!user || !selectedLocationToEnable) return;
 
     try {
       const { error } = await supabase
         .from("assistant_settings")
         .update({ system_enabled: true })
-        .eq("location_id", selectedLocation)
+        .eq("location_id", selectedLocationToEnable)
         .eq("user_id", user.id);
 
       if (error) throw error;
 
-      setSystemEnabled(true);
+      // Remove the location from disabled list
+      setDisabledLocations(prev => prev.filter(loc => loc.id !== selectedLocationToEnable));
       setShowEnableDialog(false);
-      toast.success("AI Assistant system activated");
+      
+      const locationName = disabledLocations.find(loc => loc.id === selectedLocationToEnable)?.name;
+      toast.success(`AI Assistant activated for ${locationName}`);
     } catch (error) {
       console.error("Error enabling system:", error);
       toast.error("Failed to enable system");
     }
+  };
+
+  const openEnableDialog = (locationId: string) => {
+    setSelectedLocationToEnable(locationId);
+    setShowEnableDialog(true);
   };
 
   const handleLogout = async () => {
@@ -248,25 +263,29 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/30 pb-20">
-      {/* Global AI System OFF Banner */}
-      {!systemEnabled && hasClinic && (
-        <Alert className="rounded-none border-x-0 border-t-0 border-b-2 border-amber-500 bg-amber-500/10">
-          <AlertTriangle className="h-5 w-5 text-amber-600" />
-          <AlertDescription className="flex items-center justify-between ml-2">
-            <span className="text-sm font-medium text-amber-900 dark:text-amber-200">
-              <Power className="inline h-4 w-4 mr-1" />
-              AI Assistant is currently OFF - No automatic responses are being sent
-            </span>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => setShowEnableDialog(true)}
-              className="ml-4 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white"
-            >
-              Turn On Assistant
-            </Button>
-          </AlertDescription>
-        </Alert>
+      {/* Global AI System OFF Banner - Shows per location */}
+      {disabledLocations.length > 0 && hasClinic && (
+        <div className="space-y-0">
+          {disabledLocations.map((location) => (
+            <Alert key={location.id} className="rounded-none border-x-0 border-t-0 border-b border-amber-500 bg-amber-500/10">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <AlertDescription className="flex items-center justify-between ml-2">
+                <span className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                  <Power className="inline h-4 w-4 mr-1" />
+                  AI Assistant is OFF for <strong className="font-bold">{location.name}</strong> - No automatic responses are being sent
+                </span>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => openEnableDialog(location.id)}
+                  className="ml-4 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white whitespace-nowrap"
+                >
+                  Turn On
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ))}
+        </div>
       )}
 
       {/* Header */}
@@ -326,9 +345,11 @@ const Index = () => {
       <AlertDialog open={showEnableDialog} onOpenChange={setShowEnableDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Activate AI Assistant?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Activate AI Assistant for {disabledLocations.find(loc => loc.id === selectedLocationToEnable)?.name}?
+            </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>This will enable automatic AI responses across all configured channels.</p>
+              <p>This will enable automatic AI responses across all configured channels for this location.</p>
               <p className="font-medium text-foreground">
                 The AI will start handling customer communication immediately based on your current settings.
               </p>
