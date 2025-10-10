@@ -188,15 +188,15 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
             <div className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-primary" />
               <div>
-                <CardTitle>Bjud in teammedlem</CardTitle>
+                <CardTitle>Invite team member</CardTitle>
                 <CardDescription>
-                  Skicka inbjudan via e-post. Nya användare kan registrera sig med BankID.
+                  Send invitation via email. New users can register with BankID.
                 </CardDescription>
               </div>
             </div>
             <Button onClick={() => setInviteDialogOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
-              Bjud in
+              Invite
             </Button>
           </div>
         </CardHeader>
