@@ -11,6 +11,7 @@ import Team from "./pages/Team";
 import Notifications from "./pages/Notifications";
 import UsageBilling from "./pages/UsageBilling";
 import NotFound from "./pages/NotFound";
+import InviteAccept from "./pages/InviteAccept";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ function App() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/team" element={<Team />} />
+        <Route path="/invite/:token" element={<InviteAccept />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/usage-billing" element={<UsageBilling />} />
         <Route path="*" element={<NotFound />} />

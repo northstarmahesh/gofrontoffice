@@ -20,6 +20,7 @@ import Contacts from "@/components/Contacts";
 import Tasks from "@/components/Tasks";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
+import { useInvitationAcceptance } from "@/hooks/useInvitationAcceptance";
 
 type View = "status" | "contacts" | "tasks" | "clinic";
 
@@ -36,6 +37,9 @@ const Index = () => {
   const [showEnableDialog, setShowEnableDialog] = useState(false);
   const [selectedLocationToEnable, setSelectedLocationToEnable] = useState<string>("");
   const [dismissedBanners, setDismissedBanners] = useState<Set<string>>(new Set());
+  
+  // Handle invitation acceptance after BankID redirect
+  useInvitationAcceptance();
 
   useEffect(() => {
     let mounted = true;
@@ -336,7 +340,7 @@ const Index = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/team")} className="cursor-pointer">
                 <UsersIcon className="mr-2 h-4 w-4" />
-                <span>Team Mates</span>
+                <span>Team</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => toast.info("Password management coming soon")}>
                 <Settings className="mr-2 h-4 w-4" />

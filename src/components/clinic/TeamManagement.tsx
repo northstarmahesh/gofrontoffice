@@ -188,59 +188,18 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
             <div className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-primary" />
               <div>
-                <CardTitle>Add Team Member</CardTitle>
+                <CardTitle>Bjud in teammedlem</CardTitle>
                 <CardDescription>
-                  Invite users who have already signed up to join your business
+                  Skicka inbjudan via e-post. Nya användare kan registrera sig med BankID.
                 </CardDescription>
               </div>
             </div>
-            <Button onClick={() => setInviteDialogOpen(true)} size="sm">
+            <Button onClick={() => setInviteDialogOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
               Bjud in
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAddMember} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={newMemberEmail}
-                onChange={(e) => setNewMemberEmail(e.target.value)}
-                placeholder="user@example.com"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Enter the email address of a team member who already has an account. They must have signed up first before you can add them to your business.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="role">Role *</Label>
-              <Select
-                value={newMemberRole}
-                onValueChange={(value) => setNewMemberRole(value as "admin" | "staff")}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="staff">Staff</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Admins can manage business settings and team members
-              </p>
-            </div>
-
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Adding..." : "Add Team Member"}
-            </Button>
-          </form>
-        </CardContent>
       </Card>
 
       <Card>

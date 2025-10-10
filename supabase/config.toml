@@ -41,3 +41,9 @@ verify_jwt = false
 
 [functions.check-bokadirekt-availability]
 verify_jwt = false
+
+[functions.send-team-invitation]
+verify_jwt = true
+
+[functions.accept-team-invitation]
+verify_jwt = false

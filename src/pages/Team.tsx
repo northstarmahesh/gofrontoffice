@@ -93,7 +93,7 @@ const Team = () => {
                 className="cursor-pointer bg-primary/10 text-primary font-medium"
               >
                 <Users className="mr-2 h-4 w-4" />
-                <span>Team Mates</span>
+                <span>Team</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => navigate("/")}

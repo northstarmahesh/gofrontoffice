@@ -70,8 +70,26 @@ export const TeamInvitationDialog = ({ clinicId, open, onOpenChange, onInviteSen
 
       if (inviteError) throw inviteError;
 
-      // TODO: Send invitation email via edge function
-      toast.success("Inbjudan skickad!");
+      // Get the newly created invitation
+      const { data: newInvitation } = await supabase
+        .from('team_invitations')
+        .select('id')
+        .eq('token', token)
+        .single();
+
+      if (newInvitation) {
+        // Send invitation email via edge function
+        const { error: emailError } = await supabase.functions.invoke('send-team-invitation', {
+          body: { invitationId: newInvitation.id },
+        });
+
+        if (emailError) {
+          console.error("Error sending invitation email:", emailError);
+          toast.warning("Inbjudan skapad men e-post kunde inte skickas");
+        } else {
+          toast.success("Inbjudan skickad!");
+        }
+      }
       
       // Reset form
       setEmail("");

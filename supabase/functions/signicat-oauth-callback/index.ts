@@ -122,11 +122,19 @@ serve(async (req) => {
       throw sessionError;
     }
 
+    // Check if there's an invitation token (passed from invite page via sessionStorage)
+    const invitationToken = url.searchParams.get('invitation_token');
+    
     // Redirect to app with session
     // If user is admin, redirect to /admin, otherwise to /
     const appUrl = url.origin.replace('functions/v1/signicat-oauth-callback', '');
     const redirectPath = adminCheck ? 'admin' : '';
-    const redirectUrl = `${appUrl}/#access_token=${sessionData.properties.hashed_token}&type=magiclink${redirectPath ? `&redirect=${redirectPath}` : ''}`;
+    let redirectUrl = `${appUrl}/#access_token=${sessionData.properties.hashed_token}&type=magiclink${redirectPath ? `&redirect=${redirectPath}` : ''}`;
+    
+    // Add invitation token to redirect if present
+    if (invitationToken) {
+      redirectUrl += `&invitation_token=${invitationToken}`;
+    }
 
     console.log('Redirecting to:', redirectUrl);
 
