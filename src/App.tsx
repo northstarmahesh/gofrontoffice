@@ -10,6 +10,7 @@ import Admin from "./pages/Admin";
 import Team from "./pages/Team";
 import Notifications from "./pages/Notifications";
 import UsageBilling from "./pages/UsageBilling";
+import AuthSettings from "./pages/AuthSettings";
 import NotFound from "./pages/NotFound";
 import InviteAccept from "./pages/InviteAccept";
 
@@ -30,6 +31,7 @@ function App() {
         <Route path="/invite/:token" element={<InviteAccept />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/usage-billing" element={<UsageBilling />} />
+        <Route path="/auth-settings" element={<AuthSettings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
         </TooltipProvider>

@@ -96,6 +96,13 @@ const Team = () => {
                 <span>Team</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
+                onClick={() => navigate("/auth-settings")}
+                className="cursor-pointer"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Password & Login</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
                 onClick={() => navigate("/")}
                 className="cursor-pointer"
               >

@@ -342,7 +342,7 @@ const Index = () => {
                 <UsersIcon className="mr-2 h-4 w-4" />
                 <span>Team</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("Password management coming soon")}>
+              <DropdownMenuItem onClick={() => navigate("/auth-settings")} className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Password & Login</span>
               </DropdownMenuItem>
