@@ -50,29 +50,22 @@ const AuthSettings = () => {
 
   const authMethods = [
     {
-      name: "BankID",
-      description: "Säker identifiering via BankID",
+      name: "BankID (Personnummer)",
+      description: "Säker identifiering via BankID med ditt personnummer",
       connected: false,
       recommended: true,
       icon: Shield
     },
     {
-      name: "Personnummer",
-      description: "Koppla ditt personnummer för snabbare inloggning",
-      connected: false,
-      recommended: true,
-      icon: Shield
-    },
-    {
-      name: "E-post",
-      description: user?.email || "Ingen e-post kopplad",
+      name: "E-post (Verification Code)",
+      description: user?.email ? `${user.email} - Login with OTP code` : "Ingen e-post kopplad",
       connected: !!user?.email,
       recommended: false,
       icon: Shield
     },
     {
-      name: "SMS",
-      description: "Logga in med SMS-kod till ditt telefonnummer",
+      name: "SMS (Verification Code)",
+      description: "Få en verifieringskod via SMS till ditt telefonnummer",
       connected: false,
       recommended: false,
       icon: Shield
@@ -203,10 +196,11 @@ const AuthSettings = () => {
               <div>
                 <h3 className="font-semibold mb-2">Security Recommendations</h3>
                 <ul className="text-sm text-muted-foreground space-y-2">
-                  <li>• Use BankID for the highest level of security and convenience</li>
+                  <li>• Use BankID with your personnummer for the highest level of security and convenience</li>
+                  <li>• Email and SMS authentication use one-time verification codes (OTP) for secure login</li>
                   <li>• Enable multiple authentication methods for backup access</li>
                   <li>• Keep your contact information up to date for account recovery</li>
-                  <li>• Never share your login credentials with anyone</li>
+                  <li>• Never share your login credentials or verification codes with anyone</li>
                 </ul>
               </div>
             </div>
