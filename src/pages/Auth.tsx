@@ -75,8 +75,11 @@ const Auth = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-orange-50/30 to-white flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl space-y-12">
+    <div className="min-h-screen bg-gradient-to-b from-white via-orange-50/40 to-orange-400/60 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Orange glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/30 via-primary/10 to-transparent pointer-events-none" />
+      
+      <div className="w-full max-w-4xl space-y-12 relative z-10">
         {/* Logo */}
         <div className="flex justify-center">
           <img src={logo} alt="Front Office" className="h-24 md:h-28 w-auto" />
@@ -90,7 +93,7 @@ const Auth = () => {
           </h1>
 
           {/* Login Card */}
-          <Card className="max-w-xl mx-auto shadow-2xl border-2 border-primary/20">
+          <Card className="max-w-xl mx-auto shadow-2xl border-2 border-primary/20 bg-white">
             <CardContent className="p-10 md:p-12">
               <div className="space-y-8">
                 <div className="text-center space-y-4">
@@ -112,9 +115,32 @@ const Auth = () => {
             </CardContent>
           </Card>
 
+          {/* Partner Logos */}
+          <div className="max-w-3xl mx-auto pt-8">
+            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-8">
+              FrontOffice samarbetar med:
+            </h3>
+            <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-6 items-center justify-items-center">
+              {partners.map((partner) => {
+                const Icon = partner.icon;
+                return (
+                  <div
+                    key={partner.name}
+                    className="flex flex-col items-center gap-2 transition-all duration-300 hover:scale-110"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-md border border-primary/10">
+                      <Icon className="text-primary" size={28} />
+                    </div>
+                    <span className="text-xs font-medium text-foreground">{partner.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Testimonial */}
-          <div className="max-w-2xl mx-auto">
-            <Card className="bg-white/80 backdrop-blur-sm border border-border/50">
+          <div className="max-w-2xl mx-auto pt-4">
+            <Card className="bg-white/90 backdrop-blur-sm border border-primary/20 shadow-lg">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-bold text-lg">
@@ -145,29 +171,6 @@ const Auth = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Partner Logos */}
-          <div className="max-w-3xl mx-auto pt-8 border-t border-border/20">
-            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-8">
-              FrontOffice samarbetar med:
-            </h3>
-            <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-6 items-center justify-items-center">
-              {partners.map((partner) => {
-                const Icon = partner.icon;
-                return (
-                  <div
-                    key={partner.name}
-                    className="flex flex-col items-center gap-2 transition-all duration-300 hover:scale-110"
-                  >
-                    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Icon className="text-primary" size={28} />
-                    </div>
-                    <span className="text-xs font-medium text-muted-foreground">{partner.name}</span>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>
