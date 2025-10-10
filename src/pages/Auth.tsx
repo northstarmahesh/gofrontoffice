@@ -104,18 +104,19 @@ const Auth = () => {
         contact: contactInfo
       });
       if (loginMethod === 'email') {
-        // Use custom edge function to send 6-digit code via Resend
-        const {
-          error
-        } = await supabase.functions.invoke('send-email-verification', {
-          body: {
-            email: contactInfo
+        // Use Supabase's built-in email OTP
+        const { error } = await supabase.auth.signInWithOtp({
+          email: contactInfo,
+          options: {
+            shouldCreateUser: true
           }
         });
+        
         if (error) {
-          console.error('Error sending verification code:', error);
+          console.error('Error sending OTP:', error);
           throw new Error('Kunde inte skicka verifieringskod');
         }
+        
         toast.success("Verifieringskod skickad till din e-post");
         setStep('otp');
       } else {
@@ -155,46 +156,23 @@ const Auth = () => {
         otp
       });
       if (loginMethod === 'email') {
-        // Verify custom 6-digit code
-        const {
-          data: verifyResult,
-          error: verifyError
-        } = await supabase.functions.invoke('verify-email-otp', {
-          body: {
-            email: contactInfo,
-            code: otp
-          }
+        // Verify using Supabase's built-in OTP
+        const { data, error: verifyError } = await supabase.auth.verifyOtp({
+          email: contactInfo,
+          token: otp,
+          type: 'email'
         });
         
-        if (verifyError || !verifyResult?.verified) {
+        if (verifyError || !data.session) {
           toast.error("Ogiltig verifieringskod");
           setIsSubmitting(false);
           return;
         }
 
-        // Use the hashed token to verify and establish session
-        if (verifyResult.hashed_token) {
-          const { data, error: verifyTokenError } = await supabase.auth.verifyOtp({
-            email: contactInfo,
-            token: verifyResult.hashed_token,
-            type: 'recovery'
-          });
-          
-          if (verifyTokenError || !data.session) {
-            console.error("Token verification error:", verifyTokenError);
-            toast.error("Kunde inte logga in");
-            setIsSubmitting(false);
-            return;
-          }
-
-          // Session is now established
-          console.log('Email session established successfully');
-          toast.success("Inloggning lyckades!");
-          navigate("/");
-        } else {
-          toast.error("Kunde inte hämta inloggningsuppgifter");
-          setIsSubmitting(false);
-        }
+        // Session established
+        console.log('Email session established successfully');
+        toast.success("Inloggning lyckades!");
+        navigate("/");
       } else {
         // Phone verification using custom edge function
         const fullPhone = `${countryCode}${contactInfo}`;
