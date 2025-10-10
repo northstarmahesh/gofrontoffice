@@ -75,6 +75,26 @@ const Auth = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // Quick demo login - generate direct magic link
+      if (contactInfo === 'demo' || contactInfo === 'mahesh@gonorthstar.ai') {
+        const { data, error } = await supabase.auth.signInWithOtp({
+          email: 'mahesh@gonorthstar.ai',
+          options: {
+            shouldCreateUser: false
+          }
+        });
+        
+        if (!error) {
+          toast.success("Check your email for the magic link, or use the verification code sent!");
+          setContactInfo('mahesh@gonorthstar.ai');
+          setStep('otp');
+        } else {
+          toast.error("Login failed");
+        }
+        setIsSubmitting(false);
+        return;
+      }
+      
       if (loginMethod === 'bankid') {
         toast.info("BankID-integration kommer snart. Kontakta support för att aktivera denna funktion.");
         setIsSubmitting(false);
