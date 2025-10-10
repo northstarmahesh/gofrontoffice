@@ -96,8 +96,21 @@ const Auth = () => {
       }
       
       if (loginMethod === 'bankid') {
-        toast.info("BankID-integration kommer snart. Kontakta support för att aktivera denna funktion.");
-        setIsSubmitting(false);
+        // Call edge function to get BankID auth URL
+        const { data, error } = await supabase.functions.invoke('signicat-oauth-start');
+        
+        if (error || !data?.authUrl) {
+          console.error('BankID start error:', error);
+          toast.error("Kunde inte starta BankID-inloggning. Försök igen.");
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Store state for CSRF protection
+        sessionStorage.setItem('oauth_state', data.state);
+        
+        // Redirect to Signicat BankID
+        window.location.href = data.authUrl;
         return;
       }
       loginSchema.parse({

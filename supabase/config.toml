@@ -1,5 +1,11 @@
 project_id = "bzaqtvjereyqrymupapp"
 
+[functions.signicat-oauth-start]
+verify_jwt = false
+
+[functions.signicat-oauth-callback]
+verify_jwt = false
+
 [functions.vonage-sms-webhook]
 verify_jwt = false
 
