@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { ArrowLeft, Bell, Mail, MessageSquare } from "lucide-react";
@@ -15,8 +15,8 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
-    pending_tasks_time: "8am",
-    analytics_frequency: "weekly",
+    pending_tasks_times: ["8am"] as string[],
+    analytics_frequencies: ["weekly"] as string[],
     email_enabled: true,
     sms_enabled: false,
     credit_limit_alert_enabled: true,
@@ -45,7 +45,11 @@ const Notifications = () => {
       if (error) throw error;
 
       if (data) {
-        setSettings(data);
+        setSettings({
+          ...data,
+          pending_tasks_times: data.pending_tasks_time ? [data.pending_tasks_time] : ["8am"],
+          analytics_frequencies: data.analytics_frequency ? [data.analytics_frequency] : ["weekly"],
+        });
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -65,7 +69,13 @@ const Notifications = () => {
         .from("notification_settings")
         .upsert({
           user_id: user.id,
-          ...settings,
+          email_enabled: settings.email_enabled,
+          sms_enabled: settings.sms_enabled,
+          credit_limit_alert_enabled: settings.credit_limit_alert_enabled,
+          credit_limit_threshold: settings.credit_limit_threshold,
+          auto_topup_enabled: settings.auto_topup_enabled,
+          pending_tasks_time: settings.pending_tasks_times[0] || "8am",
+          analytics_frequency: settings.analytics_frequencies[0] || "weekly",
         });
 
       if (error) throw error;
@@ -107,50 +117,142 @@ const Notifications = () => {
         <div className="space-y-6">
           {/* Pending Tasks */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Pending Tasks Notifications</h2>
-            <RadioGroup
-              value={settings.pending_tasks_time}
-              onValueChange={(value) =>
-                setSettings({ ...settings, pending_tasks_time: value })
-              }
-            >
+            <h2 className="text-xl font-semibold mb-2">Pending Tasks Notifications</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Select one or more times to receive daily reminders about pending tasks
+            </p>
+            <div className="space-y-3">
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="8am" id="8am" />
-                <Label htmlFor="8am">Every Morning 8 AM</Label>
+                <Checkbox
+                  id="8am"
+                  checked={settings.pending_tasks_times.includes("8am")}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSettings({
+                        ...settings,
+                        pending_tasks_times: [...settings.pending_tasks_times, "8am"],
+                      });
+                    } else {
+                      setSettings({
+                        ...settings,
+                        pending_tasks_times: settings.pending_tasks_times.filter((t) => t !== "8am"),
+                      });
+                    }
+                  }}
+                />
+                <Label htmlFor="8am" className="cursor-pointer">Every Morning 8 AM</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="12pm" id="12pm" />
-                <Label htmlFor="12pm">Every Day 12 PM</Label>
+                <Checkbox
+                  id="12pm"
+                  checked={settings.pending_tasks_times.includes("12pm")}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSettings({
+                        ...settings,
+                        pending_tasks_times: [...settings.pending_tasks_times, "12pm"],
+                      });
+                    } else {
+                      setSettings({
+                        ...settings,
+                        pending_tasks_times: settings.pending_tasks_times.filter((t) => t !== "12pm"),
+                      });
+                    }
+                  }}
+                />
+                <Label htmlFor="12pm" className="cursor-pointer">Every Day 12 PM</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="8pm" id="8pm" />
-                <Label htmlFor="8pm">Every Evening 8 PM</Label>
+                <Checkbox
+                  id="8pm"
+                  checked={settings.pending_tasks_times.includes("8pm")}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSettings({
+                        ...settings,
+                        pending_tasks_times: [...settings.pending_tasks_times, "8pm"],
+                      });
+                    } else {
+                      setSettings({
+                        ...settings,
+                        pending_tasks_times: settings.pending_tasks_times.filter((t) => t !== "8pm"),
+                      });
+                    }
+                  }}
+                />
+                <Label htmlFor="8pm" className="cursor-pointer">Every Evening 8 PM</Label>
               </div>
-            </RadioGroup>
+            </div>
           </Card>
 
           {/* Analytics & Credit Usage */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Analytics & Credit Usage</h2>
-            <RadioGroup
-              value={settings.analytics_frequency}
-              onValueChange={(value) =>
-                setSettings({ ...settings, analytics_frequency: value })
-              }
-            >
+            <h2 className="text-xl font-semibold mb-2">Analytics & Credit Usage Reports</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Choose how often you want to receive analytics summaries (can select multiple)
+            </p>
+            <div className="space-y-3">
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="daily" id="daily" />
-                <Label htmlFor="daily">Daily</Label>
+                <Checkbox
+                  id="daily"
+                  checked={settings.analytics_frequencies.includes("daily")}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSettings({
+                        ...settings,
+                        analytics_frequencies: [...settings.analytics_frequencies, "daily"],
+                      });
+                    } else {
+                      setSettings({
+                        ...settings,
+                        analytics_frequencies: settings.analytics_frequencies.filter((f) => f !== "daily"),
+                      });
+                    }
+                  }}
+                />
+                <Label htmlFor="daily" className="cursor-pointer">Daily</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="weekly" id="weekly" />
-                <Label htmlFor="weekly">Weekly</Label>
+                <Checkbox
+                  id="weekly"
+                  checked={settings.analytics_frequencies.includes("weekly")}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSettings({
+                        ...settings,
+                        analytics_frequencies: [...settings.analytics_frequencies, "weekly"],
+                      });
+                    } else {
+                      setSettings({
+                        ...settings,
+                        analytics_frequencies: settings.analytics_frequencies.filter((f) => f !== "weekly"),
+                      });
+                    }
+                  }}
+                />
+                <Label htmlFor="weekly" className="cursor-pointer">Weekly</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="monthly" id="monthly" />
-                <Label htmlFor="monthly">Monthly</Label>
+                <Checkbox
+                  id="monthly"
+                  checked={settings.analytics_frequencies.includes("monthly")}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSettings({
+                        ...settings,
+                        analytics_frequencies: [...settings.analytics_frequencies, "monthly"],
+                      });
+                    } else {
+                      setSettings({
+                        ...settings,
+                        analytics_frequencies: settings.analytics_frequencies.filter((f) => f !== "monthly"),
+                      });
+                    }
+                  }}
+                />
+                <Label htmlFor="monthly" className="cursor-pointer">Monthly</Label>
               </div>
-            </RadioGroup>
+            </div>
           </Card>
 
           {/* Notification Channels */}
