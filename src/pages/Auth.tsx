@@ -86,7 +86,7 @@ const Auth = () => {
         <div className="space-y-8">
           {/* Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center text-foreground leading-tight">
-            Värmt Välkommen till Front Office
+            Värmt Välkommen till Front Office, din Digital Assistant.
           </h1>
 
           {/* Login Card */}
