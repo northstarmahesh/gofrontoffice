@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { ArrowLeft, Bell, Mail, MessageSquare } from "lucide-react";
 
@@ -154,7 +155,10 @@ const Notifications = () => {
 
           {/* Notification Channels */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Notification Channels</h2>
+            <h2 className="text-xl font-semibold mb-2">Notification Channels</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Choose how you want to receive notifications. These channels apply to all notification types (tasks, analytics, credit alerts).
+            </p>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -186,17 +190,42 @@ const Notifications = () => {
           {/* Credit Limits */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Credit Limits</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Notify when 90% credits consumed</Label>
-                <Switch
-                  checked={settings.credit_limit_alert_enabled}
-                  onCheckedChange={(checked) =>
-                    setSettings({ ...settings, credit_limit_alert_enabled: checked })
-                  }
-                />
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Alert when credits consumed</Label>
+                  <Switch
+                    checked={settings.credit_limit_alert_enabled}
+                    onCheckedChange={(checked) =>
+                      setSettings({ ...settings, credit_limit_alert_enabled: checked })
+                    }
+                  />
+                </div>
+                
+                {settings.credit_limit_alert_enabled && (
+                  <div className="space-y-3 pl-4 border-l-2 border-primary/20">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Notification threshold</span>
+                      <span className="text-2xl font-bold text-primary">{settings.credit_limit_threshold}%</span>
+                    </div>
+                    <Slider
+                      value={[settings.credit_limit_threshold]}
+                      onValueChange={([value]) =>
+                        setSettings({ ...settings, credit_limit_threshold: value })
+                      }
+                      min={50}
+                      max={95}
+                      step={5}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      You'll be notified via your enabled channels (email/SMS) when {settings.credit_limit_threshold}% of your monthly credits are consumed.
+                    </p>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center justify-between">
+              
+              <div className="flex items-center justify-between pt-2 border-t">
                 <div>
                   <Label>Auto top-up credits</Label>
                   <p className="text-sm text-muted-foreground">
