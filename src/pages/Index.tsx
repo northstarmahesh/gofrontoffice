@@ -103,22 +103,32 @@ const Index = () => {
         setSession(session);
         setUser(session.user);
         
-        // Check clinic status with timeout to prevent hanging
+        // Always stop loading after a maximum of 3 seconds
+        const loadingTimeout = setTimeout(() => {
+          if (mounted) {
+            console.log('Loading timeout - forcing completion');
+            setLoading(false);
+            if (hasClinic === null) {
+              setHasClinic(false);
+              setCurrentView("clinic");
+            }
+          }
+        }, 3000);
+        
+        // Check clinic status
         try {
-          await Promise.race([
-            checkClinicStatus(session.user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-          ]);
+          await checkClinicStatus(session.user.id);
         } catch (error) {
-          console.error("Clinic check failed or timed out:", error);
+          console.error("Clinic check failed:", error);
           setHasClinic(false);
           setCurrentView("clinic");
-        }
-        
-        if (mounted) {
-          setLoading(false);
-          // Start periodic session checks
-          refreshTimer = setInterval(checkSessionPeriodically, 30000); // Check every 30 seconds
+        } finally {
+          clearTimeout(loadingTimeout);
+          if (mounted) {
+            setLoading(false);
+            // Start periodic session checks
+            refreshTimer = setInterval(checkSessionPeriodically, 30000);
+          }
         }
       } catch (error) {
         console.error("Auth error:", error);
