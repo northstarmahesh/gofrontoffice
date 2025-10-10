@@ -5,13 +5,18 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Phone, MessageSquare, Instagram, Facebook, Mail, Bot, TrendingUp, DollarSign, Clock, Calendar, MapPin, ChevronDown } from "lucide-react";
+import { Phone, MessageSquare, Instagram, Facebook, Mail, Bot, TrendingUp, DollarSign, Clock, Calendar as CalendarIcon, MapPin, ChevronDown, Power, AlertTriangle, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useGreetingAndWeather } from "@/hooks/useGreetingAndWeather";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 interface StatusProps {
   onNavigateToTasks?: () => void;
   onNavigateToClinic?: () => void;
@@ -26,6 +31,12 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [aiSystemOpen, setAiSystemOpen] = useState(true);
+  const [systemEnabled, setSystemEnabled] = useState(true);
+  const [showEnableDialog, setShowEnableDialog] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: new Date(new Date().setDate(new Date().getDate() - 7)),
+    to: new Date()
+  });
   const [channels, setChannels] = useState({
     phone: true,
     sms: true,
@@ -147,6 +158,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
 
       if (data) {
         const globalMode = data.auto_pilot_enabled ? "autopilot" : "copilot";
+        setSystemEnabled(data.system_enabled ?? true);
         setChannels({
           phone: data.phone_mode !== "off",
           sms: data.sms_enabled,
@@ -409,6 +421,60 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     );
   };
 
+  const handleSystemToggle = async (newValue: boolean) => {
+    if (newValue) {
+      setShowEnableDialog(true);
+    } else {
+      setSystemEnabled(false);
+      await updateSettings({ system_enabled: false });
+      toast.success("AI Assistant system disabled");
+    }
+  };
+
+  const confirmSystemEnable = async () => {
+    setSystemEnabled(true);
+    await updateSettings({ system_enabled: true });
+    setShowEnableDialog(false);
+    toast.success("AI Assistant system activated");
+  };
+
+  const handleExportCSV = () => {
+    const csvContent = [
+      ['Date', 'Calls', 'Messages', 'Time Saved', 'Cost Saved'],
+      ...weeklyStats.map(stat => [
+        stat.day,
+        stat.calls.toString(),
+        stat.messages.toString(),
+        '0.5h', // Mock data
+        '$20'   // Mock data
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const locationName = locations.find(l => l.id === selectedLocation)?.name || 'location';
+    const fromDate = dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : 'start';
+    const toDate = dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : 'end';
+    a.download = `analytics_${locationName}_${fromDate}_${toDate}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    toast.success("Analytics exported successfully");
+  };
+
+  const weeklyStats = [
+    { day: "Mon", calls: 3, messages: 5 },
+    { day: "Tue", calls: 5, messages: 8 },
+    { day: "Wed", calls: 4, messages: 6 },
+    { day: "Thu", calls: 6, messages: 9 },
+    { day: "Fri", calls: 7, messages: 10 },
+    { day: "Sat", calls: 2, messages: 4 },
+    { day: "Sun", calls: 1, messages: 2 },
+  ];
+
 
   const stats = [
     {
@@ -479,9 +545,107 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
 
           {locations.map((location) => (
             <TabsContent key={location.id} value={location.id} className="space-y-6 mt-6">
+              {/* Warning Banner when System is OFF */}
+              {!systemEnabled && (
+                <Alert className="border-amber-500 bg-amber-500/10">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  <AlertDescription className="flex items-center justify-between ml-2">
+                    <span className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                      AI Assistant is currently OFF - No automatic responses are being sent
+                    </span>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setShowEnableDialog(true)}
+                      className="ml-4 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white"
+                    >
+                      Turn On Assistant
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Master AI System Switch */}
+              <Card className="border-2 border-primary/30 p-6 shadow-xl bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "rounded-2xl p-4 border-2 transition-all",
+                      systemEnabled 
+                        ? "bg-green-500/20 border-green-500/40" 
+                        : "bg-muted border-border"
+                    )}>
+                      <Power className={cn(
+                        "h-8 w-8 transition-colors",
+                        systemEnabled ? "text-green-600" : "text-muted-foreground"
+                      )} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                        AI Assistant System
+                        <Badge className={cn(
+                          "text-sm font-semibold",
+                          systemEnabled 
+                            ? "bg-green-500/20 text-green-700 border-green-500/30" 
+                            : "bg-muted text-muted-foreground border-border"
+                        )}>
+                          {systemEnabled ? "Active" : "Inactive"}
+                        </Badge>
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {systemEnabled 
+                          ? "AI is handling customer communication according to your settings" 
+                          : "All automatic AI responses are paused"}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={systemEnabled}
+                    onCheckedChange={handleSystemToggle}
+                    className="data-[state=checked]:bg-green-600 scale-150"
+                  />
+                </div>
+              </Card>
+
               {/* Analytics Section - TOP */}
               <div>
-                <h3 className="text-xl font-bold text-foreground mb-4">Analytics</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-foreground">Analytics</h3>
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <CalendarIcon className="h-4 w-4" />
+                          {dateRange.from && dateRange.to ? (
+                            <>
+                              {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}
+                            </>
+                          ) : (
+                            "Select date range"
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                        <Calendar
+                          mode="range"
+                          selected={dateRange}
+                          onSelect={(range) => range && setDateRange(range)}
+                          numberOfMonths={2}
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleExportCSV}
+                      className="gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export CSV
+                    </Button>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   {stats.map((stat) => {
                     const Icon = stat.icon;
@@ -517,18 +681,33 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
               </div>
 
       {/* AI Response System - Collapsible */}
-      <Card className="border-2 border-primary/20 p-6 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
+      <Card className={cn(
+        "border-2 p-6 shadow-lg bg-gradient-to-br transition-all",
+        systemEnabled 
+          ? "border-primary/20 from-primary/5 to-primary/10" 
+          : "border-border from-muted/30 to-muted/10 opacity-60"
+      )}>
         <Collapsible open={aiSystemOpen} onOpenChange={setAiSystemOpen}>
           <CollapsibleTrigger className="w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-primary/20 p-3 border-2 border-primary/30">
-                  <Bot className="h-6 w-6 text-primary" />
+                <div className={cn(
+                  "rounded-xl p-3 border-2",
+                  systemEnabled 
+                    ? "bg-primary/20 border-primary/30" 
+                    : "bg-muted border-border"
+                )}>
+                  <Bot className={cn(
+                    "h-6 w-6",
+                    systemEnabled ? "text-primary" : "text-muted-foreground"
+                  )} />
                 </div>
                 <div className="text-left">
                   <h3 className="text-xl font-bold text-foreground">AI Response System</h3>
                   <p className="text-sm text-muted-foreground">
-                    {aiSystemOpen ? "Configure how AI handles each channel" : "Click to expand channel settings"}
+                    {systemEnabled 
+                      ? (aiSystemOpen ? "Configure how AI handles each channel" : "Click to expand channel settings")
+                      : "System is currently disabled"}
                   </p>
                 </div>
               </div>
@@ -537,6 +716,13 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
           </CollapsibleTrigger>
 
           <CollapsibleContent className="mt-6">
+            {!systemEnabled && (
+              <div className="mb-4 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <p className="text-sm text-amber-900 dark:text-amber-200">
+                  Channel settings are inactive while the AI system is disabled. Turn on the system above to activate these channels.
+                </p>
+              </div>
+            )}
             <div className="border-t pt-4">
               <p className="text-sm font-semibold text-muted-foreground mb-4">Channel Settings</p>
           
@@ -564,7 +750,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                   id="phone"
                   checked={channels.phone}
                   onCheckedChange={() => handleChannelToggle("phone")}
-                  disabled={!connectionStatus.phone}
+                  disabled={!connectionStatus.phone || !systemEnabled}
                 />
               </div>
               {!connectionStatus.phone ? (
@@ -638,7 +824,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                   id="sms"
                   checked={channels.sms}
                   onCheckedChange={() => handleChannelToggle("sms")}
-                  disabled={!connectionStatus.sms}
+                  disabled={!connectionStatus.sms || !systemEnabled}
                 />
               </div>
               {!connectionStatus.sms ? (
@@ -712,7 +898,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                   id="whatsapp"
                   checked={channels.whatsapp}
                   onCheckedChange={() => handleChannelToggle("whatsapp")}
-                  disabled={!connectionStatus.whatsapp}
+                  disabled={!connectionStatus.whatsapp || !systemEnabled}
                 />
               </div>
               {!connectionStatus.whatsapp ? (
@@ -781,7 +967,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                   id="instagram"
                   checked={channels.instagram}
                   onCheckedChange={() => handleChannelToggle("instagram")}
-                  disabled={!connectionStatus.instagram}
+                  disabled={!connectionStatus.instagram || !systemEnabled}
                 />
               </div>
               {!connectionStatus.instagram ? (
@@ -850,7 +1036,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                   id="messenger"
                   checked={channels.messenger}
                   onCheckedChange={() => handleChannelToggle("messenger")}
-                  disabled={!connectionStatus.messenger}
+                  disabled={!connectionStatus.messenger || !systemEnabled}
                 />
               </div>
               {!connectionStatus.messenger ? (
@@ -921,7 +1107,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                   id="email"
                   checked={channels.email}
                   onCheckedChange={() => handleChannelToggle("email")}
-                  disabled={!connectionStatus.email}
+                  disabled={!connectionStatus.email || !systemEnabled}
                 />
               </div>
               {!connectionStatus.email ? (
@@ -1049,6 +1235,30 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
           ))}
         </Tabs>
       )}
+
+      {/* Confirmation Dialog for Enabling System */}
+      <AlertDialog open={showEnableDialog} onOpenChange={setShowEnableDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Activate AI Assistant?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>This will enable automatic AI responses across all configured channels.</p>
+              <p className="font-medium text-foreground">
+                The AI will start handling customer communication immediately based on your current settings.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can turn off the system or adjust individual channel settings at any time.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSystemEnable} className="bg-green-600 hover:bg-green-700">
+              Activate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

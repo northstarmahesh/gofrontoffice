@@ -144,6 +144,7 @@ export type Database = {
           phone_mode: string | null
           sms_delay_seconds: number | null
           sms_enabled: boolean | null
+          system_enabled: boolean | null
           updated_at: string | null
           user_id: string
           whatsapp_delay_seconds: number | null
@@ -161,6 +162,7 @@ export type Database = {
           phone_mode?: string | null
           sms_delay_seconds?: number | null
           sms_enabled?: boolean | null
+          system_enabled?: boolean | null
           updated_at?: string | null
           user_id: string
           whatsapp_delay_seconds?: number | null
@@ -178,6 +180,7 @@ export type Database = {
           phone_mode?: string | null
           sms_delay_seconds?: number | null
           sms_enabled?: boolean | null
+          system_enabled?: boolean | null
           updated_at?: string | null
           user_id?: string
           whatsapp_delay_seconds?: number | null
