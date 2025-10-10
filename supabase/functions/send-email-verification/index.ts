@@ -38,18 +38,23 @@ serve(async (req: Request) => {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 10);
 
-    const { error: dbError } = await supabase
+    console.log(`Attempting to insert code for ${email}, expires at ${expiresAt.toISOString()}`);
+    
+    const { data: insertData, error: dbError } = await supabase
       .from("email_verifications")
       .insert({
         email,
         code,
         expires_at: expiresAt.toISOString(),
-      });
+      })
+      .select();
 
     if (dbError) {
-      console.error("Database error:", dbError);
-      throw new Error("Failed to store verification code");
+      console.error("Database insert error:", dbError);
+      throw new Error(`Failed to store verification code: ${dbError.message}`);
     }
+
+    console.log("Successfully inserted verification code:", insertData);
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
