@@ -169,10 +169,11 @@ const Auth = () => {
           return;
         }
 
-        // Session established
+        // Session established - the onAuthStateChange listener will handle navigation
         console.log('Email session established successfully');
         toast.success("Inloggning lyckades!");
-        navigate("/");
+        setIsSubmitting(false);
+        // Navigation will be handled by onAuthStateChange listener
       } else {
         // Phone verification using custom edge function
         const fullPhone = `${countryCode}${contactInfo}`;
