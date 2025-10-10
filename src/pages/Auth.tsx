@@ -152,35 +152,25 @@ const Auth = () => {
           return;
         }
 
-        // Sign in with the access and refresh tokens
-        if (verifyResult.access_token && verifyResult.refresh_token) {
-          const {
-            error: signInError
-          } = await supabase.auth.setSession({
-            access_token: verifyResult.access_token,
-            refresh_token: verifyResult.refresh_token
+        // Use the hashed token to verify and establish session
+        if (verifyResult.hashed_token) {
+          const { data, error: verifyTokenError } = await supabase.auth.verifyOtp({
+            email: contactInfo,
+            token: verifyResult.hashed_token,
+            type: 'recovery'
           });
           
-          if (signInError) {
-            console.error("Sign in error:", signInError);
+          if (verifyTokenError || !data.session) {
+            console.error("Token verification error:", verifyTokenError);
             toast.error("Kunde inte logga in");
             setIsSubmitting(false);
             return;
           }
 
-          // Wait for session to be properly established
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Verify session is established
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            console.log('Email session established successfully');
-            toast.success("Inloggning lyckades!");
-            navigate("/");
-          } else {
-            toast.error("Session kunde inte etableras");
-            setIsSubmitting(false);
-          }
+          // Session is now established
+          console.log('Email session established successfully');
+          toast.success("Inloggning lyckades!");
+          navigate("/");
         } else {
           toast.error("Kunde inte hämta inloggningsuppgifter");
           setIsSubmitting(false);

@@ -107,53 +107,35 @@ serve(async (req: Request) => {
       userId = existingUser.id;
     }
 
-    // Generate tokens using the magiclink approach (workaround to get tokens)
-    const { data: signInLink, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
+    // Generate tokens using recovery link approach (passwordless)
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
       email
     });
 
     if (linkError) {
-      console.error("Link error:", linkError);
-      throw new Error("Failed to generate tokens");
+      console.error("Link generation error:", linkError);
+      throw new Error("Failed to generate authentication tokens");
     }
 
-    console.log("Generated magic link:", signInLink.properties.action_link);
+    console.log("Link properties:", linkData.properties);
 
-    // The tokens are in the URL hash, not query params
-    const magicLinkUrl = signInLink.properties.action_link;
+    // The hashed_token can be exchanged for a session
+    const hashedToken = linkData.properties.hashed_token;
     
-    // Try to extract from hash first (format: #access_token=xxx&refresh_token=yyy)
-    let accessToken: string | null = null;
-    let refreshToken: string | null = null;
-    
-    if (magicLinkUrl.includes('#')) {
-      const hashPart = magicLinkUrl.split('#')[1];
-      const hashParams = new URLSearchParams(hashPart);
-      accessToken = hashParams.get('access_token');
-      refreshToken = hashParams.get('refresh_token');
-    }
-    
-    // If not in hash, try query params
-    if (!accessToken || !refreshToken) {
-      const urlObj = new URL(magicLinkUrl);
-      accessToken = urlObj.searchParams.get('access_token');
-      refreshToken = urlObj.searchParams.get('refresh_token');
+    if (!hashedToken) {
+      console.error("No hashed_token in response");
+      throw new Error("Failed to generate authentication token");
     }
 
-    if (!accessToken || !refreshToken) {
-      console.error("Token extraction failed. Magic link:", magicLinkUrl);
-      throw new Error("Failed to extract tokens from magic link");
-    }
-
-    console.log("Tokens extracted successfully");
+    console.log("Successfully generated hashed token");
 
     return new Response(
       JSON.stringify({ 
         verified: true,
         user_id: userId,
-        access_token: accessToken,
-        refresh_token: refreshToken
+        hashed_token: hashedToken,
+        email: email
       }),
       {
         status: 200,
