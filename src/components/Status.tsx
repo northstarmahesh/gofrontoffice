@@ -545,26 +545,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
 
           {locations.map((location) => (
             <TabsContent key={location.id} value={location.id} className="space-y-6 mt-6">
-              {/* Warning Banner when System is OFF */}
-              {!systemEnabled && (
-                <Alert className="border-amber-500 bg-amber-500/10">
-                  <AlertTriangle className="h-5 w-5 text-amber-600" />
-                  <AlertDescription className="flex items-center justify-between ml-2">
-                    <span className="text-sm font-medium text-amber-900 dark:text-amber-200">
-                      AI Assistant is currently OFF - No automatic responses are being sent
-                    </span>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setShowEnableDialog(true)}
-                      className="ml-4 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white"
-                    >
-                      Turn On Assistant
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-
               {/* Master AI System Switch */}
               <Card className="border-2 border-primary/30 p-6 shadow-xl bg-gradient-to-br from-primary/10 via-primary/5 to-background">
                 <div className="flex items-center justify-between">
