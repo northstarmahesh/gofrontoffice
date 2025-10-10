@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, CreditCard, TrendingUp, Sparkles, Phone, MessageSquare, Zap, Clock } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const UsageBilling = () => {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ const UsageBilling = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [monthlyUsage, setMonthlyUsage] = useState<any[]>([]);
   const [usageBreakdown, setUsageBreakdown] = useState<any[]>([]);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<any>(null);
 
   useEffect(() => {
     loadData();
@@ -121,11 +124,17 @@ const UsageBilling = () => {
     }
   };
 
-  const purchasePackage = async (pkg: any) => {
+  const purchasePackage = (pkg: any) => {
+    setSelectedPackage(pkg);
+    setShowPurchaseDialog(true);
+  };
+
+  const confirmPurchase = () => {
     toast.success(
-      `${pkg.name} will be added to your next invoice. Don't worry - unused credits will roll over to the next month!`,
+      `${selectedPackage.name} will be added to your next invoice. Unused credits will roll over to the next month!`,
       { duration: 5000 }
     );
+    setShowPurchaseDialog(false);
   };
 
   if (loading) {
@@ -165,9 +174,64 @@ const UsageBilling = () => {
 
           {/* Usage Tab */}
           <TabsContent value="usage" className="space-y-6">
-            {/* Credit Packages - Moved to Top */}
+            {/* Current Credit Balance - Moved to Top */}
+            <Card className="p-6 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <h2 className="text-xl font-semibold mb-4">Current Credit Balance</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Available Credits</span>
+                  <span className="text-4xl font-bold text-primary">{billingData?.current_credits || 0}</span>
+                </div>
+                <div className="w-full bg-secondary h-4 rounded-full overflow-hidden">
+                  <div
+                    className="bg-primary h-full transition-all"
+                    style={{ width: `${creditsPercentage}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Used this month: {billingData?.credits_used_this_month || 0}
+                  </span>
+                  <span className="text-muted-foreground">
+                    Included: {billingData?.included_monthly_credits || 100}/mån
+                  </span>
+                </div>
+                <div className="pt-3 border-t">
+                  <Badge variant="outline" className="text-green-600 border-green-600">
+                    ✓ Unused credits roll over to next month
+                  </Badge>
+                </div>
+              </div>
+            </Card>
+
+            {/* Auto Top-up - More Prominent */}
+            <Card className="p-6 border-2 border-yellow-accent/40 bg-gradient-to-br from-yellow-accent/10 to-transparent">
+              <div className="flex items-start gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-6 w-6 text-yellow-accent" />
+                    <h3 className="text-xl font-semibold">AI Auto Top-up</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Our AI automatically analyzes your usage patterns and finds the <strong>cheapest credit package</strong> for your needs. 
+                    Never run out of credits - we'll top up at the best price when you're running low.
+                  </p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <span className="text-green-600 font-medium">Smart savings based on your usage history</span>
+                  </div>
+                </div>
+                <Switch
+                  checked={billingData?.auto_topup_enabled || false}
+                  onCheckedChange={toggleAutoTopup}
+                  className="mt-1"
+                />
+              </div>
+            </Card>
+
+            {/* Credit Packages */}
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Extra Credit Packages</h2>
+              <h2 className="text-xl font-semibold mb-2">Extra Credit Packages</h2>
               <p className="text-sm text-muted-foreground mb-4">
                 Purchase additional credits when needed. <strong>Unused credits automatically roll over to the next month.</strong>
               </p>
@@ -201,52 +265,6 @@ const UsageBilling = () => {
                     </div>
                   </Card>
                 ))}
-              </div>
-            </Card>
-
-            {/* Credit Balance */}
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Current Credit Balance</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Available Credits</span>
-                  <span className="text-3xl font-bold">{billingData?.current_credits || 0}</span>
-                </div>
-                <div className="w-full bg-secondary h-3 rounded-full overflow-hidden">
-                  <div
-                    className="bg-primary h-full transition-all"
-                    style={{ width: `${creditsPercentage}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Used this month: {billingData?.credits_used_this_month || 0}
-                  </span>
-                  <span className="text-muted-foreground">
-                    Included: {billingData?.included_monthly_credits || 100}/mån
-                  </span>
-                </div>
-                <div className="pt-3 border-t">
-                  <Badge variant="outline" className="text-green-600 border-green-600">
-                    ✓ Unused credits roll over to next month
-                  </Badge>
-                </div>
-              </div>
-            </Card>
-
-            {/* Auto Top-up */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Auto Top-up</h3>
-                  <p className="text-sm text-muted-foreground">
-                    AI automatically finds the cheapest credit package based on your usage
-                  </p>
-                </div>
-                <Switch
-                  checked={billingData?.auto_topup_enabled || false}
-                  onCheckedChange={toggleAutoTopup}
-                />
               </div>
             </Card>
 
@@ -324,7 +342,7 @@ const UsageBilling = () => {
                       <Bar 
                         dataKey="phoneAdvanced" 
                         stackId="phone"
-                        fill="hsl(var(--chart-2))" 
+                        fill="hsl(var(--chart-5))" 
                         name="Advanced"
                         radius={[4, 4, 0, 0]}
                       />
@@ -368,7 +386,7 @@ const UsageBilling = () => {
                       <Bar 
                         dataKey="textAdvanced" 
                         stackId="text"
-                        fill="hsl(var(--chart-4))" 
+                        fill="hsl(var(--yellow-accent))" 
                         name="Advanced"
                         radius={[4, 4, 0, 0]}
                       />
@@ -519,6 +537,44 @@ const UsageBilling = () => {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Purchase Confirmation Dialog */}
+        <AlertDialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Credit Purchase</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3">
+                <div className="text-base font-medium text-foreground">
+                  You are about to purchase:
+                </div>
+                <div className="p-4 bg-muted rounded-lg">
+                  <div className="text-lg font-bold">{selectedPackage?.credits} krediter</div>
+                  <div className="text-2xl font-bold text-primary">{selectedPackage?.price_kr} kr</div>
+                </div>
+                <div className="text-sm space-y-2">
+                  <p className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <span>This amount will be <strong>added to your next invoice</strong></span>
+                  </p>
+                  <p className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <span><strong>Unused credits automatically roll over</strong> to the next month</span>
+                  </p>
+                  <p className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <span>Credits are added <strong>immediately</strong> after confirmation</span>
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmPurchase}>
+                Confirm Purchase
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
