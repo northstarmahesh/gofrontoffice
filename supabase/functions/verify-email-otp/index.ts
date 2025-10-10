@@ -99,14 +99,35 @@ serve(async (req: Request) => {
       throw new Error("Failed to generate tokens");
     }
 
-    // Extract tokens from the magic link URL
-    const magicLinkUrl = new URL(signInLink.properties.action_link);
-    const accessToken = magicLinkUrl.searchParams.get('access_token');
-    const refreshToken = magicLinkUrl.searchParams.get('refresh_token');
+    console.log("Generated magic link:", signInLink.properties.action_link);
+
+    // The tokens are in the URL hash, not query params
+    const magicLinkUrl = signInLink.properties.action_link;
+    
+    // Try to extract from hash first (format: #access_token=xxx&refresh_token=yyy)
+    let accessToken: string | null = null;
+    let refreshToken: string | null = null;
+    
+    if (magicLinkUrl.includes('#')) {
+      const hashPart = magicLinkUrl.split('#')[1];
+      const hashParams = new URLSearchParams(hashPart);
+      accessToken = hashParams.get('access_token');
+      refreshToken = hashParams.get('refresh_token');
+    }
+    
+    // If not in hash, try query params
+    if (!accessToken || !refreshToken) {
+      const urlObj = new URL(magicLinkUrl);
+      accessToken = urlObj.searchParams.get('access_token');
+      refreshToken = urlObj.searchParams.get('refresh_token');
+    }
 
     if (!accessToken || !refreshToken) {
+      console.error("Token extraction failed. Magic link:", magicLinkUrl);
       throw new Error("Failed to extract tokens from magic link");
     }
+
+    console.log("Tokens extracted successfully");
 
     return new Response(
       JSON.stringify({ 
