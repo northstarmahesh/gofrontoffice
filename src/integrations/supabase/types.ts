@@ -1151,6 +1151,9 @@ export type Database = {
           expires_at: string
           id: string
           invited_by: string
+          permissions: Json | null
+          personal_number: string | null
+          phone: string | null
           role: string
           token: string
         }
@@ -1162,6 +1165,9 @@ export type Database = {
           expires_at: string
           id?: string
           invited_by: string
+          permissions?: Json | null
+          personal_number?: string | null
+          phone?: string | null
           role: string
           token: string
         }
@@ -1173,6 +1179,9 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by?: string
+          permissions?: Json | null
+          personal_number?: string | null
+          phone?: string | null
           role?: string
           token?: string
         }

@@ -163,7 +163,40 @@ const Auth = () => {
                 </TabsList>
                 
                 <TabsContent value="login" className="space-y-6">
-                  <form onSubmit={handleEmailAuth} className="space-y-6">
+                  <Button
+                    type="button"
+                    onClick={handleBankIDLogin}
+                    className="w-full h-14 text-lg font-semibold"
+                    disabled={isSubmitting}
+                  >
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/4/42/BankID_logo.svg" 
+                      alt="BankID" 
+                      className="h-5 mr-2 brightness-0 invert"
+                    />
+                    {isSubmitting ? "Startar BankID..." : "Logga in med BankID"}
+                  </Button>
+
+                  <div className="text-center">
+                    <a 
+                      href="#" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const form = document.getElementById('email-login-form');
+                        if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+                      }}
+                      className="text-sm text-muted-foreground hover:text-foreground underline"
+                    >
+                      Eller logga in med e-post
+                    </a>
+                  </div>
+
+                  <form 
+                    id="email-login-form"
+                    onSubmit={handleEmailAuth} 
+                    className="space-y-4"
+                    style={{ display: 'none' }}
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="email">E-post</Label>
                       <Input
@@ -190,35 +223,49 @@ const Auth = () => {
                     </div>
                     <Button
                       type="submit"
-                      className="w-full h-12 text-lg font-semibold"
+                      className="w-full"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? "Loggar in..." : "Logga in"}
                     </Button>
                   </form>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <Separator />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-muted-foreground">eller</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={handleBankIDLogin}
-                    variant="outline"
-                    className="w-full h-12 text-lg font-semibold"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Startar BankID..." : "Logga in med BankID"}
-                  </Button>
                 </TabsContent>
 
                 <TabsContent value="signup" className="space-y-6">
-                  <form onSubmit={handleEmailAuth} className="space-y-6">
+                  <Button
+                    type="button"
+                    onClick={handleBankIDLogin}
+                    className="w-full h-14 text-lg font-semibold"
+                    disabled={isSubmitting}
+                  >
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/4/42/BankID_logo.svg" 
+                      alt="BankID" 
+                      className="h-5 mr-2 brightness-0 invert"
+                    />
+                    {isSubmitting ? "Startar BankID..." : "Kom igång med BankID"}
+                  </Button>
+
+                  <div className="text-center">
+                    <a 
+                      href="#" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const form = document.getElementById('email-signup-form');
+                        if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+                      }}
+                      className="text-sm text-muted-foreground hover:text-foreground underline"
+                    >
+                      Eller skapa konto med e-post
+                    </a>
+                  </div>
+
+                  <form 
+                    id="email-signup-form"
+                    onSubmit={handleEmailAuth} 
+                    className="space-y-4"
+                    style={{ display: 'none' }}
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">E-post</Label>
                       <Input
@@ -245,31 +292,12 @@ const Auth = () => {
                     </div>
                     <Button
                       type="submit"
-                      className="w-full h-12 text-lg font-semibold"
+                      className="w-full"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? "Skapar konto..." : "Skapa konto"}
                     </Button>
                   </form>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <Separator />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-muted-foreground">eller</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={handleBankIDLogin}
-                    variant="outline"
-                    className="w-full h-12 text-lg font-semibold"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Startar BankID..." : "Skapa konto med BankID"}
-                  </Button>
                 </TabsContent>
               </Tabs>
             </CardContent>

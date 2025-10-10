@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Users, UserPlus, Trash2, Shield, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TeamPermissionsDialog } from "./TeamPermissionsDialog";
+import { TeamInvitationDialog } from "./TeamInvitationDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,7 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   useEffect(() => {
     loadTeamMembers();
@@ -182,13 +184,21 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-primary" />
-            <CardTitle>Add Team Member</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              <div>
+                <CardTitle>Add Team Member</CardTitle>
+                <CardDescription>
+                  Invite users who have already signed up to join your business
+                </CardDescription>
+              </div>
+            </div>
+            <Button onClick={() => setInviteDialogOpen(true)} size="sm">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Bjud in
+            </Button>
           </div>
-          <CardDescription>
-            Invite users who have already signed up to join your business
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAddMember} className="space-y-4">
@@ -307,6 +317,13 @@ export const TeamManagement = ({ clinicId }: TeamManagementProps) => {
           </div>
         </CardContent>
       </Card>
+
+      <TeamInvitationDialog
+        clinicId={clinicId}
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+        onInviteSent={loadTeamMembers}
+      />
 
       {selectedMember && (
         <TeamPermissionsDialog
