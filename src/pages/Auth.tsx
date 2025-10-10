@@ -79,14 +79,14 @@ const Auth = () => {
       <div className="w-full max-w-4xl space-y-12">
         {/* Logo */}
         <div className="flex justify-center">
-          <img src={logo} alt="Front Office" className="h-16 w-auto" />
+          <img src={logo} alt="Front Office" className="h-24 md:h-28 w-auto" />
         </div>
 
         {/* Main Content */}
         <div className="space-y-8">
           {/* Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center text-foreground leading-tight">
-            Värmt Välkommen till Front Office, din Digital Assistant.
+            Säg 👋 till Front Office din digitala assistant
           </h1>
 
           {/* Login Card */}
