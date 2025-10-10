@@ -59,14 +59,14 @@ const UsageBilling = () => {
 
       setTransactions(trans || []);
 
-      // Generate mock monthly usage data with month-on-month comparison
+      // Generate mock monthly usage data with detailed breakdown
       const mockMonthlyData = [
-        { month: "Jan", credits: 85, prevMonth: 0, phone: 40, text: 45, simple: 60, advanced: 25 },
-        { month: "Feb", credits: 120, prevMonth: 85, phone: 55, text: 65, simple: 80, advanced: 40 },
-        { month: "Mar", credits: 95, prevMonth: 120, phone: 45, text: 50, simple: 65, advanced: 30 },
-        { month: "Apr", credits: 110, prevMonth: 95, phone: 50, text: 60, simple: 75, advanced: 35 },
-        { month: "May", credits: 140, prevMonth: 110, phone: 65, text: 75, simple: 90, advanced: 50 },
-        { month: "Jun", credits: 105, prevMonth: 140, phone: 48, text: 57, simple: 70, advanced: 35 },
+        { month: "Jan", credits: 85, phoneSimple: 25, phoneAdvanced: 15, textSimple: 35, textAdvanced: 10 },
+        { month: "Feb", credits: 120, phoneSimple: 35, phoneAdvanced: 20, textSimple: 45, textAdvanced: 20 },
+        { month: "Mar", credits: 95, phoneSimple: 28, phoneAdvanced: 17, textSimple: 37, textAdvanced: 13 },
+        { month: "Apr", credits: 110, phoneSimple: 32, phoneAdvanced: 18, textSimple: 42, textAdvanced: 18 },
+        { month: "May", credits: 140, phoneSimple: 40, phoneAdvanced: 25, textSimple: 52, textAdvanced: 23 },
+        { month: "Jun", credits: 105, phoneSimple: 30, phoneAdvanced: 18, textSimple: 40, textAdvanced: 17 },
       ];
       setMonthlyUsage(mockMonthlyData);
 
@@ -250,10 +250,9 @@ const UsageBilling = () => {
               </div>
             </Card>
 
-            {/* Monthly Usage Graph */}
+            {/* Graph 1: Total Credits Month on Month */}
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Credit Usage Over Time</h2>
-              <p className="text-sm text-muted-foreground mb-4">Compare current month vs previous month usage</p>
+              <h2 className="text-xl font-semibold mb-4">Total Credits Used Month on Month</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={monthlyUsage}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -265,6 +264,7 @@ const UsageBilling = () => {
                   <YAxis 
                     stroke="hsl(var(--foreground))"
                     style={{ fontSize: '12px' }}
+                    label={{ value: 'Credits', angle: -90, position: 'insideLeft' }}
                   />
                   <Tooltip 
                     contentStyle={{ 
@@ -275,133 +275,108 @@ const UsageBilling = () => {
                   />
                   <Legend />
                   <Bar 
-                    dataKey="prevMonth" 
-                    fill="hsl(var(--muted))" 
-                    name="Previous Month"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar 
                     dataKey="credits" 
                     fill="hsl(var(--primary))" 
-                    name="Current Month"
+                    name="Total Credits"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
 
-            {/* Usage Breakdown */}
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* Channel Breakdown */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Channel Breakdown</h2>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={monthlyUsage.slice(-2)}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="month" 
-                      stroke="hsl(var(--foreground))"
-                      style={{ fontSize: '12px' }}
-                    />
-                    <YAxis 
-                      stroke="hsl(var(--foreground))"
-                      style={{ fontSize: '12px' }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Legend />
-                    <Bar 
-                      dataKey="phone" 
-                      fill="hsl(var(--primary))" 
-                      name="Phone"
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="text" 
-                      fill="hsl(var(--yellow-accent))" 
-                      name="Text/Messaging"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" style={{ color: 'hsl(var(--primary))' }} />
-                      <span className="text-sm font-medium">Phone</span>
-                    </div>
-                    <span className="text-sm">{monthlyUsage[monthlyUsage.length - 1]?.phone || 0} credits</span>
+            {/* Graph 2: Channel Breakdown with Task Complexity */}
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Channel Usage: Simple vs Advanced Tasks</h2>
+              <div className="space-y-6">
+                {/* Phone Channel */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Phone className="h-5 w-5" style={{ color: 'hsl(var(--primary))' }} />
+                    <h3 className="font-semibold">Phone Calls</h3>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4" style={{ color: 'hsl(var(--yellow-accent))' }} />
-                      <span className="text-sm font-medium">Text</span>
-                    </div>
-                    <span className="text-sm">{monthlyUsage[monthlyUsage.length - 1]?.text || 0} credits</span>
-                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={monthlyUsage}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis 
+                        dataKey="month" 
+                        stroke="hsl(var(--foreground))"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <YAxis 
+                        stroke="hsl(var(--foreground))"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Legend />
+                      <Bar 
+                        dataKey="phoneSimple" 
+                        stackId="phone"
+                        fill="hsl(var(--chart-1))" 
+                        name="Simple"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="phoneAdvanced" 
+                        stackId="phone"
+                        fill="hsl(var(--chart-2))" 
+                        name="Advanced"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              </Card>
 
-              {/* Task Complexity Breakdown */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Task Complexity</h2>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={monthlyUsage.slice(-2)}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="month" 
-                      stroke="hsl(var(--foreground))"
-                      style={{ fontSize: '12px' }}
-                    />
-                    <YAxis 
-                      stroke="hsl(var(--foreground))"
-                      style={{ fontSize: '12px' }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Legend />
-                    <Bar 
-                      dataKey="simple" 
-                      fill="hsl(var(--chart-1))" 
-                      name="Simple Tasks"
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="advanced" 
-                      fill="hsl(var(--chart-2))" 
-                      name="Advanced Tasks"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" style={{ color: 'hsl(var(--chart-1))' }} />
-                      <span className="text-sm font-medium">Simple Tasks</span>
-                    </div>
-                    <span className="text-sm">{monthlyUsage[monthlyUsage.length - 1]?.simple || 0} credits</span>
+                {/* Text Channel */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <MessageSquare className="h-5 w-5" style={{ color: 'hsl(var(--yellow-accent))' }} />
+                    <h3 className="font-semibold">Text Messages (SMS/WhatsApp/Instagram/Messenger)</h3>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" style={{ color: 'hsl(var(--chart-2))' }} />
-                      <span className="text-sm font-medium">Advanced Tasks</span>
-                    </div>
-                    <span className="text-sm">{monthlyUsage[monthlyUsage.length - 1]?.advanced || 0} credits</span>
-                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={monthlyUsage}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis 
+                        dataKey="month" 
+                        stroke="hsl(var(--foreground))"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <YAxis 
+                        stroke="hsl(var(--foreground))"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Legend />
+                      <Bar 
+                        dataKey="textSimple" 
+                        stackId="text"
+                        fill="hsl(var(--chart-3))" 
+                        name="Simple"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="textAdvanced" 
+                        stackId="text"
+                        fill="hsl(var(--chart-4))" 
+                        name="Advanced"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              </Card>
-            </div>
+              </div>
+            </Card>
 
 
             {/* Credit Usage Info */}
