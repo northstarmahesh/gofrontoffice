@@ -33,109 +33,60 @@ const Index = () => {
 
   useEffect(() => {
     let mounted = true;
-    let refreshTimer: NodeJS.Timeout;
+    
+    // Aggressive fallback: force loading to false after 2 seconds no matter what
+    const emergencyTimeout = setTimeout(() => {
+      console.log('Emergency timeout - forcing app to load');
+      if (mounted) {
+        setLoading(false);
+      }
+    }, 2000);
 
-    // Set up auth state listener FIRST (critical for catching all auth events)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       
-      console.log('Auth state changed:', event, 'Has session:', !!session);
-      
-      // Always update both session and user together
       setSession(session);
       setUser(session?.user ?? null);
       
       if (event === 'SIGNED_OUT' || !session) {
         navigate("/auth", { replace: true });
-      } else if (event === 'TOKEN_REFRESHED' && session) {
-        console.log('Token refreshed successfully');
-        setSession(session);
-        setUser(session.user);
-      } else if (session?.user) {
-        await checkClinicStatus(session.user.id);
       }
     });
 
-    // Set up periodic session check (every 30 seconds)
-    const checkSessionPeriodically = async () => {
-      if (!mounted) return;
-      
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Session check error:', error);
-          return;
-        }
-        
-        if (!session && mounted) {
-          console.log('No session found during periodic check');
-          navigate("/auth", { replace: true });
-        }
-      } catch (error) {
-        console.error('Error during session check:', error);
-      }
-    };
-
-    // THEN check for existing session
+    // Check for existing session
     const initAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!mounted) return;
         
-        console.log('Initial session check:', !!session, 'Error:', error);
-        
-        if (error) {
-          console.error('Session fetch error:', error);
-          navigate("/auth", { replace: true });
-          setLoading(false);
-          return;
-        }
-        
-        if (!session) {
+        if (error || !session) {
           navigate("/auth", { replace: true });
           setLoading(false);
           return;
         }
 
-        // Store both session and user
         setSession(session);
         setUser(session.user);
         
-        // Always stop loading after a maximum of 3 seconds
-        const loadingTimeout = setTimeout(() => {
-          if (mounted) {
-            console.log('Loading timeout - forcing completion');
-            setLoading(false);
-            if (hasClinic === null) {
-              setHasClinic(false);
-              setCurrentView("clinic");
-            }
-          }
-        }, 3000);
-        
-        // Check clinic status
+        // Quick clinic check with timeout
         try {
-          await checkClinicStatus(session.user.id);
+          await Promise.race([
+            checkClinicStatus(session.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000))
+          ]);
         } catch (error) {
-          console.error("Clinic check failed:", error);
+          console.log("Clinic check timeout or error - showing onboarding");
           setHasClinic(false);
           setCurrentView("clinic");
         } finally {
-          clearTimeout(loadingTimeout);
-          if (mounted) {
-            setLoading(false);
-            // Start periodic session checks
-            refreshTimer = setInterval(checkSessionPeriodically, 30000);
-          }
+          setLoading(false);
         }
       } catch (error) {
-        console.error("Auth error:", error);
-        if (mounted) {
-          setLoading(false);
-          navigate("/auth", { replace: true });
-        }
+        console.error("Init error:", error);
+        setLoading(false);
+        navigate("/auth", { replace: true });
       }
     };
 
@@ -143,7 +94,7 @@ const Index = () => {
 
     return () => {
       mounted = false;
-      if (refreshTimer) clearInterval(refreshTimer);
+      clearTimeout(emergencyTimeout);
       subscription.unsubscribe();
     };
   }, [navigate]);
