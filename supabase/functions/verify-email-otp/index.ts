@@ -24,9 +24,23 @@ serve(async (req: Request) => {
       throw new Error("Email and code are required");
     }
 
+    console.log(`Verifying code for email: ${email}, code: ${code}`);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const currentTime = new Date().toISOString();
+    console.log(`Current time: ${currentTime}`);
+
+    // First check all codes for this email
+    const { data: allCodes, error: allCodesError } = await supabase
+      .from("email_verifications")
+      .select("*")
+      .eq("email", email)
+      .order("created_at", { ascending: false });
+    
+    console.log(`All codes for ${email}:`, allCodes);
 
     // Find the verification record
     const { data: verification, error: fetchError } = await supabase
@@ -34,10 +48,12 @@ serve(async (req: Request) => {
       .select("*")
       .eq("email", email)
       .eq("code", code)
-      .gte("expires_at", new Date().toISOString())
+      .gte("expires_at", currentTime)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    console.log(`Verification query result:`, { verification, fetchError });
 
     if (fetchError) {
       console.error("Fetch error:", fetchError);
@@ -45,6 +61,7 @@ serve(async (req: Request) => {
     }
 
     if (!verification) {
+      console.log("No matching verification found");
       return new Response(
         JSON.stringify({ verified: false, error: "Invalid or expired code" }),
         {
@@ -53,6 +70,8 @@ serve(async (req: Request) => {
         }
       );
     }
+
+    console.log("Verification found:", verification);
 
     // Delete the used verification code
     await supabase
