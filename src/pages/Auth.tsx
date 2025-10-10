@@ -90,12 +90,12 @@ const Auth = () => {
           </h1>
 
           {/* Login Card */}
-          <Card className="max-w-md mx-auto shadow-2xl border-2 border-primary/20">
-            <CardContent className="p-8 md:p-10">
-              <div className="space-y-6">
-                <div className="text-center space-y-3">
-                  <h2 className="text-2xl font-bold">Logga in med BankID</h2>
-                  <p className="text-muted-foreground">
+          <Card className="max-w-xl mx-auto shadow-2xl border-2 border-primary/20">
+            <CardContent className="p-10 md:p-12">
+              <div className="space-y-8">
+                <div className="text-center space-y-4">
+                  <h2 className="text-3xl font-bold">Logga in med BankID</h2>
+                  <p className="text-lg text-muted-foreground">
                     Säker inloggning för alla användare
                   </p>
                 </div>
@@ -103,7 +103,7 @@ const Auth = () => {
                 <Button
                   type="button"
                   onClick={handleBankIDLogin}
-                  className="w-full h-14 text-lg font-semibold"
+                  className="w-full h-16 text-xl font-semibold"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Startar BankID..." : "Logga in med BankID"}
@@ -111,26 +111,6 @@ const Auth = () => {
               </div>
             </CardContent>
           </Card>
-
-          {/* Benefits */}
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="flex items-start gap-3 bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-border/50">
-                <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-                <p className="font-medium">Svarar på samtal, sms, mejl och sociala medier 24/7</p>
-              </div>
-              
-              <div className="flex items-start gap-3 bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-border/50">
-                <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-                <p className="font-medium">Godkänn utkast eller låt den skicka automatiskt</p>
-              </div>
-              
-              <div className="flex items-start gap-3 bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-border/50">
-                <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-                <p className="font-medium">Skräddarsydd installation utan krångel</p>
-              </div>
-            </div>
-          </div>
 
           {/* Testimonial */}
           <div className="max-w-2xl mx-auto">
