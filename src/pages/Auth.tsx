@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { z } from "zod";
-import logo from "@/assets/front-office-logo-main.png";
+import logo from "@/assets/front-office-logo-updated.png";
 import { CheckCircle, Building2, Phone as PhoneIcon, MessageSquare, Instagram, Chrome, Send, Calendar } from "lucide-react";
 
 const authSchema = z.object({
