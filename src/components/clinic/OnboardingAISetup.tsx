@@ -173,7 +173,7 @@ export const OnboardingAISetup = ({
           location_id: locationId,
           user_id: user.id,
           auto_pilot_enabled: aiMode === "autopilot",
-          phone_mode: aiMode === "autopilot" ? "on" : "copilot",
+          phone_mode: aiMode === "autopilot" ? "on" : "passive",
           sms_enabled: true,
           whatsapp_enabled: true,
           instagram_enabled: false,
