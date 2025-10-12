@@ -42,8 +42,14 @@ src/
 │   ├── mocks/
 │   │   └── supabase.ts   # Supabase client mock
 │   └── README.md         # This file
-└── pages/
-    └── Auth.test.tsx     # Example component test
+├── pages/
+│   ├── Auth.test.tsx     # Auth page component test
+│   └── Admin.test.tsx    # Admin page access control test
+├── hooks/
+│   └── useIsAdmin.test.ts # Admin status hook test
+└── components/
+    └── admin/
+        └── AdminClinicCreation.test.tsx # Clinic creation form test
 ```
 
 ## Writing Tests
