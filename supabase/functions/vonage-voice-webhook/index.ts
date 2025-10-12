@@ -104,8 +104,22 @@ serve(async (req) => {
         direction: 'inbound',
       });
 
-    // Return NCCO to handle the call with AI
+    // Return NCCO to handle the call with AI, consent announcement, and recording
     const ncco = [
+      {
+        action: 'talk',
+        text: 'This call is being recorded for quality and training purposes.',
+      },
+      {
+        action: 'record',
+        eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording?conversation_uuid=${conversation_uuid}&clinic_id=${phoneData.clinic_id}`],
+        format: 'mp3',
+        split: 'conversation',
+        channels: 1,
+        endOnSilence: 3,
+        endOnKey: '#',
+        timeOut: 7200, // 2 hours max
+      },
       {
         action: 'talk',
         text: `Hello! Thank you for calling ${clinic?.name || 'our clinic'}. How can I help you today?`,

@@ -25,6 +25,7 @@ export type Database = {
           duration: string | null
           id: string
           location_id: string | null
+          recording_url: string | null
           status: string | null
           summary: string | null
           title: string
@@ -41,6 +42,7 @@ export type Database = {
           duration?: string | null
           id?: string
           location_id?: string | null
+          recording_url?: string | null
           status?: string | null
           summary?: string | null
           title: string
@@ -57,6 +59,7 @@ export type Database = {
           duration?: string | null
           id?: string
           location_id?: string | null
+          recording_url?: string | null
           status?: string | null
           summary?: string | null
           title?: string

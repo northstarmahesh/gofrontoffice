@@ -20,6 +20,8 @@ interface ActivityLog {
   created_at: string;
   actions: string[] | null;
   direction?: string;
+  recording_url?: string | null;
+  duration?: string | null;
 }
 
 interface ActivityLogsProps {
@@ -368,6 +370,24 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
 
                           {log.summary && (
                             <p className="text-xs text-foreground line-clamp-2">{log.summary}</p>
+                          )}
+
+                          {log.recording_url && (
+                            <div className="mt-2">
+                              <audio 
+                                controls 
+                                className="w-full h-8"
+                                preload="metadata"
+                              >
+                                <source src={log.recording_url} type="audio/mpeg" />
+                                Your browser does not support the audio element.
+                              </audio>
+                              {log.duration && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Duration: {log.duration}
+                                </p>
+                              )}
+                            </div>
                           )}
 
                           {log.actions && log.actions.length > 0 && (

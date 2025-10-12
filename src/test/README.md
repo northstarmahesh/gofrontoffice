@@ -52,18 +52,29 @@ src/
         └── AdminClinicCreation.test.tsx # Clinic creation form test
 supabase/
 └── functions/
-    └── deduct-credits/
-        └── index.test.ts # Credit deduction edge function test
+    ├── deduct-credits/
+    │   └── index.test.ts # Credit deduction edge function test
+    ├── vonage-voice-webhook/
+    │   └── index.test.ts # Voice call handling tests
+    ├── vonage-sms-webhook/
+    │   └── index.test.ts # SMS processing tests
+    └── vonage-voice-recording/
+        └── index.test.ts # Call recording tests
 ```
 
 ## Test Coverage
 
-Current test coverage:
+### Frontend Tests
 - `src/pages/Auth.tsx` - Component rendering and form interactions
 - `src/pages/Admin.tsx` - Admin access control and component rendering
 - `src/hooks/useIsAdmin.ts` - Admin role checking logic
 - `src/components/admin/AdminClinicCreation.tsx` - Clinic creation form
+
+### Backend Tests (Edge Functions)
 - `supabase/functions/deduct-credits/index.ts` - Credit deduction and billing logic
+- `supabase/functions/vonage-voice-webhook/index.ts` - Voice call handling, consent announcement, recording
+- `supabase/functions/vonage-sms-webhook/index.ts` - SMS processing and AI response generation
+- `supabase/functions/vonage-voice-recording/index.ts` - Call recording URL storage
 
 ## Writing Tests
 
