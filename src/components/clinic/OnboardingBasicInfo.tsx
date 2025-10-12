@@ -151,6 +151,31 @@ export const OnboardingBasicInfo = ({ onComplete }: OnboardingBasicInfoProps) =>
     setLoading(true);
 
     try {
+      // Ensure profile exists before creating clinic
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Check if profile exists, create if not
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: user.id,
+            email: user.email || formData.email,
+            full_name: user.user_metadata?.full_name || "",
+          });
+
+        if (profileError) throw profileError;
+      }
+
       // Create new clinic (trigger automatically adds user as owner)
       const { data: clinic, error: clinicError } = await supabase
         .from("clinics")
