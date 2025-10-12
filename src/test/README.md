@@ -80,6 +80,9 @@ supabase/
 - `src/pages/Admin.tsx` - Admin access control and component rendering
 - `src/hooks/useIsAdmin.ts` - Admin role checking logic
 - `src/components/admin/AdminClinicCreation.tsx` - Clinic creation form
+- `src/components/clinic/OnboardingSchedule.tsx` - Business hours scheduling
+- `src/components/clinic/OnboardingNotifications.tsx` - Notification preferences
+- `src/components/clinic/OnboardingAISimulator.tsx` - AI testing interface
 
 ### Backend Tests (Edge Functions)
 - `supabase/functions/deduct-credits/index.ts` - Credit deduction and billing logic

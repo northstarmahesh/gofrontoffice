@@ -2,17 +2,20 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Building2, Users, Plug, Rocket } from "lucide-react";
+import { CheckCircle2, Building2, Users, Plug, Rocket, Clock, Bell, MessageSquare } from "lucide-react";
 import { OnboardingBasicInfo } from "./OnboardingBasicInfo";
 import { OnboardingChannels } from "./OnboardingChannels";
 import { OnboardingAISetup } from "./OnboardingAISetup";
+import { OnboardingSchedule } from "./OnboardingSchedule";
+import { OnboardingNotifications } from "./OnboardingNotifications";
+import { OnboardingAISimulator } from "./OnboardingAISimulator";
 import { toast } from "sonner";
 
 interface ClinicOnboardingProps {
   onComplete: (clinicId: string) => void;
 }
 
-type OnboardingStep = "info" | "channels" | "ai-setup" | "complete";
+type OnboardingStep = "info" | "channels" | "ai-setup" | "schedule" | "notifications" | "ai-simulator" | "complete";
 
 export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("info");
@@ -26,6 +29,9 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
     { id: "info" as OnboardingStep, label: "Info", icon: Building2, description: "Basic details" },
     { id: "channels" as OnboardingStep, label: "Tools", icon: Plug, description: "Connect 2+ channels" },
     { id: "ai-setup" as OnboardingStep, label: "Assistant Intelligence", icon: Users, description: "Configure AI" },
+    { id: "schedule" as OnboardingStep, label: "Schedule", icon: Clock, description: "Business hours" },
+    { id: "notifications" as OnboardingStep, label: "Notifications", icon: Bell, description: "Stay informed" },
+    { id: "ai-simulator" as OnboardingStep, label: "Test AI", icon: MessageSquare, description: "Try it out" },
     { id: "complete" as OnboardingStep, label: "Complete", icon: Rocket, description: "All set!" },
   ];
 
@@ -140,6 +146,57 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
           </div>
         );
 
+      case "schedule":
+        return (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-3 pb-3 sm:pb-4 border-b">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm sm:text-base">
+                4
+              </div>
+              <h2 className="text-lg sm:text-xl font-semibold">Business Hours</h2>
+            </div>
+            {clinicId ? (
+              <OnboardingSchedule clinicId={clinicId} onComplete={handleNext} />
+            ) : (
+              <p className="text-center text-muted-foreground">Please complete previous steps first</p>
+            )}
+          </div>
+        );
+
+      case "notifications":
+        return (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-3 pb-3 sm:pb-4 border-b">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm sm:text-base">
+                5
+              </div>
+              <h2 className="text-lg sm:text-xl font-semibold">Notification Settings</h2>
+            </div>
+            {clinicId ? (
+              <OnboardingNotifications clinicId={clinicId} onComplete={handleNext} />
+            ) : (
+              <p className="text-center text-muted-foreground">Please complete previous steps first</p>
+            )}
+          </div>
+        );
+
+      case "ai-simulator":
+        return (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-3 pb-3 sm:pb-4 border-b">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm sm:text-base">
+                6
+              </div>
+              <h2 className="text-lg sm:text-xl font-semibold">Test Your AI Assistant</h2>
+            </div>
+            {clinicId ? (
+              <OnboardingAISimulator clinicId={clinicId} onComplete={handleNext} />
+            ) : (
+              <p className="text-center text-muted-foreground">Please complete previous steps first</p>
+            )}
+          </div>
+        );
+
       case "complete":
         return (
           <div className="space-y-4 sm:space-y-6 text-center py-6 sm:py-12">
@@ -163,11 +220,11 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
                     <p className="text-[10px] sm:text-xs text-muted-foreground">View tasks and communications in the dashboard</p>
                   </div>
                 </div>
-                <div className="flex gap-2 sm:gap-3">
+                <div className="flex items-start gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold text-xs sm:text-sm">Add knowledge base</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">Help your AI answer specific questions</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">Upload documents and URLs to help your AI answer specific questions</p>
                   </div>
                 </div>
                 <div className="flex gap-2 sm:gap-3">
@@ -192,17 +249,17 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   return (
     <div className="max-w-2xl mx-auto space-y-6 px-4 sm:px-0">
       {/* Step Indicators with numbered circles */}
-      <div className="flex items-start justify-between gap-1 sm:gap-2 mb-8">
+      <div className="flex items-start justify-between gap-1 sm:gap-2 mb-8 overflow-x-auto pb-2">
         {steps.slice(0, -1).map((step, index) => {
           const Icon = step.icon;
           const isCompleted = index < currentStepIndex;
           const isCurrent = index === currentStepIndex;
           
           return (
-            <div key={step.id} className="flex-1 relative">
+            <div key={step.id} className="flex-1 relative min-w-[80px]">
               <div className="flex flex-col items-center text-center">
                 <div
-                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-2 font-semibold text-sm ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-2 font-semibold text-sm transition-colors ${
                     isCompleted
                       ? "bg-primary text-primary-foreground"
                       : isCurrent

@@ -29,6 +29,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [urls, setUrls] = useState(["", "", ""]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [acceptedTypes] = useState(".pdf,.doc,.docx,.xls,.xlsx,.csv");
 
   useEffect(() => {
     loadEntries();
@@ -88,13 +89,27 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
 
   const handleUploadPdf = async () => {
     if (!pdfFile) {
-      toast.error("Please select a PDF file");
+      toast.error("Please select a file");
+      return;
+    }
+
+    // Validate file size (20MB max)
+    const maxSize = 20 * 1024 * 1024; // 20MB in bytes
+    if (pdfFile.size > maxSize) {
+      toast.error("File size must be less than 20MB");
+      return;
+    }
+
+    // Validate file type
+    const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv'];
+    const fileExt = pdfFile.name.split('.').pop()?.toLowerCase();
+    if (!fileExt || !allowedExtensions.includes(fileExt)) {
+      toast.error("Invalid file type. Please upload PDF, Word, Excel, or CSV files.");
       return;
     }
 
     setUploading(true);
     try {
-      const fileExt = pdfFile.name.split('.').pop();
       const fileName = `${clinicId}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
@@ -114,13 +129,13 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
 
       if (dbError) throw dbError;
 
-      toast.success("PDF uploaded successfully");
+      toast.success("Document uploaded successfully");
       setPdfFile(null);
       setDialogOpen(false);
       loadEntries();
     } catch (error: any) {
-      console.error("Error uploading PDF:", error);
-      toast.error(error.message || "Failed to upload PDF");
+      console.error("Error uploading document:", error);
+      toast.error(error.message || "Failed to upload document");
     } finally {
       setUploading(false);
     }
@@ -182,7 +197,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
                   </TabsTrigger>
                   <TabsTrigger value="pdf">
                     <FileText className="h-4 w-4 mr-2" />
-                    PDF Document
+                    Documents
                   </TabsTrigger>
                 </TabsList>
 
@@ -217,14 +232,14 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
 
                 <TabsContent value="pdf" className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Upload a PDF document to extract knowledge from
+                    Upload documents to extract knowledge from (PDF, Word, Excel, CSV)
                   </p>
                   <div className="space-y-2">
-                    <Label htmlFor="pdf-file">PDF File (Max 20MB)</Label>
+                    <Label htmlFor="pdf-file">Document File (Max 20MB)</Label>
                     <Input
                       id="pdf-file"
                       type="file"
-                      accept=".pdf"
+                      accept={acceptedTypes}
                       onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
                     />
                     {pdfFile && (
@@ -232,13 +247,16 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
                         Selected: {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
                       </p>
                     )}
+                    <p className="text-xs text-muted-foreground">
+                      Supported formats: PDF, Word (.doc, .docx), Excel (.xls, .xlsx), CSV
+                    </p>
                   </div>
                   <Button 
                     onClick={handleUploadPdf} 
                     disabled={uploading || !pdfFile}
                     className="w-full"
                   >
-                    {uploading ? "Uploading..." : "Upload PDF"}
+                    {uploading ? "Uploading..." : "Upload Document"}
                   </Button>
                 </TabsContent>
               </Tabs>
@@ -246,7 +264,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
           </Dialog>
         </div>
         <CardDescription>
-          Add website URLs or PDF documents to build your business's knowledge base
+          Add website URLs or documents (PDF, Word, Excel, CSV) to build your business's knowledge base
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -272,7 +290,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
                       </p>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {entry.source_type === "pdf" ? "PDF Document" : "Website"}
+                      {entry.source_type === "pdf" ? "Document" : "Website"}
                     </span>
                   </div>
                 </div>
