@@ -1158,45 +1158,45 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       </Card>
 
       {/* Assistant Schedule - Collapsible */}
-      <Card className="border-2 border-primary/20 p-6 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
+      <Card className="p-6">
         <Collapsible open={scheduleOpen} onOpenChange={setScheduleOpen}>
           <CollapsibleTrigger className="w-full">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between hover:opacity-80 transition-opacity">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-primary/20 p-3 border-2 border-primary/30">
-                  <Calendar className="h-6 w-6 text-primary" />
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <Calendar className="h-5 w-5 text-primary" />
                 </div>
                 <div className="text-left">
-                  <h3 className="text-xl font-bold text-foreground">Assistant Schedule</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Assistant Schedule</h3>
                   <p className="text-sm text-muted-foreground">
-                    {scheduleOpen ? "Set when your AI assistant should work" : "Click to expand schedule settings"}
+                    Set when your AI assistant should work
                   </p>
                 </div>
               </div>
-              <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${scheduleOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${scheduleOpen ? "rotate-180" : ""}`} />
             </div>
           </CollapsibleTrigger>
 
           <CollapsibleContent className="mt-6">
-            <div className="space-y-2">
+            <div className="space-y-2 bg-background rounded-lg p-4 border">
               {schedules.map((schedule) => (
                 <div
                   key={schedule.day_of_week}
-                  className="flex items-center gap-2 p-3 border rounded-lg"
+                  className="flex items-center gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-center gap-2 w-28">
+                  <div className="flex items-center gap-3 w-32">
                     <Switch
                       checked={schedule.is_available}
                       onCheckedChange={(checked) =>
                         updateSchedule(schedule.day_of_week, "is_available", checked)
                       }
                     />
-                    <Label className="text-sm font-medium">
+                    <Label className="text-sm font-medium cursor-pointer">
                       {DAYS[schedule.day_of_week]}
                     </Label>
                   </div>
 
-                  {schedule.is_available && (
+                  {schedule.is_available ? (
                     <div className="flex items-center gap-2 flex-1">
                       <input
                         type="time"
@@ -1204,7 +1204,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                         onChange={(e) =>
                           updateSchedule(schedule.day_of_week, "start_time", e.target.value)
                         }
-                        className="px-2 py-1 border rounded-md text-sm w-28"
+                        className="px-3 py-2 border rounded-md text-sm bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       />
                       <span className="text-muted-foreground text-sm">to</span>
                       <input
@@ -1213,12 +1213,10 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
                         onChange={(e) =>
                           updateSchedule(schedule.day_of_week, "end_time", e.target.value)
                         }
-                        className="px-2 py-1 border rounded-md text-sm w-28"
+                        className="px-3 py-2 border rounded-md text-sm bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       />
                     </div>
-                  )}
-
-                  {!schedule.is_available && (
+                  ) : (
                     <span className="text-muted-foreground text-sm flex-1">Closed</span>
                   )}
                 </div>
