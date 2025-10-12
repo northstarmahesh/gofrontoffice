@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { generateAiResponse } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -118,49 +119,13 @@ Deno.serve(async (req) => {
               ?.map(kb => `${kb.title}: ${kb.content}`)
               .join('\n\n') || 'No additional knowledge available.';
 
-            // Build system prompt with custom instructions
-            const basePrompt = clinic?.assistant_prompt || `You are a helpful AI assistant for ${clinic?.name || 'a clinic'}.`;
-            const systemPrompt = `${basePrompt}
-
-You are responding via Facebook Messenger, so be conversational and friendly.
-
-Clinic Information:
-- Name: ${clinic?.name}
-- Phone: ${clinic?.phone}
-- Email: ${clinic?.email}
-- Address: ${clinic?.address}
-
-Knowledge Base:
-${knowledgeContext}
-
-Respond professionally and helpfully to customer inquiries on Messenger.`;
-
-            // Generate AI response using Lovable AI
-            const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-            
-            const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${LOVABLE_API_KEY}`
-              },
-              body: JSON.stringify({
-                model: 'google/gemini-2.5-flash',
-                messages: [
-                  {
-                    role: 'system',
-                    content: systemPrompt
-                  },
-                  {
-                    role: 'user',
-                    content: messageText
-                  }
-                ]
-              })
+            // Generate AI response using shared service
+            const { responseText: aiMessage } = await generateAiResponse({
+              messageText,
+              clinic: clinic || {},
+              knowledgeBase: knowledgeContext,
+              channelType: 'messenger'
             });
-
-            const aiData = await aiResponse.json();
-            const aiMessage = aiData.choices?.[0]?.message?.content || 'Thank you for your message. We will get back to you soon.';
 
             if (settings.auto_pilot_enabled) {
               // Send response via Messenger Send API

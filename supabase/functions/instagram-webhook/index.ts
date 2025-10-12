@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { generateAiResponse } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -142,42 +143,13 @@ serve(async (req) => {
                   ?.map(kb => `${kb.title}: ${kb.content}`)
                   .join('\n\n') || '';
 
-                // Build system prompt with custom instructions
-                const basePrompt = clinic?.assistant_prompt || `You are a helpful AI assistant for ${clinic?.name || 'a clinic'}.`;
-                const systemPrompt = `${basePrompt}
-
-You are responding via Instagram DM, so be friendly, professional, and concise.
-
-Clinic Information:
-- Name: ${clinic?.name}
-- Phone: ${clinic?.phone}
-- Email: ${clinic?.email}
-- Address: ${clinic?.address}
-
-Knowledge Base:
-${context || 'No additional information available.'}
-
-Keep responses brief and suitable for Instagram DM format.`;
-
-                const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    model: 'google/gemini-2.5-flash',
-                    messages: [
-                      { role: 'system', content: systemPrompt },
-                      { role: 'user', content: messageText }
-                    ],
-                  }),
+                // Generate AI response using shared service
+                const { responseText: replyText } = await generateAiResponse({
+                  messageText,
+                  clinic: clinic || {},
+                  knowledgeBase: context,
+                  channelType: 'instagram'
                 });
-
-                const aiData = await aiResponse.json();
-                const replyText = aiData.choices?.[0]?.message?.content || 'I apologize, but I was unable to generate a response.';
-
-                console.log('AI response generated:', replyText.substring(0, 100));
 
                 // Deduct credits for AI response
                 try {

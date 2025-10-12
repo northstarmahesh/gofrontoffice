@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { generateAiResponse } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -113,54 +114,13 @@ serve(async (req) => {
 
     const knowledgeContent = knowledgeBase?.map(kb => kb.content).join('\n\n') || '';
 
-    // Build system prompt with custom instructions
-    const basePrompt = clinic?.assistant_prompt || `You are a helpful AI assistant for ${clinic?.name || 'a clinic'}.`;
-    const systemPrompt = `${basePrompt}
-
-You are responding via WhatsApp, so keep responses conversational and friendly.
-
-Clinic Information:
-- Name: ${clinic?.name}
-- Phone: ${clinic?.phone}
-- Email: ${clinic?.email}
-- Address: ${clinic?.address}
-
-Knowledge Base:
-${knowledgeContent || 'No additional information available.'}
-
-Important: Keep your response clear and concise. Use emojis appropriately to maintain a friendly tone.`;
-
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    if (!lovableApiKey) {
-      console.error('LOVABLE_API_KEY not set');
-      throw new Error('AI configuration error');
-    }
-
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${lovableApiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: messageText }
-        ],
-      }),
+    // Generate AI response using shared service
+    const { responseText } = await generateAiResponse({
+      messageText,
+      clinic: clinic || {},
+      knowledgeBase: knowledgeContent,
+      channelType: 'whatsapp'
     });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('AI API error:', aiResponse.status, errorText);
-      throw new Error(`AI API request failed: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const responseText = aiData.choices[0].message.content;
-
-    console.log('AI Response:', responseText.substring(0, 100));
 
     // Deduct credits for AI response
     try {

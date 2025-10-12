@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { generateAiResponse } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -111,54 +112,13 @@ serve(async (req) => {
 
     const knowledgeContent = knowledgeBase?.map(kb => kb.content).join('\n\n') || '';
 
-    // Build system prompt with custom instructions
-    const basePrompt = clinic?.assistant_prompt || `You are a helpful AI assistant for ${clinic?.name || 'a clinic'}.`;
-    const systemPrompt = `${basePrompt}
-
-You are responding via SMS, so keep responses brief (under 160 characters when possible).
-
-Clinic Information:
-- Name: ${clinic?.name}
-- Phone: ${clinic?.phone}
-- Email: ${clinic?.email}
-- Address: ${clinic?.address}
-
-Knowledge Base:
-${knowledgeContent || 'No additional information available.'}
-
-Important: Keep your response concise and friendly. If you need more information, ask one clear question.`;
-
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    if (!lovableApiKey) {
-      console.error('LOVABLE_API_KEY not set');
-      throw new Error('AI configuration error');
-    }
-
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${lovableApiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: text }
-        ],
-      }),
+    // Generate AI response using shared service
+    const { responseText } = await generateAiResponse({
+      messageText: text || '',
+      clinic: clinic || {},
+      knowledgeBase: knowledgeContent,
+      channelType: 'sms'
     });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('AI API error:', aiResponse.status, errorText);
-      throw new Error(`AI API request failed: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const responseText = aiData.choices[0].message.content;
-
-    console.log('AI Response:', responseText);
 
     if (autoPilotEnabled && phoneMode === 'on') {
       // Send SMS using Vonage
