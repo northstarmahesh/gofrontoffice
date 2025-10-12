@@ -214,9 +214,13 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
       setDialogOpen(false);
       resetForm();
       loadContacts();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving contact:", error);
-      toast.error("Failed to save contact");
+      if (error?.code === '23505' && error?.message?.includes('unique_phone_per_clinic')) {
+        toast.error("A contact with this phone number already exists");
+      } else {
+        toast.error("Failed to save contact");
+      }
     }
   };
 
