@@ -68,9 +68,11 @@ supabase/
     │   └── index.test.ts # Instagram OAuth flow tests
     ├── instagram-send-message/
     │   └── index.test.ts # Instagram message sending tests
-    └── check-bokadirekt-availability/
-        ├── index.test.ts # Bokadirekt availability scraping tests
-        └── test-data.html # Static HTML fixture for testing
+    ├── check-bokadirekt-availability/
+    │   ├── index.test.ts # Bokadirekt availability scraping tests
+    │   └── test-data.html # Static HTML fixture for testing
+    └── send-notifications-cron/
+        └── index.test.ts # Scheduled notification delivery tests
 ```
 
 ## Test Coverage
@@ -94,6 +96,7 @@ supabase/
 - `supabase/functions/instagram-oauth-callback/index.ts` - Instagram OAuth token exchange and storage
 - `supabase/functions/instagram-send-message/index.ts` - Instagram message sending via Graph API
 - `supabase/functions/check-bokadirekt-availability/index.ts` - Bokadirekt page scraping, availability checking, booking handoff emails
+- `supabase/functions/send-notifications-cron/index.ts` - Scheduled notification delivery for pending tasks and analytics reports
 
 ## Writing Tests
 
