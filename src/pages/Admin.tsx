@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { Loader2, Shield } from "lucide-react";
+import { Loader2, Shield, Building2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import AdminClinicList from "@/components/admin/AdminClinicList";
 import AdminClinicCreation from "@/components/admin/AdminClinicCreation";
 
@@ -31,12 +32,18 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-8">
-          <Shield className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Front Office Admin</h1>
-            <p className="text-muted-foreground">Manage clinics and onboard new clients</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Shield className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold">Front Office Admin</h1>
+              <p className="text-muted-foreground">Manage clinics and onboard new clients</p>
+            </div>
           </div>
+          <Button onClick={() => navigate("/crm")} variant="outline">
+            <Building2 className="mr-2 h-4 w-4" />
+            Open CRM
+          </Button>
         </div>
 
         <Tabs defaultValue="clinics" className="w-full">
