@@ -977,6 +977,47 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_top_ups: {
+        Row: {
+          amount_kr: number
+          clinic_id: string
+          credits_to_add: number
+          id: string
+          processed_at: string | null
+          status: string
+          triggered_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_kr: number
+          clinic_id: string
+          credits_to_add: number
+          id?: string
+          processed_at?: string | null
+          status?: string
+          triggered_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_kr?: number
+          clinic_id?: string
+          credits_to_add?: number
+          id?: string
+          processed_at?: string | null
+          status?: string
+          triggered_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_top_ups_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_admins: {
         Row: {
           created_at: string | null
@@ -1250,6 +1291,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      deduct_credits_atomic: {
+        Args: {
+          p_action_type: string
+          p_clinic_id: string
+          p_credits_amount: number
+          p_related_log_id?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       is_email_platform_admin: {
         Args: { check_email: string }
         Returns: boolean

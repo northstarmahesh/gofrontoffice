@@ -50,7 +50,20 @@ src/
 └── components/
     └── admin/
         └── AdminClinicCreation.test.tsx # Clinic creation form test
+supabase/
+└── functions/
+    └── deduct-credits/
+        └── index.test.ts # Credit deduction edge function test
 ```
+
+## Test Coverage
+
+Current test coverage:
+- `src/pages/Auth.tsx` - Component rendering and form interactions
+- `src/pages/Admin.tsx` - Admin access control and component rendering
+- `src/hooks/useIsAdmin.ts` - Admin role checking logic
+- `src/components/admin/AdminClinicCreation.tsx` - Clinic creation form
+- `supabase/functions/deduct-credits/index.ts` - Credit deduction and billing logic
 
 ## Writing Tests
 
