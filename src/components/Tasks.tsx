@@ -68,13 +68,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       loadTasks();
       loadActivityLogs();
       loadAnalytics();
-      // Only sync dummy contacts once when location is first selected
-      // Don't run this on every render to avoid duplicates
-      const hasRunSync = sessionStorage.getItem(`synced-${selectedLocation}`);
-      if (!hasRunSync) {
-        syncTaskContactsToDatabase();
-        sessionStorage.setItem(`synced-${selectedLocation}`, 'true');
-      }
     }
 
     // Set up realtime subscription for tasks
@@ -256,91 +249,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     }
   };
 
-  const syncTaskContactsToDatabase = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: clinicData } = await supabase
-        .from("clinic_users")
-        .select("clinic_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!clinicData?.clinic_id) return;
-
-      // Get all tasks with contacts (only from dummy data for demo)
-      const allTasksWithContacts = [...dummyHumanTasks].filter(
-        task => task.contact_name && task.contact_info
-      );
-
-      // Sync each contact - check if already exists first to avoid duplicates
-      for (const task of allTasksWithContacts) {
-        const { data: existingContact } = await supabase
-          .from("contacts")
-          .select("id")
-          .eq("clinic_id", clinicData.clinic_id)
-          .eq("phone", task.contact_info)
-          .maybeSingle();
-
-        if (!existingContact && task.contact_name && task.contact_info) {
-          // Create contact
-          const { data: newContact, error: contactError } = await supabase
-            .from("contacts")
-            .insert({
-              clinic_id: clinicData.clinic_id,
-              name: task.contact_name,
-              phone: task.contact_info,
-              location_id: selectedLocation
-            })
-            .select()
-            .single();
-
-          if (contactError) {
-            console.error("Error creating contact:", contactError);
-            continue;
-          }
-
-          // Create activity logs from message history only if they don't exist
-          if (task.message_history && task.message_history.length > 0) {
-            for (const msg of task.message_history) {
-              // Check if this specific log already exists
-              const { data: existingLog } = await supabase
-                .from("activity_logs")
-                .select("id")
-                .eq("contact_info", task.contact_info)
-                .eq("clinic_id", clinicData.clinic_id)
-                .eq("title", msg.title)
-                .eq("created_at", msg.created_at)
-                .maybeSingle();
-
-              if (!existingLog) {
-                await supabase
-                  .from("activity_logs")
-                  .insert({
-                    user_id: user.id,
-                    clinic_id: clinicData.clinic_id,
-                    location_id: selectedLocation,
-                    type: msg.type === 'draft' ? task.source : msg.type,
-                    title: msg.title,
-                    summary: msg.summary,
-                    contact_name: task.contact_name,
-                    contact_info: task.contact_info,
-                    status: msg.type === 'draft' ? 'pending' : 'completed',
-                    direction: msg.type === 'draft' ? 'outbound' : (msg as any).direction || 'inbound',
-                    duration: (msg as any).duration,
-                    created_at: msg.created_at
-                  });
-              }
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error syncing task contacts:", error);
-    }
-  };
-
   const loadTasks = async () => {
     try {
       setLoading(true);
@@ -381,113 +289,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       setLoading(false);
     }
   };
-
-  // Add some dummy tasks for contacts with draft messages
-  const dummyHumanTasks = [
-    {
-      id: "dummy1",
-      title: "Tidbokning förfrågan",
-      description: "AI har skapat ett svar med tillgängliga tider",
-      status: "pending",
-      date: "Today",
-      time: "13:30",
-      source: "whatsapp",
-      isInternal: false,
-      contact_name: "Emma Anderson",
-      contact_info: "+46 70 987 6543",
-      draftMessage: "Hej Emma! Tack för att du hörde av dig. Jag har dessa tider tillgängliga denna vecka:\n\n• Tisdag 14:00\n• Onsdag 10:30\n• Fredag 15:00\n\nVilken tid passar dig bäst?",
-      message_history: [
-        {
-          id: "msg1",
-          title: "WhatsApp meddelande",
-          type: "whatsapp",
-          summary: "Emma Anderson: Hej! Jag behöver omboka min tid. Har ni någon ledig tid denna vecka?",
-          created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-        },
-        {
-          id: "msg2",
-          title: "AI Utkast",
-          type: "draft",
-          summary: "Hej Emma! Tack för att du hörde av dig. Jag har dessa tider tillgängliga denna vecka:\n\n• Tisdag 14:00\n• Onsdag 10:30\n• Fredag 15:00\n\nVilken tid passar dig bäst?",
-          created_at: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
-        },
-      ],
-    },
-    {
-      id: "dummy2",
-      title: "AI Call Summary - New Patient Consultation",
-      description: "Call handled by AI - Review summary and complete follow-up actions",
-      status: "pending",
-      date: "Today",
-      time: "10:45 AM",
-      source: "phone",
-      isInternal: true,
-      contact_name: "Sarah Martinez",
-      contact_info: "+46 70 234 5678",
-      callSummary: "Sarah called inquiring about teeth whitening services. She's interested in booking a consultation and asked about pricing. She mentioned she has sensitive teeth and wants to know if that's an issue.",
-      actions: [
-        "Send pricing information via SMS",
-        "Schedule consultation appointment",
-        "Add note about teeth sensitivity to patient file"
-      ],
-      duration: "4m 32s",
-      draftMessage: "Hi Sarah! Thanks for calling about our teeth whitening services. I'm happy to help!\n\nFor sensitive teeth, we offer a gentle whitening treatment that's specifically designed for this. Our consultation is 500 SEK (deducted from treatment if you proceed).\n\nFull treatment pricing:\n• In-office whitening: 3,500 SEK\n• Take-home kit: 2,200 SEK\n• Sensitivity treatment (if needed): 800 SEK\n\nWould you like to book a consultation? I have availability:\n• Tomorrow 2:00 PM\n• Thursday 10:30 AM\n• Friday 1:00 PM\n\nLet me know what works best for you!",
-      message_history: [
-        {
-          id: "call1",
-          title: "Incoming call",
-          type: "phone",
-          summary: "Call from Sarah Martinez - Duration: 4m 32s",
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-          duration: "4m 32s",
-          direction: "inbound",
-        },
-        {
-          id: "call_summary1",
-          title: "AI Call Summary",
-          type: "call_summary",
-          summary: "Sarah called inquiring about teeth whitening services. She's interested in booking a consultation and asked about pricing. She mentioned she has sensitive teeth and wants to know if that's an issue.\n\nAction Items:\n• Send pricing information via SMS\n• Schedule consultation appointment\n• Add note about teeth sensitivity to patient file",
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3 + 1000 * 60).toISOString(),
-        },
-        {
-          id: "draft2",
-          title: "AI Draft Response",
-          type: "draft",
-          summary: "Hi Sarah! Thanks for calling about our teeth whitening services. I'm happy to help!\n\nFor sensitive teeth, we offer a gentle whitening treatment that's specifically designed for this. Our consultation is 500 SEK (deducted from treatment if you proceed).\n\nFull treatment pricing:\n• In-office whitening: 3,500 SEK\n• Take-home kit: 2,200 SEK\n• Sensitivity treatment (if needed): 800 SEK\n\nWould you like to book a consultation? I have availability:\n• Tomorrow 2:00 PM\n• Thursday 10:30 AM\n• Friday 1:00 PM\n\nLet me know what works best for you!",
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 3 + 1000 * 120).toISOString(),
-        },
-      ],
-    },
-    {
-      id: "dummy3",
-      title: "Uppföljning receptförfrågan",
-      description: "Utkast klart: Information om receptförnyelse",
-      status: "pending",
-      date: "Today",
-      time: "14:15",
-      source: "sms",
-      isInternal: false,
-      contact_name: "Mike Johnson",
-      contact_info: "+46 70 123 4567",
-      draftMessage: "Hej Mike! För receptförnyelse, vänligen ring oss minst 48 timmar innan ditt recept tar slut. Vi behöver kontrollera med din läkare för godkännande. Du kan även använda vårt onlineformulär på vår hemsida.",
-      message_history: [
-        {
-          id: "msg5",
-          title: "SMS meddelande",
-          type: "sms",
-          summary: "Mike Johnson: Hej, jag behöver förnya mitt recept. Vad är processen?",
-          created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        },
-        {
-          id: "msg6",
-          title: "AI Utkast",
-          type: "draft",
-          summary: "Hej Mike! För receptförnyelse, vänligen ring oss minst 48 timmar innan ditt recept tar slut. Vi behöver kontrollera med din läkare för godkännande. Du kan även använda vårt onlineformulär på vår hemsida.",
-          created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-        },
-      ],
-    },
-  ];
 
   const handleTaskComplete = () => {
     setRefreshKey(prev => prev + 1);
@@ -586,7 +387,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
   ];
 
   // Filter to show only today's tasks
-  const todayHumanTasks = [...humanTasks, ...dummyHumanTasks].filter(task => task.date === "Today");
+  const todayHumanTasks = humanTasks.filter(task => task.date === "Today");
 
   const handleTaskClick = (task: any) => {
     const isContactTask = task.contact_name || !task.isInternal;
