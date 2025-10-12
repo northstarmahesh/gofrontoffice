@@ -66,8 +66,11 @@ supabase/
     │   └── index.test.ts # Instagram DM webhook tests
     ├── instagram-oauth-callback/
     │   └── index.test.ts # Instagram OAuth flow tests
-    └── instagram-send-message/
-        └── index.test.ts # Instagram message sending tests
+    ├── instagram-send-message/
+    │   └── index.test.ts # Instagram message sending tests
+    └── check-bokadirekt-availability/
+        ├── index.test.ts # Bokadirekt availability scraping tests
+        └── test-data.html # Static HTML fixture for testing
 ```
 
 ## Test Coverage
@@ -87,6 +90,7 @@ supabase/
 - `supabase/functions/instagram-webhook/index.ts` - Instagram DM processing, AI responses, webhook verification
 - `supabase/functions/instagram-oauth-callback/index.ts` - Instagram OAuth token exchange and storage
 - `supabase/functions/instagram-send-message/index.ts` - Instagram message sending via Graph API
+- `supabase/functions/check-bokadirekt-availability/index.ts` - Bokadirekt page scraping, availability checking, booking handoff emails
 
 ## Writing Tests
 
