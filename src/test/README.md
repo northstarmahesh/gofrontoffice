@@ -58,6 +58,8 @@ supabase/
     │   └── index.test.ts # Voice call handling tests
     ├── vonage-sms-webhook/
     │   └── index.test.ts # SMS processing tests
+    ├── vonage-whatsapp-webhook/
+    │   └── index.test.ts # WhatsApp message processing tests
     └── vonage-voice-recording/
         └── index.test.ts # Call recording tests
 ```
@@ -74,6 +76,7 @@ supabase/
 - `supabase/functions/deduct-credits/index.ts` - Credit deduction and billing logic
 - `supabase/functions/vonage-voice-webhook/index.ts` - Voice call handling, consent announcement, recording
 - `supabase/functions/vonage-sms-webhook/index.ts` - SMS processing and AI response generation
+- `supabase/functions/vonage-whatsapp-webhook/index.ts` - WhatsApp message processing, AI responses, mode handling
 - `supabase/functions/vonage-voice-recording/index.ts` - Call recording URL storage
 
 ## Writing Tests

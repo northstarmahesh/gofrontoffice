@@ -16,7 +16,25 @@ serve(async (req) => {
     const { from, to, message, message_uuid } = body;
     const messageText = message?.content?.text || '';
     
-    console.log('Incoming WhatsApp from:', from, 'to:', to, 'text:', messageText);
+    // Input validation
+    if (!from || !to || !messageText || messageText.trim().length === 0) {
+      console.error('Missing required fields:', { from, to, hasMessage: !!messageText });
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate message length (WhatsApp has 4096 character limit)
+    if (messageText.length > 4096) {
+      console.error('Message too long:', messageText.length);
+      return new Response(JSON.stringify({ error: 'Message too long' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    console.log('Incoming WhatsApp from:', from, 'to:', to, 'text:', messageText.substring(0, 100));
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -53,8 +71,8 @@ serve(async (req) => {
     const phoneMode = settings?.phone_mode || 'on';
     const autoPilotEnabled = settings?.auto_pilot_enabled ?? true;
 
-    // Log incoming message
-    await supabase
+    // Log incoming message and get the log ID
+    const { data: inboundLog, error: logError } = await supabase
       .from('activity_logs')
       .insert({
         clinic_id: phoneData.clinic_id,
@@ -65,7 +83,13 @@ serve(async (req) => {
         contact_name: normalizedFrom,
         contact_info: normalizedFrom,
         direction: 'inbound',
-      });
+      })
+      .select()
+      .single();
+
+    if (logError || !inboundLog) {
+      console.error('Error creating activity log:', logError);
+    }
 
     if (phoneMode === 'off' || !settings?.whatsapp_enabled) {
       console.log('WhatsApp disabled or phone mode is off');
@@ -136,7 +160,27 @@ Important: Keep your response clear and concise. Use emojis appropriately to mai
     const aiData = await aiResponse.json();
     const responseText = aiData.choices[0].message.content;
 
-    console.log('AI Response:', responseText);
+    console.log('AI Response:', responseText.substring(0, 100));
+
+    // Deduct credits for AI response
+    try {
+      const { data: userData } = await supabase.auth.admin.listUsers();
+      const firstUser = userData?.users?.[0];
+      
+      if (firstUser) {
+        await supabase.rpc('deduct_credits_atomic', {
+          p_clinic_id: phoneData.clinic_id,
+          p_user_id: firstUser.id,
+          p_action_type: 'AI_WHATSAPP_RESPONSE',
+          p_credits_amount: 1,
+          p_related_log_id: inboundLog?.id,
+        });
+        console.log('Credits deducted for AI WhatsApp response');
+      }
+    } catch (creditError) {
+      console.error('Error deducting credits:', creditError);
+      // Don't fail the request if credit deduction fails
+    }
 
     if (autoPilotEnabled && phoneMode === 'on') {
       // Send WhatsApp using Vonage Messages API
@@ -162,10 +206,16 @@ Important: Keep your response clear and concise. Use emojis appropriately to mai
         }),
       });
 
+      if (!vonageResponse.ok) {
+        const errorText = await vonageResponse.text();
+        console.error('Vonage API error:', vonageResponse.status, errorText);
+        throw new Error(`Vonage API request failed: ${vonageResponse.status}`);
+      }
+
       const vonageData = await vonageResponse.json();
       console.log('Vonage response:', vonageData);
 
-      // Update activity log
+      // Log outbound message
       await supabase
         .from('activity_logs')
         .insert({
@@ -173,22 +223,37 @@ Important: Keep your response clear and concise. Use emojis appropriately to mai
           type: 'whatsapp',
           title: `WhatsApp to ${normalizedFrom}`,
           summary: responseText,
-          status: 'completed',
+          status: 'auto-replied',
           contact_name: normalizedFrom,
           contact_info: normalizedFrom,
           direction: 'outbound',
         });
+
+      // Update inbound log status
+      if (inboundLog) {
+        await supabase
+          .from('activity_logs')
+          .update({ status: 'completed' })
+          .eq('id', inboundLog.id);
+      }
     } else {
       // Co-pilot mode: save as draft
-      await supabase
-        .from('draft_replies')
-        .insert({
-          log_id: message_uuid,
-          clinic_id: phoneData.clinic_id,
-          user_id: phoneData.clinic_id,
-          draft_content: responseText,
-          status: 'pending',
-        });
+      const { data: userData } = await supabase.auth.admin.listUsers();
+      const firstUser = userData?.users?.[0];
+
+      if (inboundLog && firstUser) {
+        await supabase
+          .from('draft_replies')
+          .insert({
+            log_id: inboundLog.id,
+            clinic_id: phoneData.clinic_id,
+            user_id: firstUser.id,
+            draft_content: responseText,
+            status: 'pending',
+          });
+        
+        console.log('Draft reply saved for copilot mode');
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
