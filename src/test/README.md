@@ -60,8 +60,14 @@ supabase/
     │   └── index.test.ts # SMS processing tests
     ├── vonage-whatsapp-webhook/
     │   └── index.test.ts # WhatsApp message processing tests
-    └── vonage-voice-recording/
-        └── index.test.ts # Call recording tests
+    ├── vonage-voice-recording/
+    │   └── index.test.ts # Call recording tests
+    ├── instagram-webhook/
+    │   └── index.test.ts # Instagram DM webhook tests
+    ├── instagram-oauth-callback/
+    │   └── index.test.ts # Instagram OAuth flow tests
+    └── instagram-send-message/
+        └── index.test.ts # Instagram message sending tests
 ```
 
 ## Test Coverage
@@ -78,6 +84,9 @@ supabase/
 - `supabase/functions/vonage-sms-webhook/index.ts` - SMS processing and AI response generation
 - `supabase/functions/vonage-whatsapp-webhook/index.ts` - WhatsApp message processing, AI responses, mode handling
 - `supabase/functions/vonage-voice-recording/index.ts` - Call recording URL storage
+- `supabase/functions/instagram-webhook/index.ts` - Instagram DM processing, AI responses, webhook verification
+- `supabase/functions/instagram-oauth-callback/index.ts` - Instagram OAuth token exchange and storage
+- `supabase/functions/instagram-send-message/index.ts` - Instagram message sending via Graph API
 
 ## Writing Tests
 

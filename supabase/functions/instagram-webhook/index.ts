@@ -56,10 +56,22 @@ serve(async (req) => {
                 const messageText = event.message.text || '';
                 const messageId = event.message.mid;
 
+                // Input validation
+                if (!senderId || !recipientId) {
+                  console.error('Missing sender or recipient ID');
+                  continue;
+                }
+
+                // Validate message text (Instagram has 1000 character limit for messages)
+                if (messageText.length > 1000) {
+                  console.error('Message too long:', messageText.length);
+                  continue;
+                }
+
                 console.log('Incoming Instagram DM:', {
                   from: senderId,
                   to: recipientId,
-                  text: messageText,
+                  text: messageText.substring(0, 100),
                   messageId
                 });
 
@@ -165,16 +177,55 @@ Keep responses brief and suitable for Instagram DM format.`;
                 const aiData = await aiResponse.json();
                 const replyText = aiData.choices?.[0]?.message?.content || 'I apologize, but I was unable to generate a response.';
 
+                console.log('AI response generated:', replyText.substring(0, 100));
+
+                // Deduct credits for AI response
+                try {
+                  const { data: userData } = await supabase.auth.admin.listUsers();
+                  const firstUser = userData?.users?.[0];
+                  
+                  if (firstUser) {
+                    await supabase.rpc('deduct_credits_atomic', {
+                      p_clinic_id: integration.clinic_id,
+                      p_user_id: firstUser.id,
+                      p_action_type: 'AI_INSTAGRAM_RESPONSE',
+                      p_credits_amount: 1,
+                      p_related_log_id: log.id,
+                    });
+                    console.log('Credits deducted for AI Instagram response');
+                  }
+                } catch (creditError) {
+                  console.error('Error deducting credits:', creditError);
+                  // Don't fail the request if credit deduction fails
+                }
+
                 if (isAutoPilot) {
                   // Send message immediately via Instagram Graph API
-                  const { data: integrationData } = await supabase
+                  const { data: integrationData, error: integrationError } = await supabase
                     .from('clinic_integrations')
                     .select('access_token')
                     .eq('clinic_id', integration.clinic_id)
                     .eq('integration_type', 'instagram')
                     .single();
 
-                  if (integrationData?.access_token) {
+                  if (integrationError || !integrationData?.access_token) {
+                    console.error('Failed to retrieve access token:', integrationError);
+                    
+                    // Save as draft if token retrieval fails
+                    await supabase
+                      .from('draft_replies')
+                      .insert({
+                        log_id: log.id,
+                        user_id: log.user_id,
+                        clinic_id: integration.clinic_id,
+                        draft_content: replyText,
+                        status: 'pending',
+                      });
+                    
+                    continue;
+                  }
+
+                  try {
                     const sendResponse = await fetch(
                       `https://graph.facebook.com/v18.0/${recipientId}/messages`,
                       {
@@ -190,14 +241,48 @@ Keep responses brief and suitable for Instagram DM format.`;
                       }
                     );
 
+                    if (!sendResponse.ok) {
+                      const errorData = await sendResponse.json();
+                      console.error('Instagram API error:', errorData);
+                      throw new Error(errorData.error?.message || 'Failed to send message');
+                    }
+
                     const sendData = await sendResponse.json();
                     console.log('Instagram message sent:', sendData);
 
-                    // Update activity log
+                    // Log outbound message
+                    await supabase
+                      .from('activity_logs')
+                      .insert({
+                        clinic_id: integration.clinic_id,
+                        user_id: log.user_id,
+                        type: 'instagram',
+                        title: `Instagram DM to ${senderId}`,
+                        summary: replyText,
+                        contact_name: senderId,
+                        contact_info: senderId,
+                        direction: 'outbound',
+                        status: 'auto-replied',
+                      });
+
+                    // Update inbound log status
                     await supabase
                       .from('activity_logs')
                       .update({ status: 'completed' })
                       .eq('id', log.id);
+                  } catch (sendError) {
+                    console.error('Error sending Instagram message:', sendError);
+                    
+                    // Save as draft if sending fails
+                    await supabase
+                      .from('draft_replies')
+                      .insert({
+                        log_id: log.id,
+                        user_id: log.user_id,
+                        clinic_id: integration.clinic_id,
+                        draft_content: replyText,
+                        status: 'pending',
+                      });
                   }
                 } else {
                   // Co-pilot mode: save as draft

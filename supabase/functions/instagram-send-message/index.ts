@@ -14,8 +14,37 @@ serve(async (req) => {
   try {
     const { recipientId, message, clinicId } = await req.json();
 
+    // Input validation
     if (!recipientId || !message || !clinicId) {
-      throw new Error('Missing required parameters: recipientId, message, clinicId');
+      return new Response(
+        JSON.stringify({ error: 'Missing required parameters: recipientId, message, clinicId' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+
+    // Validate message length (Instagram limit is 1000 characters)
+    if (message.length > 1000) {
+      return new Response(
+        JSON.stringify({ error: 'Message too long (max 1000 characters)' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+
+    // Validate message is not empty
+    if (message.trim().length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Message cannot be empty' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');

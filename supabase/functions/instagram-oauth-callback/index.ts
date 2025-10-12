@@ -23,6 +23,11 @@ serve(async (req) => {
     // Parse state: clinicId:locationId:timestamp
     const [clinicId, locationId] = state.split(':');
 
+    // Input validation
+    if (!clinicId) {
+      throw new Error('Invalid state parameter: missing clinic ID');
+    }
+
     const META_APP_ID = Deno.env.get('META_APP_ID');
     const META_APP_SECRET = Deno.env.get('META_APP_SECRET');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -124,6 +129,21 @@ serve(async (req) => {
         console.log('Instagram integration saved for page:', page.name, 'IG Account:', igAccountId);
         connectedCount++;
       }
+    }
+
+    // Log successful connection
+    if (connectedCount > 0) {
+      await supabase
+        .from('activity_logs')
+        .insert({
+          clinic_id: clinicId,
+          user_id: (await supabase.auth.admin.listUsers()).data.users[0]?.id,
+          type: 'system',
+          title: 'Instagram Connected',
+          summary: `Successfully connected ${connectedCount} Instagram Business account(s)`,
+          status: 'completed',
+          direction: 'internal',
+        });
     }
 
     if (connectedCount === 0) {
