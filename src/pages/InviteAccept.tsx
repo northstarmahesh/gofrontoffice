@@ -82,7 +82,15 @@ const InviteAccept = () => {
       }
       
       sessionStorage.setItem('oauth_state', data.state);
-      window.location.href = data.authUrl;
+      try {
+        if (window.top) {
+          (window.top as Window).location.href = data.authUrl;
+        } else {
+          window.location.href = data.authUrl;
+        }
+      } catch {
+        window.location.href = data.authUrl;
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast.error("Något gick fel. Försök igen.");
