@@ -75,33 +75,35 @@ serve(async (req) => {
     const email = userInfo.email || `${personalNumber}@bankid.temp`;
     const fullName = userInfo.name || '';
 
-    // Try to find existing user by email first
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(u => u.email === email);
-
     let userId: string;
 
-    if (existingUser) {
-      // User already exists, use their ID
-      userId = existingUser.id;
-      console.log('User already exists:', userId);
-    } else {
-      // Create new user
-      const { data: userData, error: userError } = await supabase.auth.admin.createUser({
-        email: email,
-        email_confirm: true,
-        user_metadata: {
-          full_name: fullName,
-          personal_number: personalNumber,
-          auth_provider: 'bankid',
-        },
-      });
+    // Try to create user - if they exist, we'll get an error and fetch them instead
+    const { data: userData, error: userError } = await supabase.auth.admin.createUser({
+      email: email,
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName,
+        personal_number: personalNumber,
+        auth_provider: 'bankid',
+      },
+    });
 
-      if (userError) {
-        console.error('Error creating user:', userError);
-        throw userError;
+    if (userError && userError.message?.includes('already been registered')) {
+      // User exists, fetch them by email
+      console.log('User already exists, fetching by email');
+      const { data: existingUsers } = await supabase.auth.admin.listUsers();
+      const existingUser = existingUsers?.users?.find(u => u.email === email);
+      
+      if (!existingUser) {
+        throw new Error('User exists but could not be found');
       }
-
+      
+      userId = existingUser.id;
+      console.log('Found existing user:', userId);
+    } else if (userError) {
+      console.error('Error creating user:', userError);
+      throw userError;
+    } else {
       userId = userData.user.id;
       console.log('Created new user:', userId);
     }
