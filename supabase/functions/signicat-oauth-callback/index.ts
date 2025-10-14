@@ -75,31 +75,35 @@ serve(async (req) => {
     const email = userInfo.email || `${personalNumber}@bankid.temp`;
     const fullName = userInfo.name || '';
 
-    // Create or get user in Supabase
-    const { data: userData, error: userError } = await supabase.auth.admin.createUser({
-      email: email,
-      email_confirm: true,
-      user_metadata: {
-        full_name: fullName,
-        personal_number: personalNumber,
-        auth_provider: 'bankid',
-      },
-    });
+    // Try to find existing user by email first
+    const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === email);
 
-    if (userError && !userError.message.includes('already registered')) {
-      console.error('Error creating user:', userError);
-      throw userError;
-    }
+    let userId: string;
 
-    // Get the user ID
-    const userId = userData?.user?.id || (await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
-      .single()).data?.id;
+    if (existingUser) {
+      // User already exists, use their ID
+      userId = existingUser.id;
+      console.log('User already exists:', userId);
+    } else {
+      // Create new user
+      const { data: userData, error: userError } = await supabase.auth.admin.createUser({
+        email: email,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName,
+          personal_number: personalNumber,
+          auth_provider: 'bankid',
+        },
+      });
 
-    if (!userId) {
-      throw new Error('Could not find or create user');
+      if (userError) {
+        console.error('Error creating user:', userError);
+        throw userError;
+      }
+
+      userId = userData.user.id;
+      console.log('Created new user:', userId);
     }
 
     // Check if user is a platform admin

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Building2, Users, Plug, Rocket, Clock, Bell, MessageSquare } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { OnboardingBasicInfo } from "./OnboardingBasicInfo";
 import { OnboardingChannels } from "./OnboardingChannels";
 import { OnboardingAISetup } from "./OnboardingAISetup";
@@ -24,6 +25,101 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   const [clinicType, setClinicType] = useState("medical");
   const [hasMinimumChannels, setHasMinimumChannels] = useState(false);
   const [hasPhoneConnection, setHasPhoneConnection] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Check if user has started onboarding and resume from where they left off
+  useEffect(() => {
+    const checkOnboardingProgress = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Check if user has a clinic
+        const { data: clinicUser } = await supabase
+          .from("clinic_users")
+          .select("clinic_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (clinicUser?.clinic_id) {
+          setClinicId(clinicUser.clinic_id);
+
+          // Get clinic details
+          const { data: clinic } = await supabase
+            .from("clinics")
+            .select("name, clinic_type")
+            .eq("id", clinicUser.clinic_id)
+            .single();
+
+          if (clinic) {
+            setClinicName(clinic.name);
+            setClinicType(clinic.clinic_type || "medical");
+
+            // Check what's been completed
+            const { data: channels } = await supabase
+              .from("clinic_phone_numbers")
+              .select("id")
+              .eq("clinic_id", clinicUser.clinic_id)
+              .limit(1);
+
+            const { data: integrations } = await supabase
+              .from("clinic_integrations")
+              .select("id")
+              .eq("clinic_id", clinicUser.clinic_id)
+              .limit(1);
+
+            const hasChannels = (channels && channels.length > 0) || (integrations && integrations.length > 0);
+
+            if (!hasChannels) {
+              setCurrentStep("channels");
+            } else {
+              // Has channels, check AI setup
+              const { data: settings } = await supabase
+                .from("assistant_settings")
+                .select("id")
+                .eq("user_id", user.id)
+                .limit(1);
+
+              if (!settings || settings.length === 0) {
+                setCurrentStep("ai-setup");
+              } else {
+                // Has AI setup, check schedule
+                const { data: schedules } = await supabase
+                  .from("assistant_schedules")
+                  .select("id")
+                  .eq("user_id", user.id)
+                  .limit(1);
+
+                if (!schedules || schedules.length === 0) {
+                  setCurrentStep("schedule");
+                } else {
+                  // Has schedule, check notifications
+                  const { data: notifications } = await supabase
+                    .from("notification_settings")
+                    .select("id")
+                    .eq("user_id", user.id)
+                    .limit(1);
+
+                  if (!notifications || notifications.length === 0) {
+                    setCurrentStep("notifications");
+                  } else {
+                    // Everything is set up, go to simulator
+                    setCurrentStep("ai-simulator");
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking onboarding progress:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkOnboardingProgress();
+  }, []);
 
   const steps = [
     { id: "info" as OnboardingStep, label: "Info", icon: Building2, description: "Basic details" },
@@ -71,6 +167,17 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-16 w-16 animate-pulse rounded-2xl bg-gradient-to-br from-primary to-primary-light" />
+          <p className="text-muted-foreground">Loading your progress...</p>
+        </div>
+      </div>
+    );
+  }
+
   const renderStepContent = () => {
     switch (currentStep) {
       case "info":
@@ -106,7 +213,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
                 />
                 <div className="flex gap-3 pt-4">
                   <Button onClick={handleSkipOnboarding} variant="outline" className="flex-1">
-                    Skip for Now
+                    Skip & Go to Dashboard
                   </Button>
                   <Button 
                     onClick={handleNext} 
@@ -133,13 +240,20 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
               <h2 className="text-lg sm:text-xl font-semibold">Configure AI Assistant</h2>
             </div>
             {clinicId ? (
-              <OnboardingAISetup 
-                clinicId={clinicId}
-                clinicType={clinicType}
-                clinicName={clinicName}
-                hasPhoneConnection={hasPhoneConnection}
-                onComplete={handleNext}
-              />
+              <>
+                <OnboardingAISetup 
+                  clinicId={clinicId}
+                  clinicType={clinicType}
+                  clinicName={clinicName}
+                  hasPhoneConnection={hasPhoneConnection}
+                  onComplete={handleNext}
+                />
+                <div className="flex gap-3 pt-4">
+                  <Button onClick={handleSkipOnboarding} variant="outline" className="flex-1">
+                    Skip & Go to Dashboard
+                  </Button>
+                </div>
+              </>
             ) : (
               <p className="text-center text-muted-foreground">Please complete previous steps first</p>
             )}
@@ -156,7 +270,14 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
               <h2 className="text-lg sm:text-xl font-semibold">Business Hours</h2>
             </div>
             {clinicId ? (
-              <OnboardingSchedule clinicId={clinicId} onComplete={handleNext} />
+              <>
+                <OnboardingSchedule clinicId={clinicId} onComplete={handleNext} />
+                <div className="flex gap-3 pt-4">
+                  <Button onClick={handleSkipOnboarding} variant="outline" className="flex-1">
+                    Skip & Go to Dashboard
+                  </Button>
+                </div>
+              </>
             ) : (
               <p className="text-center text-muted-foreground">Please complete previous steps first</p>
             )}
@@ -173,7 +294,14 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
               <h2 className="text-lg sm:text-xl font-semibold">Notification Settings</h2>
             </div>
             {clinicId ? (
-              <OnboardingNotifications clinicId={clinicId} onComplete={handleNext} />
+              <>
+                <OnboardingNotifications clinicId={clinicId} onComplete={handleNext} />
+                <div className="flex gap-3 pt-4">
+                  <Button onClick={handleSkipOnboarding} variant="outline" className="flex-1">
+                    Skip & Go to Dashboard
+                  </Button>
+                </div>
+              </>
             ) : (
               <p className="text-center text-muted-foreground">Please complete previous steps first</p>
             )}
@@ -190,7 +318,14 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
               <h2 className="text-lg sm:text-xl font-semibold">Test Your AI Assistant</h2>
             </div>
             {clinicId ? (
-              <OnboardingAISimulator clinicId={clinicId} onComplete={handleNext} />
+              <>
+                <OnboardingAISimulator clinicId={clinicId} onComplete={handleNext} />
+                <div className="flex gap-3 pt-4">
+                  <Button onClick={handleSkipOnboarding} variant="outline" className="flex-1">
+                    Skip & Go to Dashboard
+                  </Button>
+                </div>
+              </>
             ) : (
               <p className="text-center text-muted-foreground">Please complete previous steps first</p>
             )}
