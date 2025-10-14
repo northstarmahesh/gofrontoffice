@@ -89,27 +89,53 @@ serve(async (req) => {
     });
 
     if (userError && userError.message?.includes('already been registered')) {
-      // User exists, fetch their ID from profiles table
+      // User exists. First try to find profile by email (fast path)
       console.log('User already exists, fetching from profiles by email');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', email)
         .maybeSingle();
-      
-      if (profileError || !profile) {
-        console.error('Error fetching profile:', profileError);
-        throw new Error('User exists but profile not found');
+
+      if (profile?.id) {
+        userId = profile.id;
+        console.log('Found existing user via profiles:', userId);
+      } else {
+        // Profile missing (likely older account without trigger). Fallback to admin list and match by email
+        console.log('Profile not found, falling back to admin.listUsers to resolve user by email');
+        const { data: usersData, error: listError } = await supabase.auth.admin.listUsers();
+        if (listError) {
+          console.error('Error listing users:', listError);
+          throw new Error('Could not resolve existing user');
+        }
+        const existingUser = usersData?.users?.find((u: any) => (u.email || '').toLowerCase() === email.toLowerCase());
+        if (!existingUser) {
+          throw new Error('User exists but could not be found');
+        }
+        userId = existingUser.id;
+        console.log('Resolved existing user via admin list:', userId);
+
+        // Create missing profile idempotently so future lookups succeed
+        const { error: upsertMissingProfileError } = await supabase
+          .from('profiles')
+          .upsert({ id: userId, email, full_name: fullName }, { onConflict: 'id' });
+        if (upsertMissingProfileError) {
+          console.warn('Non-fatal: failed to upsert missing profile:', upsertMissingProfileError);
+        }
       }
-      
-      userId = profile.id;
-      console.log('Found existing user:', userId);
     } else if (userError) {
       console.error('Error creating user:', userError);
       throw userError;
     } else {
       userId = userData.user.id;
       console.log('Created new user:', userId);
+      // Ensure profile exists for new user (in case DB trigger is not present)
+      const { error: upsertProfileError } = await supabase
+        .from('profiles')
+        .upsert({ id: userId, email, full_name: fullName }, { onConflict: 'id' });
+      if (upsertProfileError) {
+        console.warn('Non-fatal: failed to upsert profile for new user:', upsertProfileError);
+      }
     }
 
     // Check if user is a platform admin
