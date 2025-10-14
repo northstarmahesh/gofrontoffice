@@ -118,11 +118,11 @@ serve(async (req) => {
     const appUrl = url.origin.replace('functions/v1/signicat-oauth-callback', '');
     const redirectPath = adminCheck ? 'admin' : '';
 
-    // Build hash fragment so our SPA can pick up parameters (used by useInvitationAcceptance)
-    const hashParts: string[] = [];
-    if (redirectPath) hashParts.push(`redirect=${redirectPath}`);
-    if (invitationToken) hashParts.push(`invitation_token=${invitationToken}`);
-    const redirectTo = `${appUrl}/${hashParts.length ? '#' + hashParts.join('&') : ''}`;
+    // Build redirect URL with query params (hash will be used by Supabase for tokens)
+    const query = new URLSearchParams();
+    if (redirectPath) query.set('redirect', redirectPath);
+    if (invitationToken) query.set('invitation_token', invitationToken);
+    const redirectTo = `${appUrl}/${query.toString() ? `?${query.toString()}` : ''}`;
 
     // Generate an action_link that will set the Supabase session, then redirect back to our app
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
