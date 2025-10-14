@@ -111,10 +111,24 @@ serve(async (req) => {
 
     console.log('Admin check result:', adminCheck ? 'User is admin' : 'User is not admin');
 
-    // Generate session token
+    // Build redirect target after successful session
+    const invitationToken = url.searchParams.get('invitation_token');
+
+    // If user is admin, redirect to /admin, otherwise to /
+    const appUrl = url.origin.replace('functions/v1/signicat-oauth-callback', '');
+    const redirectPath = adminCheck ? 'admin' : '';
+
+    // Build hash fragment so our SPA can pick up parameters (used by useInvitationAcceptance)
+    const hashParts: string[] = [];
+    if (redirectPath) hashParts.push(`redirect=${redirectPath}`);
+    if (invitationToken) hashParts.push(`invitation_token=${invitationToken}`);
+    const redirectTo = `${appUrl}/${hashParts.length ? '#' + hashParts.join('&') : ''}`;
+
+    // Generate an action_link that will set the Supabase session, then redirect back to our app
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: email,
+      options: { redirectTo }
     });
 
     if (sessionError) {
@@ -122,27 +136,18 @@ serve(async (req) => {
       throw sessionError;
     }
 
-    // Check if there's an invitation token (passed from invite page via sessionStorage)
-    const invitationToken = url.searchParams.get('invitation_token');
-    
-    // Redirect to app with session
-    // If user is admin, redirect to /admin, otherwise to /
-    const appUrl = url.origin.replace('functions/v1/signicat-oauth-callback', '');
-    const redirectPath = adminCheck ? 'admin' : '';
-    let redirectUrl = `${appUrl}/#access_token=${sessionData.properties.hashed_token}&type=magiclink${redirectPath ? `&redirect=${redirectPath}` : ''}`;
-    
-    // Add invitation token to redirect if present
-    if (invitationToken) {
-      redirectUrl += `&invitation_token=${invitationToken}`;
+    const actionLink = sessionData?.properties?.action_link as string | undefined;
+    if (!actionLink) {
+      throw new Error('Could not create session action link');
     }
 
-    console.log('Redirecting to:', redirectUrl);
+    console.log('Redirecting to action_link');
 
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': redirectUrl,
+        'Location': actionLink,
       },
     });
 
