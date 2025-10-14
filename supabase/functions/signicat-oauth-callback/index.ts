@@ -77,7 +77,7 @@ serve(async (req) => {
 
     let userId: string;
 
-    // Try to create user - if they exist, we'll get an error and fetch them instead
+    // Try to create user - if they exist, we'll get an error and fetch them from profiles
     const { data: userData, error: userError } = await supabase.auth.admin.createUser({
       email: email,
       email_confirm: true,
@@ -89,16 +89,20 @@ serve(async (req) => {
     });
 
     if (userError && userError.message?.includes('already been registered')) {
-      // User exists, fetch them by email
-      console.log('User already exists, fetching by email');
-      const { data: existingUsers } = await supabase.auth.admin.listUsers();
-      const existingUser = existingUsers?.users?.find(u => u.email === email);
+      // User exists, fetch their ID from profiles table
+      console.log('User already exists, fetching from profiles by email');
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
       
-      if (!existingUser) {
-        throw new Error('User exists but could not be found');
+      if (profileError || !profile) {
+        console.error('Error fetching profile:', profileError);
+        throw new Error('User exists but profile not found');
       }
       
-      userId = existingUser.id;
+      userId = profile.id;
       console.log('Found existing user:', userId);
     } else if (userError) {
       console.error('Error creating user:', userError);
