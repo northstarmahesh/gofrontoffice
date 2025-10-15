@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { z } from "zod";
 import logo from "@/assets/front-office-logo-updated.png";
+import bankidLogo from "@/assets/bankid-logo.png";
 import { CheckCircle, Building2, Phone as PhoneIcon, MessageSquare, Instagram, Chrome, Send, Calendar } from "lucide-react";
 
 const authSchema = z.object({
@@ -182,9 +183,9 @@ const Auth = () => {
                     disabled={isSubmitting}
                   >
                     <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/4/42/BankID_logo.svg" 
+                      src={bankidLogo} 
                       alt="BankID" 
-                      className="h-5 mr-2 brightness-0 invert"
+                      className="h-5 mr-2"
                     />
                     {isSubmitting ? "Startar BankID..." : "Logga in med BankID"}
                   </Button>
@@ -251,9 +252,9 @@ const Auth = () => {
                     disabled={isSubmitting}
                   >
                     <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/4/42/BankID_logo.svg" 
+                      src={bankidLogo} 
                       alt="BankID" 
-                      className="h-5 mr-2 brightness-0 invert"
+                      className="h-5 mr-2"
                     />
                     {isSubmitting ? "Startar BankID..." : "Kom igång med BankID"}
                   </Button>
