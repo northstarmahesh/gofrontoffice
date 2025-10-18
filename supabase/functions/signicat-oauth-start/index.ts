@@ -20,10 +20,15 @@ serve(async (req) => {
       throw new Error('Missing required configuration');
     }
 
+    // Get the app origin from the request referer
+    const referer = req.headers.get('referer') || '';
+    const appOrigin = referer ? new URL(referer).origin : '';
+
     const redirectUri = `${supabaseUrl}/functions/v1/signicat-oauth-callback`;
     const stateData = {
       r: Math.random().toString(36).substring(2),
-      mode: mode || 'login'
+      mode: mode || 'login',
+      origin: appOrigin
     };
     const state = encodeURIComponent(JSON.stringify(stateData));
     

@@ -16,11 +16,13 @@ serve(async (req) => {
     const code = url.searchParams.get('code');
     const stateParam = url.searchParams.get('state');
     
-    // Decode state to get mode
+    // Decode state to get mode and origin
     let mode = 'login';
+    let appOrigin = '';
     try {
       const stateData = JSON.parse(decodeURIComponent(stateParam || ''));
       mode = stateData.mode || 'login';
+      appOrigin = stateData.origin || '';
     } catch (e) {
       console.log('Could not parse state, defaulting to login mode');
     }
@@ -102,8 +104,8 @@ serve(async (req) => {
       if (mode === 'signup') {
         // In signup mode, we don't allow existing users
         console.log('Signup mode: User already exists, redirecting with error');
-        const appUrl = url.origin.replace('functions/v1/signicat-oauth-callback', '');
-        const errorUrl = `${appUrl}/auth?error=Du har redan ett konto. Vänligen logga in istället.`;
+        const errorMessage = encodeURIComponent('Du har redan ett konto. Vänligen logga in istället.');
+        const errorUrl = `${appOrigin}/auth?error=${errorMessage}`;
         return new Response(null, {
           status: 302,
           headers: {
@@ -175,14 +177,13 @@ serve(async (req) => {
     const invitationToken = url.searchParams.get('invitation_token');
 
     // If user is admin, redirect to /admin, otherwise to /
-    const appUrl = url.origin.replace('functions/v1/signicat-oauth-callback', '');
     const redirectPath = adminCheck ? 'admin' : '';
 
     // Build redirect URL with query params (hash will be used by Supabase for tokens)
     const query = new URLSearchParams();
     if (redirectPath) query.set('redirect', redirectPath);
     if (invitationToken) query.set('invitation_token', invitationToken);
-    const redirectTo = `${appUrl}/${query.toString() ? `?${query.toString()}` : ''}`;
+    const redirectTo = `${appOrigin}/${query.toString() ? `?${query.toString()}` : ''}`;
 
     // Generate an action_link that will set the Supabase session, then redirect back to our app
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
