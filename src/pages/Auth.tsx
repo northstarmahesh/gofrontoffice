@@ -28,6 +28,15 @@ const Auth = () => {
   useEffect(() => {
     let mounted = true;
 
+    // Check for error in URL (from BankID redirect)
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+    if (errorParam) {
+      toast.error(errorParam);
+      // Clean URL
+      window.history.replaceState({}, document.title, '/auth');
+    }
+
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -103,10 +112,12 @@ const Auth = () => {
     }
   };
 
-  const handleBankIDLogin = async () => {
+  const handleBankIDLogin = async (mode: 'login' | 'signup' = 'login') => {
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('signicat-oauth-start');
+      const { data, error } = await supabase.functions.invoke('signicat-oauth-start', {
+        body: { mode }
+      });
       
       if (error || !data?.authUrl) {
         console.error('BankID start error:', error);
@@ -178,7 +189,7 @@ const Auth = () => {
                 <TabsContent value="login" className="space-y-6">
                   <Button
                     type="button"
-                    onClick={handleBankIDLogin}
+                    onClick={() => handleBankIDLogin('login')}
                     className="w-full h-14 text-lg font-semibold"
                     disabled={isSubmitting}
                   >
@@ -247,7 +258,7 @@ const Auth = () => {
                 <TabsContent value="signup" className="space-y-6">
                   <Button
                     type="button"
-                    onClick={handleBankIDLogin}
+                    onClick={() => handleBankIDLogin('signup')}
                     className="w-full h-14 text-lg font-semibold"
                     disabled={isSubmitting}
                   >

@@ -14,9 +14,18 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
-    const state = url.searchParams.get('state');
+    const stateParam = url.searchParams.get('state');
+    
+    // Decode state to get mode
+    let mode = 'login';
+    try {
+      const stateData = JSON.parse(atob(stateParam || ''));
+      mode = stateData.mode || 'login';
+    } catch (e) {
+      console.log('Could not parse state, defaulting to login mode');
+    }
 
-    console.log('Received callback with code:', code ? 'present' : 'missing');
+    console.log('Received callback with code:', code ? 'present' : 'missing', 'mode:', mode);
 
     if (!code) {
       throw new Error('No authorization code received');
@@ -89,7 +98,22 @@ serve(async (req) => {
     });
 
     if (userError && userError.message?.includes('already been registered')) {
-      // User exists. First try to find profile by email (fast path)
+      // User exists - check if we're in signup mode
+      if (mode === 'signup') {
+        // In signup mode, we don't allow existing users
+        console.log('Signup mode: User already exists, redirecting with error');
+        const appUrl = url.origin.replace('functions/v1/signicat-oauth-callback', '');
+        const errorUrl = `${appUrl}/auth?error=Du har redan ett konto. Vänligen logga in istället.`;
+        return new Response(null, {
+          status: 302,
+          headers: {
+            ...corsHeaders,
+            'Location': errorUrl,
+          },
+        });
+      }
+      
+      // Login mode - proceed to log in existing user
       console.log('User already exists, fetching from profiles by email');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')

@@ -11,6 +11,8 @@ serve(async (req) => {
   }
 
   try {
+    const { mode } = await req.json().catch(() => ({ mode: 'login' }));
+    
     const clientId = Deno.env.get('SIGNICAT_CLIENT_ID');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
 
@@ -19,7 +21,11 @@ serve(async (req) => {
     }
 
     const redirectUri = `${supabaseUrl}/functions/v1/signicat-oauth-callback`;
-    const state = Math.random().toString(36).substring(7);
+    const stateData = {
+      random: Math.random().toString(36).substring(7),
+      mode: mode || 'login'
+    };
+    const state = btoa(JSON.stringify(stateData));
     
     // Build authorization URL (using Signicat sandbox environment)
     const authUrl = new URL('https://front-office.sandbox.signicat.com/auth/open/connect/authorize');
@@ -30,7 +36,7 @@ serve(async (req) => {
     authUrl.searchParams.set('state', state);
     authUrl.searchParams.set('acr_values', 'urn:signicat:oidc:method:sbid'); // Swedish BankID
 
-    console.log('Generated BankID auth URL');
+    console.log('Generated BankID auth URL with mode:', mode);
 
     return new Response(
       JSON.stringify({ 
