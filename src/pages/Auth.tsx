@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { z } from "zod";
 import logo from "@/assets/front-office-logo-updated.png";
-import bankidLogo from "@/assets/bankid-logo.png";
 import { CheckCircle, Building2, Phone as PhoneIcon, MessageSquare, Instagram, Chrome, Send, Calendar } from "lucide-react";
 
 const authSchema = z.object({
@@ -27,15 +26,6 @@ const Auth = () => {
 
   useEffect(() => {
     let mounted = true;
-
-    // Check for error in URL (from BankID redirect)
-    const urlParams = new URLSearchParams(window.location.search);
-    const errorParam = urlParams.get('error');
-    if (errorParam) {
-      toast.error(errorParam);
-      // Clean URL
-      window.history.replaceState({}, document.title, '/auth');
-    }
 
     const checkSession = async () => {
       try {
@@ -112,12 +102,10 @@ const Auth = () => {
     }
   };
 
-  const handleBankIDLogin = async (mode: 'login' | 'signup' = 'login') => {
+  const handleBankIDLogin = async () => {
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('signicat-oauth-start', {
-        body: { mode }
-      });
+      const { data, error } = await supabase.functions.invoke('signicat-oauth-start');
       
       if (error || !data?.authUrl) {
         console.error('BankID start error:', error);
@@ -129,9 +117,16 @@ const Auth = () => {
       sessionStorage.setItem('oauth_state', data.state);
       const url = data.authUrl as string;
       try {
-        window.location.href = url;
+        if (window.top && window.top !== window) {
+          (window.top as Window).location.assign(url);
+        } else {
+          window.location.assign(url);
+        }
       } catch {
-        window.location.href = url;
+        const opened = window.open(url, '_blank', 'noopener,noreferrer');
+        if (!opened) {
+          window.location.href = url;
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -182,14 +177,14 @@ const Auth = () => {
                 <TabsContent value="login" className="space-y-6">
                   <Button
                     type="button"
-                    onClick={() => handleBankIDLogin('login')}
+                    onClick={handleBankIDLogin}
                     className="w-full h-14 text-lg font-semibold"
                     disabled={isSubmitting}
                   >
                     <img 
-                      src={bankidLogo} 
+                      src="https://upload.wikimedia.org/wikipedia/commons/4/42/BankID_logo.svg" 
                       alt="BankID" 
-                      className="h-5 mr-2"
+                      className="h-5 mr-2 brightness-0 invert"
                     />
                     {isSubmitting ? "Startar BankID..." : "Logga in med BankID"}
                   </Button>
@@ -251,14 +246,14 @@ const Auth = () => {
                 <TabsContent value="signup" className="space-y-6">
                   <Button
                     type="button"
-                    onClick={() => handleBankIDLogin('signup')}
+                    onClick={handleBankIDLogin}
                     className="w-full h-14 text-lg font-semibold"
                     disabled={isSubmitting}
                   >
                     <img 
-                      src={bankidLogo} 
+                      src="https://upload.wikimedia.org/wikipedia/commons/4/42/BankID_logo.svg" 
                       alt="BankID" 
-                      className="h-5 mr-2"
+                      className="h-5 mr-2 brightness-0 invert"
                     />
                     {isSubmitting ? "Startar BankID..." : "Kom igång med BankID"}
                   </Button>
