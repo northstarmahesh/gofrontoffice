@@ -22,10 +22,10 @@ serve(async (req) => {
 
     const redirectUri = `${supabaseUrl}/functions/v1/signicat-oauth-callback`;
     const stateData = {
-      random: Math.random().toString(36).substring(7),
+      r: Math.random().toString(36).substring(2),
       mode: mode || 'login'
     };
-    const state = btoa(JSON.stringify(stateData));
+    const state = encodeURIComponent(JSON.stringify(stateData));
     
     // Build authorization URL (using Signicat sandbox environment)
     const authUrl = new URL('https://front-office.sandbox.signicat.com/auth/open/connect/authorize');

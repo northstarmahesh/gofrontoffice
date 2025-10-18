@@ -19,7 +19,7 @@ serve(async (req) => {
     // Decode state to get mode
     let mode = 'login';
     try {
-      const stateData = JSON.parse(atob(stateParam || ''));
+      const stateData = JSON.parse(decodeURIComponent(stateParam || ''));
       mode = stateData.mode || 'login';
     } catch (e) {
       console.log('Could not parse state, defaulting to login mode');

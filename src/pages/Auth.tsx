@@ -129,16 +129,9 @@ const Auth = () => {
       sessionStorage.setItem('oauth_state', data.state);
       const url = data.authUrl as string;
       try {
-        if (window.top && window.top !== window) {
-          (window.top as Window).location.assign(url);
-        } else {
-          window.location.assign(url);
-        }
+        window.location.href = url;
       } catch {
-        const opened = window.open(url, '_blank', 'noopener,noreferrer');
-        if (!opened) {
-          window.location.href = url;
-        }
+        window.location.href = url;
       }
     } catch (error) {
       console.error('Login error:', error);
