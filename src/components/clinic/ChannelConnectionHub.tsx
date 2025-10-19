@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MessengerConnection } from "./MessengerConnection";
 import { InstagramConnection } from "./InstagramConnection";
+import { WhatsAppConnection } from "./WhatsAppConnection";
 
 interface ChannelConnectionHubProps {
   clinicId: string;
@@ -28,6 +29,7 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
   const [connecting, setConnecting] = useState<string | null>(null);
   const [messengerDialogOpen, setMessengerDialogOpen] = useState(false);
   const [instagramDialogOpen, setInstagramDialogOpen] = useState(false);
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
 
   useEffect(() => {
     checkConnections();
@@ -79,9 +81,11 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
     try {
       if (channelId === "instagram") {
         setInstagramDialogOpen(true);
-      } else if (channelId === "phone" || channelId === "sms" || channelId === "whatsapp") {
+      } else if (channelId === "whatsapp") {
+        setWhatsappDialogOpen(true);
+      } else if (channelId === "phone" || channelId === "sms") {
         toast.info("Set up Vonage", {
-          description: "Visit dashboard.nexmo.com to configure your phone, SMS, and WhatsApp channels.",
+          description: "Visit dashboard.nexmo.com to configure your phone and SMS channels.",
           action: {
             label: "Open Vonage",
             onClick: () => window.open('https://dashboard.nexmo.com', '_blank')
@@ -188,6 +192,24 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
             onConnectionChange={() => {
               checkConnections();
               setInstagramDialogOpen(false);
+              if (onChannelsUpdated) onChannelsUpdated();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={whatsappDialogOpen} onOpenChange={setWhatsappDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Connect WhatsApp Business</DialogTitle>
+          </DialogHeader>
+          <WhatsAppConnection
+            clinicId={clinicId}
+            locationId={locationId || ""}
+            isConnected={connectionStatus.whatsapp}
+            onConnectionChange={() => {
+              checkConnections();
+              setWhatsappDialogOpen(false);
               if (onChannelsUpdated) onChannelsUpdated();
             }}
           />
