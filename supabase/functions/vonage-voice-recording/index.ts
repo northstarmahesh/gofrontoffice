@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { normalizePhoneNumber } from "../_shared/phone-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,9 @@ serve(async (req) => {
     const conversation_uuid = url.searchParams.get('conversation_uuid');
     const clinic_id = url.searchParams.get('clinic_id');
     const from = url.searchParams.get('from');
+    
+    // Normalize phone number
+    const normalizedFrom = normalizePhoneNumber(from);
     
     console.log('Recording webhook received:', {
       conversation_uuid,
@@ -72,7 +76,7 @@ serve(async (req) => {
             .insert({
               user_id: activityLog.user_id,
               clinic_id: clinic_id,
-              title: `Review voicemail from ${from || 'Unknown'}`,
+              title: `Review voicemail from ${normalizedFrom || 'Unknown'}`,
               description: `Voicemail transcript: ${transcriptText}`,
               status: 'pending',
               priority: 'high',

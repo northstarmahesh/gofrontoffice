@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { normalizePhoneNumber } from "../_shared/phone-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -45,9 +46,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Normalize phone numbers
-    const normalizedTo = to && to.trim() !== '' ? (to.startsWith('+') ? to : `+${to}`) : '';
-    const normalizedFrom = from && from.trim() !== '' ? (from.startsWith('+') ? from : `+${from}`) : '';
+    // Normalize phone numbers using shared utility
+    const normalizedTo = normalizePhoneNumber(to);
+    const normalizedFrom = normalizePhoneNumber(from);
 
     if (!normalizedTo || !normalizedFrom) {
       console.error('Missing phone numbers:', { from, to, normalizedFrom, normalizedTo });

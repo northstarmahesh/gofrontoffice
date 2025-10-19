@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { generateAiResponse } from "../_shared/ai-service.ts";
+import { normalizePhoneNumber } from "../_shared/phone-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,9 +43,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Normalize phone number - add + if missing and trim whitespace
-    const normalizedTo = (to?.trim().startsWith('+') ? to.trim() : `+${to?.trim()}`);
-    const normalizedFrom = (from?.trim().startsWith('+') ? from.trim() : `+${from?.trim()}`);
+    // Normalize phone numbers using shared utility
+    const normalizedTo = normalizePhoneNumber(to);
+    const normalizedFrom = normalizePhoneNumber(from);
 
     console.log('Normalized numbers - From:', normalizedFrom, 'To:', normalizedTo);
 
@@ -82,11 +83,11 @@ serve(async (req) => {
       .insert({
         clinic_id: phoneData.clinic_id,
         type: 'sms',
-        title: `SMS from ${from}`,
+        title: `SMS from ${normalizedFrom}`,
         summary: text,
         status: 'pending',
-        contact_name: from,
-        contact_info: from,
+        contact_name: normalizedFrom,
+        contact_info: normalizedFrom,
         direction: 'inbound',
       });
 
