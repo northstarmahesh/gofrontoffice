@@ -76,6 +76,7 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
   };
 
   const handleConnectChannel = async (channelId: string) => {
+    console.log('🔍 Channel clicked:', channelId);
     setConnecting(channelId);
     
     try {
