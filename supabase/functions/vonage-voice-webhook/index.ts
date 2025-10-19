@@ -179,8 +179,8 @@ serve(async (req) => {
         });
 
       const voicemailMessage = isOutsideBusinessHours 
-        ? `Thank you for calling ${clinic?.name || 'us'}. We are currently closed. Our business hours are Monday to Friday, 9 AM to 5 PM. Please leave a message after the beep, and we will get back to you as soon as possible.`
-        : `Thank you for calling ${clinic?.name || 'us'}. Please leave a message after the beep.`;
+        ? 'Tack för att du ringer ' + (clinic?.name || 'oss') + '. Vi har stängt just nu. Våra öppettider är måndag till fredag, 9 till 17. Vänligen lämna ett meddelande efter tonen, så återkommer vi så snart som möjligt.'
+        : 'Tack för att du ringer ' + (clinic?.name || 'oss') + '. Vänligen lämna ett meddelande efter tonen.';
 
       return new Response(
         JSON.stringify([
