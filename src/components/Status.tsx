@@ -71,6 +71,43 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     whatsapp?: string;
   }>({});
 
+  const [stats, setStats] = useState([
+    {
+      label: "Calls Today",
+      value: "0",
+      change: "+0%",
+      icon: Phone,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      label: "Messages",
+      value: "0",
+      change: "+0%",
+      icon: MessageSquare,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      label: "Time Saved",
+      value: "0h",
+      change: "Today",
+      icon: Clock,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      label: "Cost Saved",
+      value: "$0",
+      change: "This week",
+      icon: DollarSign,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+  ]);
+
+  const [weeklyStats, setWeeklyStats] = useState<Array<{ day: string; calls: number; messages: number }>>([]);
+
   useEffect(() => {
     loadLocations();
   }, []);
@@ -81,6 +118,7 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
       loadSettings();
       loadSchedules();
       checkConnectionStatus();
+      loadAnalytics();
 
       // Set up real-time subscription for phone number changes
       const channel = supabase
@@ -452,16 +490,182 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     toast.success("AI Assistant system activated");
   };
 
+  const loadAnalytics = async () => {
+    if (!selectedLocation || !clinicId) return;
+
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      // Get today's calls
+      const { count: callsTodayCount } = await supabase
+        .from("activity_logs")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .eq("location_id", selectedLocation)
+        .eq("type", "call")
+        .gte("created_at", today.toISOString());
+
+      // Get yesterday's calls for comparison
+      const { count: callsYesterdayCount } = await supabase
+        .from("activity_logs")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .eq("location_id", selectedLocation)
+        .eq("type", "call")
+        .gte("created_at", yesterday.toISOString())
+        .lt("created_at", today.toISOString());
+
+      // Get today's messages (SMS, WhatsApp, Instagram, Messenger)
+      const { count: messagesTodayCount } = await supabase
+        .from("activity_logs")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .eq("location_id", selectedLocation)
+        .in("type", ["sms", "whatsapp", "instagram", "messenger"])
+        .gte("created_at", today.toISOString());
+
+      // Get yesterday's messages
+      const { count: messagesYesterdayCount } = await supabase
+        .from("activity_logs")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .eq("location_id", selectedLocation)
+        .in("type", ["sms", "whatsapp", "instagram", "messenger"])
+        .gte("created_at", yesterday.toISOString())
+        .lt("created_at", today.toISOString());
+
+      // Calculate changes
+      const callsChange = callsYesterdayCount ? 
+        Math.round(((callsTodayCount || 0) - callsYesterdayCount) / callsYesterdayCount * 100) : 0;
+      const messagesChange = messagesYesterdayCount ?
+        Math.round(((messagesTodayCount || 0) - messagesYesterdayCount) / messagesYesterdayCount * 100) : 0;
+
+      // Calculate time saved (avg 5 minutes per interaction)
+      const totalInteractions = (callsTodayCount || 0) + (messagesTodayCount || 0);
+      const timeSavedMinutes = totalInteractions * 5;
+      const timeSavedHours = (timeSavedMinutes / 60).toFixed(1);
+
+      // Calculate weekly cost saved ($40/hour)
+      const { count: weeklyInteractions } = await supabase
+        .from("activity_logs")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .eq("location_id", selectedLocation)
+        .gte("created_at", weekAgo.toISOString());
+
+      const weeklyMinutes = (weeklyInteractions || 0) * 5;
+      const costSaved = Math.round((weeklyMinutes / 60) * 40);
+
+      // Update stats
+      setStats([
+        {
+          label: "Calls Today",
+          value: (callsTodayCount || 0).toString(),
+          change: `${callsChange >= 0 ? '+' : ''}${callsChange}%`,
+          icon: Phone,
+          color: "text-primary",
+          bgColor: "bg-primary/10",
+        },
+        {
+          label: "Messages",
+          value: (messagesTodayCount || 0).toString(),
+          change: `${messagesChange >= 0 ? '+' : ''}${messagesChange}%`,
+          icon: MessageSquare,
+          color: "text-primary",
+          bgColor: "bg-primary/10",
+        },
+        {
+          label: "Time Saved",
+          value: `${timeSavedHours}h`,
+          change: "Today",
+          icon: Clock,
+          color: "text-primary",
+          bgColor: "bg-primary/10",
+        },
+        {
+          label: "Cost Saved",
+          value: `$${costSaved}`,
+          change: "This week",
+          icon: DollarSign,
+          color: "text-primary",
+          bgColor: "bg-primary/10",
+        },
+      ]);
+
+      // Generate weekly stats for the date range
+      if (dateRange.from && dateRange.to) {
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const days: Array<{ day: string; calls: number; messages: number }> = [];
+        
+        const currentDate = new Date(dateRange.from);
+        const endDate = new Date(dateRange.to);
+        
+        while (currentDate <= endDate) {
+          const dayStart = new Date(currentDate);
+          dayStart.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(currentDate);
+          dayEnd.setHours(23, 59, 59, 999);
+
+          const { count: dayCalls } = await supabase
+            .from("activity_logs")
+            .select("*", { count: "exact" })
+            .eq("clinic_id", clinicId)
+            .eq("location_id", selectedLocation)
+            .eq("type", "call")
+            .gte("created_at", dayStart.toISOString())
+            .lte("created_at", dayEnd.toISOString());
+
+          const { count: dayMessages } = await supabase
+            .from("activity_logs")
+            .select("*", { count: "exact" })
+            .eq("clinic_id", clinicId)
+            .eq("location_id", selectedLocation)
+            .in("type", ["sms", "whatsapp", "instagram", "messenger"])
+            .gte("created_at", dayStart.toISOString())
+            .lte("created_at", dayEnd.toISOString());
+
+          days.push({
+            day: dayNames[currentDate.getDay()],
+            calls: dayCalls || 0,
+            messages: dayMessages || 0
+          });
+
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        setWeeklyStats(days);
+      }
+    } catch (error) {
+      console.error("Error loading analytics:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedLocation && clinicId && dateRange.from && dateRange.to) {
+      loadAnalytics();
+    }
+  }, [selectedLocation, clinicId, dateRange]);
+
   const handleExportCSV = () => {
     const csvContent = [
       ['Date', 'Calls', 'Messages', 'Time Saved', 'Cost Saved'],
-      ...weeklyStats.map(stat => [
-        stat.day,
-        stat.calls.toString(),
-        stat.messages.toString(),
-        '0.5h', // Mock data
-        '$20'   // Mock data
-      ])
+      ...weeklyStats.map(stat => {
+        const interactions = stat.calls + stat.messages;
+        const timeSaved = ((interactions * 5) / 60).toFixed(1);
+        const costSaved = Math.round((interactions * 5 / 60) * 40);
+        return [
+          stat.day,
+          stat.calls.toString(),
+          stat.messages.toString(),
+          `${timeSaved}h`,
+          `$${costSaved}`
+        ];
+      })
     ].map(row => row.join(',')).join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -478,52 +682,6 @@ const Status = ({ onNavigateToTasks, onNavigateToClinic }: StatusProps) => {
     window.URL.revokeObjectURL(url);
     toast.success("Analytics exported successfully");
   };
-
-  const weeklyStats = [
-    { day: "Mon", calls: 3, messages: 5 },
-    { day: "Tue", calls: 5, messages: 8 },
-    { day: "Wed", calls: 4, messages: 6 },
-    { day: "Thu", calls: 6, messages: 9 },
-    { day: "Fri", calls: 7, messages: 10 },
-    { day: "Sat", calls: 2, messages: 4 },
-    { day: "Sun", calls: 1, messages: 2 },
-  ];
-
-
-  const stats = [
-    {
-      label: "Calls Today",
-      value: "12",
-      change: "+15%",
-      icon: Phone,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-    },
-    {
-      label: "Messages",
-      value: "24",
-      change: "+8%",
-      icon: MessageSquare,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-    },
-    {
-      label: "Time Saved",
-      value: "4.5h",
-      change: "Today",
-      icon: Clock,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-    },
-    {
-      label: "Cost Saved",
-      value: "$180",
-      change: "This week",
-      icon: DollarSign,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-    },
-  ];
 
   if (loading) {
     return (

@@ -297,8 +297,9 @@ export const OnboardingAISetup = ({
         </CardContent>
       </Card>
 
-      {/* Voice Selection - Only show if phone is connected AND autopilot mode */}
-      {hasPhoneConnection && aiMode === "autopilot" && (
+      {/* Voice Selection - Disabled for now as we use Vonage built-in TTS */}
+      {/* Will be re-enabled when OpenAI Realtime API is implemented */}
+      {false && hasPhoneConnection && aiMode === "autopilot" && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">

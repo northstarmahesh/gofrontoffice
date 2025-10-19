@@ -3,16 +3,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Phone, MessageSquare, Instagram, Facebook, CheckCircle2, Building2, Bot } from "lucide-react";
+import { Phone, MessageSquare, Instagram, Facebook, CheckCircle2, Building2, Bot, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import ClinicManagement from "./ClinicManagement";
+import { ScheduleManagement } from "./clinic/ScheduleManagement";
 
 const Settings = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [settingsId, setSettingsId] = useState<string | null>(null);
+  const [locationId, setLocationId] = useState<string | null>(null);
+  const [clinicName, setClinicName] = useState<string>("");
+  const [locationName, setLocationName] = useState<string>("");
   const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
   const [autoPilotEnabled, setAutoPilotEnabled] = useState(true);
   const [channels, setChannels] = useState({
@@ -30,25 +34,64 @@ const Settings = () => {
   const loadSettings = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-      const { data, error } = await supabase
-        .from("assistant_settings")
-        .select("*")
+      // Get user's clinic
+      const { data: clinicUser, error: clinicUserError } = await supabase
+        .from("clinic_users")
+        .select("clinic_id, clinics(name)")
         .eq("user_id", user.id)
         .single();
 
-      if (error) throw error;
+      if (clinicUserError || !clinicUser) {
+        console.error("No clinic found for user");
+        setLoading(false);
+        return;
+      }
 
-      if (data) {
-        setSettingsId(data.id);
-        setPhoneMode(data.phone_mode as "on" | "passive" | "off");
-        setAutoPilotEnabled(data.auto_pilot_enabled ?? true);
+      setClinicName(clinicUser.clinics?.name || "");
+
+      // Get first location for this clinic
+      const { data: location, error: locationError } = await supabase
+        .from("clinic_locations")
+        .select("id, name")
+        .eq("clinic_id", clinicUser.clinic_id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .single();
+
+      if (locationError || !location) {
+        console.error("No location found for clinic");
+        setLoading(false);
+        return;
+      }
+
+      setLocationId(location.id);
+      setLocationName(location.name);
+
+      // Get settings for this location
+      const { data: settings, error: settingsError } = await supabase
+        .from("assistant_settings")
+        .select("*")
+        .eq("location_id", location.id)
+        .maybeSingle();
+
+      if (settingsError) {
+        console.error("Error loading settings:", settingsError);
+      }
+
+      if (settings) {
+        setSettingsId(settings.id);
+        setPhoneMode(settings.phone_mode as "on" | "passive" | "off");
+        setAutoPilotEnabled(settings.auto_pilot_enabled ?? true);
         setChannels({
-          sms: data.sms_enabled,
-          whatsapp: data.whatsapp_enabled,
-          instagram: data.instagram_enabled,
-          messenger: data.messenger_enabled,
+          sms: settings.sms_enabled,
+          whatsapp: settings.whatsapp_enabled,
+          instagram: settings.instagram_enabled,
+          messenger: settings.messenger_enabled,
         });
       }
     } catch (error) {
@@ -60,13 +103,15 @@ const Settings = () => {
 
   const updateSettings = async (updates: any) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!locationId) {
+        toast.error("No location configured");
+        return;
+      }
 
       const { error } = await supabase
         .from("assistant_settings")
         .update(updates)
-        .eq("user_id", user.id);
+        .eq("location_id", locationId);
 
       if (error) throw error;
     } catch (error) {
@@ -77,8 +122,18 @@ const Settings = () => {
 
   const handlePhoneModeChange = async (mode: "on" | "passive" | "off") => {
     setPhoneMode(mode);
-    await updateSettings({ phone_mode: mode });
-    toast.success(`Phone mode set to ${mode.toUpperCase()}`);
+    
+    // Sync auto_pilot_enabled with phone_mode
+    const autoPilot = mode === "on";
+    setAutoPilotEnabled(autoPilot);
+    
+    await updateSettings({ 
+      phone_mode: mode,
+      auto_pilot_enabled: autoPilot
+    });
+    
+    const modeLabel = mode === "on" ? "Auto-Pilot" : mode === "passive" ? "Co-Pilot" : "Off";
+    toast.success(`Phone mode: ${modeLabel}`);
   };
 
   const handleChannelToggle = async (channel: keyof typeof channels) => {
@@ -133,6 +188,12 @@ const Settings = () => {
             <p className="text-sm text-muted-foreground">
               Configure how your assistant handles communications
             </p>
+            {locationName && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5" />
+                <span>{clinicName} • {locationName}</span>
+              </div>
+            )}
           </div>
 
           {/* Phone Settings */}
@@ -163,8 +224,8 @@ const Settings = () => {
                     {phoneMode === "on" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">Autopilot</p>
-                    <p className="text-xs text-muted-foreground">AI answers calls, transcribes, summarizes, and takes action automatically</p>
+                    <p className="font-semibold text-foreground">Auto-Pilot</p>
+                    <p className="text-xs text-muted-foreground">AI answers calls and responds automatically</p>
                   </div>
                 </div>
               </button>
@@ -184,8 +245,8 @@ const Settings = () => {
                     {phoneMode === "passive" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">Co-pilot</p>
-                    <p className="text-xs text-muted-foreground">AI transcribes and drafts responses, but you review before sending</p>
+                    <p className="font-semibold text-foreground">Co-Pilot</p>
+                    <p className="text-xs text-muted-foreground">AI drafts responses for your review</p>
                   </div>
                 </div>
               </button>
@@ -383,6 +444,22 @@ const Settings = () => {
               </div>
             </div>
           </Card>
+
+          {/* Schedule Management */}
+          {locationId && (
+            <Card className="border-0 p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-xl bg-accent/10 p-2.5">
+                  <CheckCircle2 className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Business Hours</h3>
+                  <p className="text-xs text-muted-foreground">Set when your assistant is available</p>
+                </div>
+              </div>
+              <ScheduleManagement clinicId={locationId} />
+            </Card>
+          )}
         </div>
       </TabsContent>
 
