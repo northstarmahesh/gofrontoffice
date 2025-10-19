@@ -43,16 +43,7 @@ const Index = () => {
 
   useEffect(() => {
     let mounted = true;
-    
-    // Aggressive fallback: force loading to false after 2 seconds no matter what
-    const emergencyTimeout = setTimeout(() => {
-      console.log('Emergency timeout - forcing app to load');
-      if (mounted) {
-        setLoading(false);
-      }
-    }, 2000);
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       
@@ -64,7 +55,6 @@ const Index = () => {
       }
     });
 
-    // Check for existing session
     const initAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -80,23 +70,15 @@ const Index = () => {
         setSession(session);
         setUser(session.user);
         
-        // Quick clinic check with timeout
-        try {
-          await Promise.race([
-            checkClinicStatus(session.user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000))
-          ]);
-        } catch (error) {
-          console.log("Clinic check timeout or error - showing onboarding");
-          setHasClinic(false);
-          setCurrentView("clinic");
-        } finally {
-          setLoading(false);
-        }
+        // Check clinic status
+        await checkClinicStatus(session.user.id);
+        setLoading(false);
       } catch (error) {
         console.error("Init error:", error);
-        setLoading(false);
-        navigate("/auth", { replace: true });
+        if (mounted) {
+          setLoading(false);
+          navigate("/auth", { replace: true });
+        }
       }
     };
 
@@ -104,7 +86,6 @@ const Index = () => {
 
     return () => {
       mounted = false;
-      clearTimeout(emergencyTimeout);
       subscription.unsubscribe();
     };
   }, [navigate]);
@@ -118,21 +99,18 @@ const Index = () => {
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (error) {
+      if (error || !data) {
         console.error("Error checking clinic:", error);
         setHasClinic(false);
         setCurrentView("clinic");
         return;
       }
 
-      if (data) {
-        setHasClinic(true);
-        // Load AI system status
-        await loadSystemStatus(userId, data.clinic_id);
-      } else {
-        setHasClinic(false);
-        setCurrentView("clinic"); // Show clinic setup
-      }
+      setHasClinic(true);
+      // Load AI system status (non-blocking)
+      loadSystemStatus(userId, data.clinic_id).catch(err => 
+        console.error("Error loading system status:", err)
+      );
     } catch (error) {
       console.error("Error checking clinic:", error);
       setHasClinic(false);
