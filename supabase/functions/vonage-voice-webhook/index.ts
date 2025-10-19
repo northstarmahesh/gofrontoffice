@@ -187,18 +187,19 @@ serve(async (req) => {
           {
             action: 'talk',
             text: voicemailMessage,
-            voiceName: clinic?.assistant_voice || 'Salli',
+            voiceName: 'Astrid',
             language: 'sv-SE',
+            premium: true,
           },
           {
             action: 'record',
-            eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording?conversation_uuid=${conversation_uuid}&clinic_id=${phoneData.clinic_id}&from=${normalizedFrom}`],
+            eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-recording?conversation_uuid=' + conversation_uuid + '&clinic_id=' + phoneData.clinic_id + '&from=' + normalizedFrom],
             endOnSilence: 3,
             endOnKey: '#',
             beepStart: true,
             transcription: {
               language: 'sv-SE',
-              eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording?conversation_uuid=${conversation_uuid}&clinic_id=${phoneData.clinic_id}&from=${normalizedFrom}`]
+              eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-recording?conversation_uuid=' + conversation_uuid + '&clinic_id=' + phoneData.clinic_id + '&from=' + normalizedFrom]
             }
           }
         ]),
@@ -235,9 +236,10 @@ serve(async (req) => {
     const ncco = [
       {
         action: 'talk',
-        text: 'This call is being recorded for quality and training purposes.',
-        voiceName: clinic?.assistant_voice || 'Salli',
+        text: 'Detta samtal spelas in för kvalitet och utbildningsändamål.',
+        voiceName: 'Astrid',
         language: 'sv-SE',
+        premium: true,
       },
       {
         action: 'record',
@@ -251,17 +253,19 @@ serve(async (req) => {
       },
       {
         action: 'talk',
-        text: `Hello! Thank you for calling ${clinic?.name || 'our clinic'}. How can I help you today?`,
-        voiceName: clinic?.assistant_voice || 'Salli',
+        text: 'Hej! Tack för att du ringer ' + (clinic?.name || 'vår klinik') + '. Vad kan jag hjälpa dig med?',
+        voiceName: 'Astrid',
         language: 'sv-SE',
+        premium: true,
       },
       {
         action: 'input',
-        eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-input`],
+        eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-input'],
         type: ['speech'],
         speech: {
-          context: ['customer service', 'clinic', 'appointment'],
-          endOnSilence: 2,
+          context: ['kundservice', 'klinik', 'bokning', 'tidsbeställning'],
+          endOnSilence: 3,
+          maxDuration: 30,
           language: 'sv-SE',
         },
       }
@@ -282,9 +286,10 @@ serve(async (req) => {
       JSON.stringify([
         {
           action: 'talk',
-          text: 'Sorry, there was an error. Please try again later.',
-          voiceName: 'Salli',
+          text: 'Förlåt, det uppstod ett fel. Vänligen försök igen senare.',
+          voiceName: 'Astrid',
           language: 'sv-SE',
+          premium: true,
         }
       ]),
       {
