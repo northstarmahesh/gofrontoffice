@@ -12,18 +12,51 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const { from, to, conversation_uuid } = body;
+    let from: string | undefined;
+    let to: string | undefined;
+    let conversation_uuid: string | undefined;
+
+    try {
+      if (req.method === 'GET') {
+        const urlParams = new URL(req.url).searchParams;
+        from = urlParams.get('from') || undefined;
+        to = urlParams.get('to') || undefined;
+        conversation_uuid = urlParams.get('conversation_uuid') || undefined;
+      } else {
+        // Try JSON first, fallback to form-data or empty
+        const contentType = req.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const body = await req.json();
+          from = body.from;
+          to = body.to;
+          conversation_uuid = body.conversation_uuid;
+        } else if (contentType.includes('application/x-www-form-urlencoded')) {
+          const text = await req.text();
+          const params = new URLSearchParams(text);
+          from = params.get('from') || undefined;
+          to = params.get('to') || undefined;
+          conversation_uuid = params.get('conversation_uuid') || undefined;
+        } else {
+          const maybeBody = await req.text().catch(() => '');
+          try {
+            const parsed = JSON.parse(maybeBody || '{}');
+            from = parsed.from; to = parsed.to; conversation_uuid = parsed.conversation_uuid;
+          } catch (_) { /* ignore */ }
+        }
+      }
+    } catch (e) {
+      console.warn('Request body parse failed, continuing with defaults');
+    }
     
-    console.log('Incoming call from:', from, 'to:', to, 'uuid:', conversation_uuid);
+    console.log('Incoming call webhook:', { method: req.method, from, to, conversation_uuid });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Normalize phone number - add + if missing
-    const normalizedTo = to?.startsWith('+') ? to : `+${to}`;
-    const normalizedFrom = from?.startsWith('+') ? from : `+${from}`;
+    const normalizedTo = to?.startsWith('+') ? to : (to ? `+${to}` : undefined);
+    const normalizedFrom = from?.startsWith('+') ? from : (from ? `+${from}` : undefined);
 
     // Find clinic by phone number
     const { data: phoneData, error: phoneError } = await supabase
@@ -46,6 +79,26 @@ serve(async (req) => {
           status: 200
         }
       );
+    }
+    // Determine a user_id to attribute logs (clinic owner/admin)
+    let logUserId: string | null = null;
+    const { data: adminCU } = await supabase
+      .from('clinic_users')
+      .select('user_id, role')
+      .eq('clinic_id', phoneData.clinic_id)
+      .in('role', ['owner','admin'])
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    logUserId = adminCU?.user_id || null;
+    if (!logUserId) {
+      const { data: anyCU } = await supabase
+        .from('clinic_users')
+        .select('user_id')
+        .eq('clinic_id', phoneData.clinic_id)
+        .limit(1)
+        .maybeSingle();
+      logUserId = anyCU?.user_id || null;
     }
 
     // Get settings
@@ -98,6 +151,7 @@ serve(async (req) => {
         .from('activity_logs')
         .insert({
           clinic_id: phoneData.clinic_id,
+          user_id: logUserId,
           type: 'call',
           title: `Voicemail from ${normalizedFrom}`,
           summary: `Call received outside business hours - UUID: ${conversation_uuid}`,
@@ -148,6 +202,7 @@ serve(async (req) => {
       .from('activity_logs')
       .insert({
         clinic_id: phoneData.clinic_id,
+        user_id: logUserId,
         type: 'call',
         title: `Incoming Call from ${normalizedFrom}`,
         summary: `Call received - UUID: ${conversation_uuid}`,
