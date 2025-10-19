@@ -76,7 +76,6 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
   };
 
   const handleConnectChannel = async (channelId: string) => {
-    console.log('🔍 Channel clicked:', channelId);
     setConnecting(channelId);
     
     try {
@@ -84,6 +83,8 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
         setInstagramDialogOpen(true);
       } else if (channelId === "whatsapp") {
         setWhatsappDialogOpen(true);
+      } else if (channelId === "messenger") {
+        setMessengerDialogOpen(true);
       } else if (channelId === "phone" || channelId === "sms") {
         toast.info("Set up Vonage", {
           description: "Visit dashboard.nexmo.com to configure your phone and SMS channels.",
@@ -96,8 +97,6 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
         toast.info("Email integration coming soon", {
           description: "Gmail and Outlook integrations will be available soon.",
         });
-      } else if (channelId === "messenger") {
-        setMessengerDialogOpen(true);
       }
     } catch (error) {
       console.error(`Error connecting ${channelId}:`, error);
