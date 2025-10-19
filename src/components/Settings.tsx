@@ -464,7 +464,7 @@ const Settings = () => {
                   <p className="text-xs text-muted-foreground">Set when your assistant is available</p>
                 </div>
               </div>
-              <ScheduleManagement clinicId={locationId} />
+              <ScheduleManagement locationId={locationId} />
             </Card>
           )}
         </div>

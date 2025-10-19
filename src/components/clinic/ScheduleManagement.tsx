@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 
 interface ScheduleManagementProps {
-  clinicId: string;
+  locationId: string;
 }
 
 interface Schedule {
@@ -28,7 +28,7 @@ interface Schedule {
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-export const ScheduleManagement = ({ clinicId }: ScheduleManagementProps) => {
+export const ScheduleManagement = ({ locationId }: ScheduleManagementProps) => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,14 +36,14 @@ export const ScheduleManagement = ({ clinicId }: ScheduleManagementProps) => {
 
   useEffect(() => {
     loadSchedules();
-  }, [clinicId]);
+  }, [locationId]);
 
   const loadSchedules = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("clinic_schedules")
+      .from("assistant_schedules")
       .select("*")
-      .eq("clinic_id", clinicId)
+      .eq("location_id", locationId)
       .order("day_of_week");
 
     if (error) {
@@ -66,15 +66,23 @@ export const ScheduleManagement = ({ clinicId }: ScheduleManagementProps) => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("User not authenticated");
+        return;
+      }
+
       // Delete existing schedules
       await supabase
-        .from("clinic_schedules")
+        .from("assistant_schedules")
         .delete()
-        .eq("clinic_id", clinicId);
+        .eq("location_id", locationId);
 
       // Insert new schedules
       const schedulesToInsert = schedules.map((schedule) => ({
-        clinic_id: clinicId,
+        location_id: locationId,
+        user_id: user.id,
         day_of_week: schedule.day_of_week,
         start_time: schedule.start_time,
         end_time: schedule.end_time,
@@ -82,7 +90,7 @@ export const ScheduleManagement = ({ clinicId }: ScheduleManagementProps) => {
       }));
 
       const { error } = await supabase
-        .from("clinic_schedules")
+        .from("assistant_schedules")
         .insert(schedulesToInsert);
 
       if (error) throw error;
