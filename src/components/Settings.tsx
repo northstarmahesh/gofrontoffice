@@ -17,7 +17,7 @@ const Settings = () => {
   const [locationId, setLocationId] = useState<string | null>(null);
   const [clinicName, setClinicName] = useState<string>("");
   const [locationName, setLocationName] = useState<string>("");
-  const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
+  const [phoneMode, setPhoneMode] = useState<"on" | "copilot" | "off">("on");
   const [autoPilotEnabled, setAutoPilotEnabled] = useState(true);
   const [channels, setChannels] = useState({
     sms: true,
@@ -92,7 +92,7 @@ const Settings = () => {
 
       if (settings) {
         setSettingsId(settings.id);
-        setPhoneMode(settings.phone_mode as "on" | "passive" | "off");
+        setPhoneMode(settings.phone_mode as "on" | "copilot" | "off");
         setAutoPilotEnabled(settings.auto_pilot_enabled ?? true);
         setChannels({
           sms: settings.sms_enabled,
@@ -127,7 +127,7 @@ const Settings = () => {
     }
   };
 
-  const handlePhoneModeChange = async (mode: "on" | "passive" | "off") => {
+  const handlePhoneModeChange = async (mode: "on" | "copilot" | "off") => {
     setPhoneMode(mode);
     
     // Sync auto_pilot_enabled with phone_mode
@@ -139,7 +139,7 @@ const Settings = () => {
       auto_pilot_enabled: autoPilot
     });
     
-    const modeLabel = mode === "on" ? "Auto-Pilot" : mode === "passive" ? "Co-Pilot" : "Off";
+    const modeLabel = mode === "on" ? "Auto-Pilot" : mode === "copilot" ? "Co-Pilot" : "Off";
     toast.success(`Phone mode: ${modeLabel}`);
   };
 
@@ -238,18 +238,18 @@ const Settings = () => {
               </button>
 
               <button
-                onClick={() => handlePhoneModeChange("passive")}
+                onClick={() => handlePhoneModeChange("copilot")}
                 className={`w-full rounded-lg border-2 p-4 text-left transition-all ${
-                  phoneMode === "passive"
+                  phoneMode === "copilot"
                     ? "border-primary bg-primary/5"
                     : "border-border bg-card hover:border-primary/50"
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                    phoneMode === "passive" ? "border-primary" : "border-muted-foreground"
+                    phoneMode === "copilot" ? "border-primary" : "border-muted-foreground"
                   }`}>
-                    {phoneMode === "passive" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                    {phoneMode === "copilot" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-foreground">Co-Pilot</p>
