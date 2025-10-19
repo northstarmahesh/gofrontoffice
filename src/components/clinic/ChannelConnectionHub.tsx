@@ -46,7 +46,6 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
 
       const hasPhone = phoneData?.some(p => p.channels?.includes("voice")) || false;
       const hasSms = phoneData?.some(p => p.channels?.includes("sms")) || false;
-      const hasWhatsApp = phoneData?.some(p => p.channels?.includes("whatsapp")) || false;
 
       // Check integrations
       const { data: integrationData } = await supabase
@@ -55,6 +54,7 @@ export const ChannelConnectionHub = ({ clinicId, locationId, onChannelsUpdated }
         .eq("clinic_id", clinicId)
         .eq("is_connected", true);
 
+      const hasWhatsApp = integrationData?.some(i => i.integration_type === "whatsapp") || false;
       const hasInstagram = integrationData?.some(i => i.integration_type === "instagram") || false;
       const hasMessenger = integrationData?.some(i => i.integration_type === "messenger") || false;
 
