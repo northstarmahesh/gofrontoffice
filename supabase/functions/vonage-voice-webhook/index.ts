@@ -60,8 +60,32 @@ serve(async (req) => {
 
     console.log('Phone mode:', phoneMode, 'Auto-pilot:', autoPilotEnabled);
 
-    // If phone is off, leave voicemail
-    if (phoneMode === 'off') {
+    // Check business hours
+    const { data: schedule } = await supabase
+      .from('assistant_schedules')
+      .select('is_available, start_time, end_time')
+      .eq('location_id', phoneData.location_id)
+      .eq('day_of_week', new Date().getDay())
+      .maybeSingle();
+
+    const now = new Date();
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:00`;
+    
+    const isOutsideBusinessHours = !schedule?.is_available || 
+      (schedule.start_time && currentTime < schedule.start_time) ||
+      (schedule.end_time && currentTime > schedule.end_time);
+
+    console.log('Schedule check:', { 
+      day: new Date().getDay(), 
+      currentTime, 
+      isAvailable: schedule?.is_available,
+      startTime: schedule?.start_time,
+      endTime: schedule?.end_time,
+      isOutsideBusinessHours 
+    });
+
+    // If outside business hours or phone is off, leave voicemail
+    if (isOutsideBusinessHours || phoneMode === 'off') {
       return new Response(
         JSON.stringify([
           {
