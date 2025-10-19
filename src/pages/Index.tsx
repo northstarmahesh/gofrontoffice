@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Settings, CreditCard, Users as UsersIcon, ChevronDown, AlertTriangle, Power, X, Bell } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, CreditCard, Users as UsersIcon, ChevronDown, AlertTriangle, Power, X, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import frontOfficeLogo from "@/assets/front-office-logo-yellow-full.png";
 import Status from "@/components/Status";
-import ClinicManagement from "@/components/ClinicManagement";
+import Settings from "@/components/Settings";
 import Contacts from "@/components/Contacts";
 import Tasks from "@/components/Tasks";
 import Navigation from "@/components/Navigation";
@@ -255,7 +255,7 @@ const Index = () => {
   const renderView = () => {
     // If user hasn't completed onboarding, show only onboarding
     if (hasClinic === false) {
-      return <ClinicManagement />;
+      return <Settings />;
     }
 
     switch (currentView) {
@@ -269,7 +269,7 @@ const Index = () => {
       case "tasks":
         return <Tasks onNavigateToContact={handleNavigateToContact} />;
       case "clinic":
-        return <ClinicManagement initialTab={clinicTab} />;
+        return <Settings />;
       default:
         return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
     }
@@ -330,7 +330,7 @@ const Index = () => {
                 size="sm"
                 className="gap-2 hover:bg-accent"
               >
-                <Settings className="h-4 w-4" />
+                <SettingsIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Account</span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
@@ -343,7 +343,7 @@ const Index = () => {
                 <span>Team</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/auth-settings")} className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
+                <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Password & Login</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
