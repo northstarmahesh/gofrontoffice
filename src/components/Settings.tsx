@@ -42,7 +42,7 @@ const Settings = () => {
       // Get user's clinic
       const { data: clinicUser, error: clinicUserError } = await supabase
         .from("clinic_users")
-        .select("clinic_id, clinics(name)")
+        .select("clinic_id")
         .eq("user_id", user.id)
         .single();
 
@@ -52,7 +52,14 @@ const Settings = () => {
         return;
       }
 
-      setClinicName(clinicUser.clinics?.name || "");
+      // Get clinic details
+      const { data: clinic } = await supabase
+        .from("clinics")
+        .select("name")
+        .eq("id", clinicUser.clinic_id)
+        .single();
+
+      setClinicName(clinic?.name || "");
 
       // Get first location for this clinic
       const { data: location, error: locationError } = await supabase
