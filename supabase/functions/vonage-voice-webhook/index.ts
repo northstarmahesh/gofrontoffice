@@ -12,51 +12,58 @@ serve(async (req) => {
   }
 
   try {
-    let from: string | undefined;
-    let to: string | undefined;
-    let conversation_uuid: string | undefined;
-
-    try {
-      if (req.method === 'GET') {
-        const urlParams = new URL(req.url).searchParams;
-        from = urlParams.get('from') || undefined;
-        to = urlParams.get('to') || undefined;
-        conversation_uuid = urlParams.get('conversation_uuid') || undefined;
-      } else {
-        // Try JSON first, fallback to form-data or empty
+    // Parse request - Vonage can send GET or POST
+    const url = new URL(req.url);
+    let from = url.searchParams.get('from') || '';
+    let to = url.searchParams.get('to') || '';
+    let conversation_uuid = url.searchParams.get('conversation_uuid') || '';
+    
+    // If params not in URL, try body (POST)
+    if (!from || !to) {
+      try {
         const contentType = req.headers.get('content-type') || '';
         if (contentType.includes('application/json')) {
           const body = await req.json();
-          from = body.from;
-          to = body.to;
-          conversation_uuid = body.conversation_uuid;
+          from = body.from || from;
+          to = body.to || to;
+          conversation_uuid = body.conversation_uuid || conversation_uuid;
         } else if (contentType.includes('application/x-www-form-urlencoded')) {
           const text = await req.text();
           const params = new URLSearchParams(text);
-          from = params.get('from') || undefined;
-          to = params.get('to') || undefined;
-          conversation_uuid = params.get('conversation_uuid') || undefined;
-        } else {
-          const maybeBody = await req.text().catch(() => '');
-          try {
-            const parsed = JSON.parse(maybeBody || '{}');
-            from = parsed.from; to = parsed.to; conversation_uuid = parsed.conversation_uuid;
-          } catch (_) { /* ignore */ }
+          from = params.get('from') || from;
+          to = params.get('to') || to;
+          conversation_uuid = params.get('conversation_uuid') || conversation_uuid;
         }
+      } catch (e) {
+        console.error('Body parse error:', e);
       }
-    } catch (e) {
-      console.warn('Request body parse failed, continuing with defaults');
     }
     
-    console.log('Incoming call webhook:', { method: req.method, from, to, conversation_uuid });
+    console.log('Incoming call:', { method: req.method, from, to, conversation_uuid });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Normalize phone number - add + if missing
-    const normalizedTo = to?.startsWith('+') ? to : (to ? `+${to}` : undefined);
-    const normalizedFrom = from?.startsWith('+') ? from : (from ? `+${from}` : undefined);
+    // Normalize phone numbers
+    const normalizedTo = to && to.trim() !== '' ? (to.startsWith('+') ? to : `+${to}`) : '';
+    const normalizedFrom = from && from.trim() !== '' ? (from.startsWith('+') ? from : `+${from}`) : '';
+
+    if (!normalizedTo || !normalizedFrom) {
+      console.error('Missing phone numbers:', { from, to, normalizedFrom, normalizedTo });
+      return new Response(
+        JSON.stringify([
+          {
+            action: 'talk',
+            text: 'Unable to process call. Missing phone number information.',
+          }
+        ]),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
 
     // Find clinic by phone number
     const { data: phoneData, error: phoneError } = await supabase
@@ -124,9 +131,18 @@ serve(async (req) => {
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:00`;
     
-    const isOutsideBusinessHours = !schedule?.is_available || 
-      (schedule.start_time && currentTime < schedule.start_time) ||
-      (schedule.end_time && currentTime > schedule.end_time);
+    // Check if outside business hours
+    let isOutsideBusinessHours = !schedule?.is_available;
+    
+    if (schedule?.is_available && schedule.start_time && schedule.end_time) {
+      // Handle case where end_time might be less than start_time (misconfiguration)
+      if (schedule.end_time < schedule.start_time) {
+        console.warn('Invalid schedule: end_time < start_time', schedule);
+        isOutsideBusinessHours = true; // Treat as closed
+      } else {
+        isOutsideBusinessHours = currentTime < schedule.start_time || currentTime > schedule.end_time;
+      }
+    }
 
     console.log('Schedule check:', { 
       day: new Date().getDay(), 
@@ -253,6 +269,8 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('Error in voice webhook:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return new Response(
       JSON.stringify([
         {
