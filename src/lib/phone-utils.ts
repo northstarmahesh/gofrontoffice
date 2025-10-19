@@ -16,10 +16,16 @@ export function normalizePhoneNumber(phoneNumber: string | null | undefined): st
     return '';
   }
 
-  // Add + prefix if missing
-  if (!normalized.startsWith('+')) {
-    normalized = `+${normalized}`;
+  // Remove leading + if present for processing
+  if (normalized.startsWith('+')) {
+    normalized = normalized.substring(1);
   }
+
+  // Remove any leading zeros (common mistake)
+  normalized = normalized.replace(/^0+/, '');
+
+  // Add + prefix back
+  normalized = `+${normalized}`;
 
   return normalized;
 }
