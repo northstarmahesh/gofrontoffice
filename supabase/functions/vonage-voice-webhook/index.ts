@@ -187,6 +187,8 @@ serve(async (req) => {
           {
             action: 'talk',
             text: voicemailMessage,
+            voiceName: clinic?.assistant_voice || 'Salli',
+            language: 'sv-SE',
           },
           {
             action: 'record',
@@ -195,7 +197,7 @@ serve(async (req) => {
             endOnKey: '#',
             beepStart: true,
             transcription: {
-              language: 'en-US',
+              language: 'sv-SE',
               eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording?conversation_uuid=${conversation_uuid}&clinic_id=${phoneData.clinic_id}&from=${normalizedFrom}`]
             }
           }
@@ -210,7 +212,7 @@ serve(async (req) => {
     // Get clinic info
     const { data: clinic } = await supabase
       .from('clinics')
-      .select('name, phone, email, address')
+      .select('name, phone, email, address, assistant_voice')
       .eq('id', phoneData.clinic_id)
       .single();
 
@@ -234,6 +236,8 @@ serve(async (req) => {
       {
         action: 'talk',
         text: 'This call is being recorded for quality and training purposes.',
+        voiceName: clinic?.assistant_voice || 'Salli',
+        language: 'sv-SE',
       },
       {
         action: 'record',
@@ -248,6 +252,8 @@ serve(async (req) => {
       {
         action: 'talk',
         text: `Hello! Thank you for calling ${clinic?.name || 'our clinic'}. How can I help you today?`,
+        voiceName: clinic?.assistant_voice || 'Salli',
+        language: 'sv-SE',
       },
       {
         action: 'input',
@@ -256,7 +262,7 @@ serve(async (req) => {
         speech: {
           context: ['customer service', 'clinic', 'appointment'],
           endOnSilence: 2,
-          language: 'en-US',
+          language: 'sv-SE',
         },
       }
     ];
@@ -277,6 +283,8 @@ serve(async (req) => {
         {
           action: 'talk',
           text: 'Sorry, there was an error. Please try again later.',
+          voiceName: 'Salli',
+          language: 'sv-SE',
         }
       ]),
       {

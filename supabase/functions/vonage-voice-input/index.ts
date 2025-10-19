@@ -39,6 +39,8 @@ serve(async (req) => {
           {
             action: 'talk',
             text: 'Sorry, there was an error processing your request.',
+            voiceName: 'Salli',
+            language: 'sv-SE',
           }
         ]),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -139,6 +141,9 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
           {
             action: 'talk',
             text: responseText,
+            voiceName: clinic?.assistant_voice || 'Salli',
+            language: 'sv-SE',
+            bargeIn: true,
           },
           {
             action: 'input',
@@ -147,7 +152,7 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
             speech: {
               context: ['customer service', 'clinic', 'appointment'],
               endOnSilence: 2,
-              language: 'en-US',
+              language: 'sv-SE',
             },
           }
         ]),
@@ -183,6 +188,8 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
         {
           action: 'talk',
           text: 'I apologize, but I\'m having trouble right now. Please try calling back later.',
+          voiceName: 'Salli',
+          language: 'sv-SE',
         }
       ]),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
