@@ -86,18 +86,47 @@ serve(async (req) => {
 
     // If outside business hours or phone is off, leave voicemail
     if (isOutsideBusinessHours || phoneMode === 'off') {
+      // Get clinic info for voicemail message
+      const { data: clinic } = await supabase
+        .from('clinics')
+        .select('name')
+        .eq('id', phoneData.clinic_id)
+        .single();
+
+      // Log the voicemail attempt
+      await supabase
+        .from('activity_logs')
+        .insert({
+          clinic_id: phoneData.clinic_id,
+          type: 'call',
+          title: `Voicemail from ${normalizedFrom}`,
+          summary: `Call received outside business hours - UUID: ${conversation_uuid}`,
+          status: 'pending',
+          contact_name: normalizedFrom,
+          contact_info: normalizedFrom,
+          direction: 'inbound',
+        });
+
+      const voicemailMessage = isOutsideBusinessHours 
+        ? `Thank you for calling ${clinic?.name || 'us'}. We are currently closed. Our business hours are Monday to Friday, 9 AM to 5 PM. Please leave a message after the beep, and we will get back to you as soon as possible.`
+        : `Thank you for calling ${clinic?.name || 'us'}. Please leave a message after the beep.`;
+
       return new Response(
         JSON.stringify([
           {
             action: 'talk',
-            text: 'Thank you for calling. Please leave a message after the beep.',
+            text: voicemailMessage,
           },
           {
             action: 'record',
-            eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording`],
+            eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording?conversation_uuid=${conversation_uuid}&clinic_id=${phoneData.clinic_id}&from=${normalizedFrom}`],
             endOnSilence: 3,
             endOnKey: '#',
             beepStart: true,
+            transcription: {
+              language: 'en-US',
+              eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording?conversation_uuid=${conversation_uuid}&clinic_id=${phoneData.clinic_id}&from=${normalizedFrom}`]
+            }
           }
         ]),
         {
