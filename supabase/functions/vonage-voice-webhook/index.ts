@@ -189,7 +189,6 @@ serve(async (req) => {
             text: voicemailMessage,
             voiceName: 'Astrid',
             language: 'sv-SE',
-            premium: true,
           },
           {
             action: 'record',
@@ -235,7 +234,6 @@ serve(async (req) => {
         text: 'Detta samtal spelas in för kvalitet och utbildningsändamål.',
         voiceName: 'Astrid',
         language: 'sv-SE',
-        premium: true,
       },
       {
         action: 'record',
@@ -252,7 +250,6 @@ serve(async (req) => {
         text: 'Hej! Tack för att du ringer ' + (clinic?.name || 'vår klinik') + '. Vad kan jag hjälpa dig med?',
         voiceName: 'Astrid',
         language: 'sv-SE',
-        premium: true,
       },
       {
         action: 'input',
@@ -285,7 +282,6 @@ serve(async (req) => {
           text: 'Förlåt, det uppstod ett fel. Vänligen försök igen senare.',
           voiceName: 'Astrid',
           language: 'sv-SE',
-          premium: true,
         }
       ]),
       {
