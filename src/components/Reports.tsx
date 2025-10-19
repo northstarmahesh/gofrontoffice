@@ -1,19 +1,140 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Phone, MessageSquare, TrendingUp, CheckCircle, CalendarIcon, Download } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { DateRange } from "react-day-picker";
+import { supabase } from "@/integrations/supabase/client";
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     to: new Date(),
   });
+
+  const [weeklyStats, setWeeklyStats] = useState<Array<{ day: string; calls: number; messages: number }>>([]);
+  const [totalCalls, setTotalCalls] = useState(0);
+  const [totalMessages, setTotalMessages] = useState(0);
+  const [lastWeekCalls, setLastWeekCalls] = useState(0);
+  const [lastWeekMessages, setLastWeekMessages] = useState(0);
+  const [completionRate, setCompletionRate] = useState(0);
+  const [totalTasks, setTotalTasks] = useState(0);
+  const [completedTasks, setCompletedTasks] = useState(0);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [dateRange]);
+
+  const loadAnalytics = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: clinicUser } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicUser) return;
+
+      const clinicId = clinicUser.clinic_id;
+      const startDate = dateRange?.from || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const endDate = dateRange?.to || new Date();
+
+      // Get calls for the period
+      const { data: calls, count: callsCount } = await supabase
+        .from("activity_logs")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .eq("type", "call")
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
+      // Get messages for the period
+      const { data: messages, count: messagesCount } = await supabase
+        .from("activity_logs")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .in("type", ["sms", "whatsapp", "instagram", "messenger"])
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
+      // Get last week's data for comparison
+      const lastWeekStart = subWeeks(startDate, 1);
+      const lastWeekEnd = subWeeks(endDate, 1);
+
+      const { count: lastWeekCallsCount } = await supabase
+        .from("activity_logs")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .eq("type", "call")
+        .gte("created_at", lastWeekStart.toISOString())
+        .lte("created_at", lastWeekEnd.toISOString());
+
+      const { count: lastWeekMessagesCount } = await supabase
+        .from("activity_logs")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .in("type", ["sms", "whatsapp", "instagram", "messenger"])
+        .gte("created_at", lastWeekStart.toISOString())
+        .lte("created_at", lastWeekEnd.toISOString());
+
+      // Get tasks data
+      const { data: allTasks, count: allTasksCount } = await supabase
+        .from("tasks")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId);
+
+      const { count: completedTasksCount } = await supabase
+        .from("tasks")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
+        .eq("status", "completed");
+
+      setTotalCalls(callsCount || 0);
+      setTotalMessages(messagesCount || 0);
+      setLastWeekCalls(lastWeekCallsCount || 0);
+      setLastWeekMessages(lastWeekMessagesCount || 0);
+      setTotalTasks(allTasksCount || 0);
+      setCompletedTasks(completedTasksCount || 0);
+      setCompletionRate(allTasksCount ? Math.round((completedTasksCount || 0) / allTasksCount * 100) : 0);
+
+      // Build weekly stats
+      const days = eachDayOfInterval({ start: startDate, end: endDate });
+      const stats = days.slice(0, 7).map(day => {
+        const dayStart = new Date(day);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(day);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const dayCalls = calls?.filter(c => {
+          const callDate = new Date(c.created_at);
+          return callDate >= dayStart && callDate <= dayEnd;
+        }).length || 0;
+
+        const dayMessages = messages?.filter(m => {
+          const msgDate = new Date(m.created_at);
+          return msgDate >= dayStart && msgDate <= dayEnd;
+        }).length || 0;
+
+        return {
+          day: format(day, "EEE"),
+          calls: dayCalls,
+          messages: dayMessages
+        };
+      });
+
+      setWeeklyStats(stats);
+
+    } catch (error) {
+      console.error("Error loading analytics:", error);
+    }
+  };
 
   const handleExport = () => {
     // Create CSV data
@@ -35,19 +156,12 @@ const Reports = () => {
     toast.success("Report exported successfully!");
   };
 
-  const weeklyStats = [
-    { day: "Mon", calls: 8, messages: 15 },
-    { day: "Tue", calls: 12, messages: 18 },
-    { day: "Wed", calls: 10, messages: 22 },
-    { day: "Thu", calls: 14, messages: 20 },
-    { day: "Fri", calls: 16, messages: 24 },
-    { day: "Sat", calls: 6, messages: 10 },
-    { day: "Sun", calls: 4, messages: 8 },
-  ];
-
-  const maxValue = Math.max(
+  const maxValue = weeklyStats.length > 0 ? Math.max(
     ...weeklyStats.map((stat) => Math.max(stat.calls, stat.messages))
-  );
+  ) : 1;
+
+  const callsChange = lastWeekCalls > 0 ? Math.round((totalCalls - lastWeekCalls) / lastWeekCalls * 100) : 0;
+  const messagesChange = lastWeekMessages > 0 ? Math.round((totalMessages - lastWeekMessages) / lastWeekMessages * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -99,11 +213,11 @@ const Reports = () => {
           <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
             <Phone className="h-5 w-5 text-primary" />
           </div>
-          <p className="text-2xl font-bold text-foreground">70</p>
+          <p className="text-2xl font-bold text-foreground">{totalCalls}</p>
           <p className="text-xs text-muted-foreground">Total Calls This Week</p>
-          <div className="mt-2 flex items-center gap-1 text-xs text-success">
+          <div className={`mt-2 flex items-center gap-1 text-xs ${callsChange >= 0 ? 'text-success' : 'text-warning'}`}>
             <TrendingUp className="h-3 w-3" />
-            <span>+12% from last week</span>
+            <span>{callsChange >= 0 ? '+' : ''}{callsChange}% from last week</span>
           </div>
         </Card>
 
@@ -111,11 +225,11 @@ const Reports = () => {
           <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10">
             <MessageSquare className="h-5 w-5 text-secondary" />
           </div>
-          <p className="text-2xl font-bold text-foreground">117</p>
+          <p className="text-2xl font-bold text-foreground">{totalMessages}</p>
           <p className="text-xs text-muted-foreground">Total Messages</p>
-          <div className="mt-2 flex items-center gap-1 text-xs text-success">
+          <div className={`mt-2 flex items-center gap-1 text-xs ${messagesChange >= 0 ? 'text-success' : 'text-warning'}`}>
             <TrendingUp className="h-3 w-3" />
-            <span>+8% from last week</span>
+            <span>{messagesChange >= 0 ? '+' : ''}{messagesChange}% from last week</span>
           </div>
         </Card>
       </div>
@@ -209,8 +323,8 @@ const Reports = () => {
             <p className="text-xs text-muted-foreground">Tasks completed on time</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold text-success">94%</p>
-            <p className="text-xs text-muted-foreground">168 of 179 tasks</p>
+            <p className="text-3xl font-bold text-success">{completionRate}%</p>
+            <p className="text-xs text-muted-foreground">{completedTasks} of {totalTasks} tasks</p>
           </div>
         </div>
       </Card>
