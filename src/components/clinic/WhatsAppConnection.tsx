@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, CheckCircle2, AlertCircle } from "lucide-react";
+import { MessageCircle, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
 
 interface WhatsAppConnectionProps {
   clinicId: string;
@@ -20,20 +18,10 @@ export function WhatsAppConnection({
   isConnected,
   onConnectionChange 
 }: WhatsAppConnectionProps) {
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const { toast } = useToast();
 
   const handleConnect = async () => {
-    if (!phoneNumber.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter your WhatsApp Business phone number",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsConnecting(true);
 
     try {
@@ -51,64 +39,79 @@ export function WhatsAppConnection({
         validLocationId = locations?.id || null;
       }
 
-      // Store WhatsApp number in clinic_phone_numbers
-      const { data: existingPhone, error: checkError } = await supabase
-        .from('clinic_phone_numbers')
-        .select('id, channels')
-        .eq('clinic_id', clinicId)
-        .eq('phone_number', phoneNumber)
-        .maybeSingle();
-
-      if (checkError && checkError.code !== 'PGRST116') throw checkError;
-
-      if (existingPhone) {
-        // Update existing phone to add whatsapp channel
-        const channels = existingPhone.channels || [];
-        if (!channels.includes('whatsapp')) {
-          channels.push('whatsapp');
-        }
-
-        const { error } = await supabase
-          .from('clinic_phone_numbers')
-          .update({
-            channels,
-            is_verified: true,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingPhone.id);
-
-        if (error) throw error;
-      } else {
-        // Create new phone number entry
-        const { error } = await supabase
-          .from('clinic_phone_numbers')
-          .insert({
-            clinic_id: clinicId,
-            location_id: validLocationId,
-            phone_number: phoneNumber,
-            channels: ['whatsapp'],
-            is_verified: true,
-            channel: 'whatsapp',
-          });
-
-        if (error) throw error;
-      }
-
-      toast({
-        title: "Success",
-        description: "WhatsApp connected successfully!",
+      const { data, error } = await supabase.functions.invoke('whatsapp-oauth-start', {
+        body: { clinicId, locationId: validLocationId }
       });
 
-      setPhoneNumber("");
-      onConnectionChange();
+      if (error) throw error;
+
+      if (data?.authUrl) {
+        // Open OAuth window
+        const width = 600;
+        const height = 700;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+        
+        const popup = window.open(
+          data.authUrl,
+          'WhatsApp Authorization',
+          `width=${width},height=${height},left=${left},top=${top}`
+        );
+
+        if (popup) {
+          toast({
+            title: "Authorization Started",
+            description: "Please complete the authorization in the popup window.",
+          });
+
+          // Poll for connection status
+          const pollInterval = setInterval(async () => {
+            if (popup.closed) {
+              clearInterval(pollInterval);
+              
+              // Check if connection was successful
+              const { data: integration } = await supabase
+                .from('clinic_integrations')
+                .select('is_connected')
+                .eq('clinic_id', clinicId)
+                .eq('integration_type', 'whatsapp')
+                .maybeSingle();
+
+              if (integration?.is_connected) {
+                toast({
+                  title: "Success",
+                  description: "WhatsApp connected successfully!",
+                });
+                onConnectionChange();
+              }
+              setIsConnecting(false);
+            }
+          }, 1000);
+
+          // Stop polling after 5 minutes
+          setTimeout(() => {
+            clearInterval(pollInterval);
+            if (!popup.closed) {
+              popup.close();
+            }
+            setIsConnecting(false);
+          }, 300000);
+        } else {
+          toast({
+            title: "Popup Blocked",
+            description: "Please allow popups for this site and try again.",
+            variant: "destructive",
+          });
+          setIsConnecting(false);
+        }
+      }
     } catch (error: any) {
       console.error('Error connecting WhatsApp:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to connect WhatsApp",
+        description: error.message || "Failed to start WhatsApp connection",
         variant: "destructive",
       });
-    } finally {
       setIsConnecting(false);
     }
   };
@@ -117,25 +120,17 @@ export function WhatsAppConnection({
     setIsConnecting(true);
 
     try {
-      // Remove whatsapp from all phone numbers
-      const { data: phones } = await supabase
-        .from('clinic_phone_numbers')
-        .select('id, channels')
-        .eq('clinic_id', clinicId);
+      const { error } = await supabase
+        .from('clinic_integrations')
+        .update({
+          is_connected: false,
+          access_token: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('clinic_id', clinicId)
+        .eq('integration_type', 'whatsapp');
 
-      if (phones) {
-        for (const phone of phones) {
-          const channels = (phone.channels || []).filter((c: string) => c !== 'whatsapp');
-          
-          await supabase
-            .from('clinic_phone_numbers')
-            .update({
-              channels,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', phone.id);
-        }
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -166,24 +161,24 @@ export function WhatsAppConnection({
           )}
         </div>
         <CardDescription>
-          Connect your WhatsApp Business account via Vonage
+          Connect your WhatsApp Business account through Facebook
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {!isConnected ? (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="whatsapp-phone">WhatsApp Business Phone Number</Label>
-              <Input
-                id="whatsapp-phone"
-                type="tel"
-                placeholder="+46701234567"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
-                Enter the phone number registered with WhatsApp Business and connected to Vonage
-              </p>
+            <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p className="font-medium">Requirements:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>A Facebook Business account</li>
+                    <li>A WhatsApp Business account linked to your Meta Business</li>
+                    <li>Admin access to the WhatsApp Business account</li>
+                  </ul>
+                </div>
+              </div>
             </div>
 
             <Button 
@@ -193,6 +188,18 @@ export function WhatsAppConnection({
             >
               {isConnecting ? "Connecting..." : "Connect WhatsApp"}
             </Button>
+
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <ExternalLink className="h-4 w-4" />
+              <a 
+                href="https://business.facebook.com/wa/manage/home/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                Manage WhatsApp Business Account
+              </a>
+            </div>
           </>
         ) : (
           <div className="space-y-4">
@@ -218,13 +225,8 @@ export function WhatsAppConnection({
           <div className="flex items-start gap-2">
             <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
             <div className="text-sm text-muted-foreground space-y-1">
-              <p className="font-medium">Vonage Setup Required:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Create a Vonage account at dashboard.nexmo.com</li>
-                <li>Set up WhatsApp Business API</li>
-                <li>Configure webhook URL in Vonage dashboard</li>
-                <li>Make sure VONAGE_API_KEY and VONAGE_API_SECRET are set</li>
-              </ul>
+              <p className="font-medium">How it works:</p>
+              <p>When you connect, we'll access your WhatsApp Business account through Meta. You'll be able to receive and respond to WhatsApp messages through your AI assistant.</p>
             </div>
           </div>
         </div>

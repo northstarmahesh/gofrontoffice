@@ -56,3 +56,9 @@ verify_jwt = true
 
 [functions.accept-team-invitation]
 verify_jwt = false
+
+[functions.whatsapp-oauth-start]
+verify_jwt = true
+
+[functions.whatsapp-oauth-callback]
+verify_jwt = false
