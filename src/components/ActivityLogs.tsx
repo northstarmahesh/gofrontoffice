@@ -238,16 +238,22 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday = date.toDateString() === yesterday.toDateString();
+    const timezone = 'Europe/Stockholm';
     
-    const timeStr = date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
+    // Convert to Sweden timezone
+    const nowSweden = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+    const dateSweden = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+    
+    const isToday = dateSweden.toDateString() === nowSweden.toDateString();
+    const yesterday = new Date(nowSweden);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = dateSweden.toDateString() === yesterday.toDateString();
+    
+    const timeStr = date.toLocaleTimeString('sv-SE', { 
+      timeZone: timezone,
+      hour: '2-digit', 
       minute: '2-digit',
-      hour12: true 
+      hour12: false 
     });
     
     if (isToday) {
@@ -255,7 +261,8 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
     } else if (isYesterday) {
       return { date: "Yesterday", time: `Yesterday, ${timeStr}` };
     } else {
-      const dateStr = date.toLocaleDateString('en-US', { 
+      const dateStr = date.toLocaleDateString('sv-SE', {
+        timeZone: timezone, 
         month: 'short', 
         day: 'numeric'
       });

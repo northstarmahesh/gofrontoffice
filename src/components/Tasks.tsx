@@ -970,6 +970,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     {task.message_history && task.message_history[0]?.created_at && (
                       <span className="text-xs text-muted-foreground">
                         {new Date(task.message_history[0].created_at).toLocaleTimeString('sv-SE', { 
+                          timeZone: 'Europe/Stockholm',
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}
@@ -1036,8 +1037,9 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                             </Badge>
                             <span className="text-xs text-muted-foreground">
                               {draftTime.toLocaleTimeString('sv-SE', { 
+                                timeZone: 'Europe/Stockholm',
                                 hour: '2-digit', 
-                                minute: '2-digit' 
+                                minute: '2-digit'
                               })}
                             </span>
                           </>

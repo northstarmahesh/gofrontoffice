@@ -474,16 +474,22 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Invalid date";
       
-      const now = new Date();
-      const isToday = date.toDateString() === now.toDateString();
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const isYesterday = date.toDateString() === yesterday.toDateString();
+      const timezone = 'Europe/Stockholm';
       
-      const timeStr = date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
+      // Convert to Sweden timezone
+      const nowSweden = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+      const dateSweden = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+      
+      const isToday = dateSweden.toDateString() === nowSweden.toDateString();
+      const yesterday = new Date(nowSweden);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const isYesterday = dateSweden.toDateString() === yesterday.toDateString();
+      
+      const timeStr = date.toLocaleTimeString('sv-SE', {
+        timeZone: timezone, 
+        hour: '2-digit', 
         minute: '2-digit',
-        hour12: true 
+        hour12: false 
       });
       
       if (isToday) {
@@ -491,10 +497,11 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       } else if (isYesterday) {
         return `Yesterday at ${timeStr}`;
       } else {
-        return date.toLocaleDateString('en-US', { 
+        return date.toLocaleDateString('sv-SE', {
+          timeZone: timezone, 
           month: 'short', 
           day: 'numeric',
-          year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+          year: dateSweden.getFullYear() !== nowSweden.getFullYear() ? 'numeric' : undefined
         }) + ` at ${timeStr}`;
       }
     } catch {
