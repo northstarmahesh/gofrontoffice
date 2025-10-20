@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import ActivityLogs from "./ActivityLogs";
 
 interface TasksProps {
   onNavigateToContact?: (contactName: string) => void;
@@ -1056,11 +1055,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     </div>
                   )}
 
-                  {/* Activity Logs */}
-                  <div className="pt-6 border-t">
-                    <h3 className="text-xl font-bold text-foreground mb-4">Activity Logs</h3>
-                    <ActivityLogs onNavigateToContact={onNavigateToContact} />
-                  </div>
                 </>
               )}
 
