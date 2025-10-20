@@ -387,10 +387,14 @@ export type Database = {
           clinic_id: string
           content: string | null
           created_at: string | null
+          elevenlabs_doc_id: string | null
           file_path: string | null
           id: string
           source_type: string
           source_url: string | null
+          sync_error: string | null
+          sync_status: string | null
+          synced_at: string | null
           title: string | null
           updated_at: string | null
         }
@@ -398,10 +402,14 @@ export type Database = {
           clinic_id: string
           content?: string | null
           created_at?: string | null
+          elevenlabs_doc_id?: string | null
           file_path?: string | null
           id?: string
           source_type?: string
           source_url?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
           title?: string | null
           updated_at?: string | null
         }
@@ -409,10 +417,14 @@ export type Database = {
           clinic_id?: string
           content?: string | null
           created_at?: string | null
+          elevenlabs_doc_id?: string | null
           file_path?: string | null
           id?: string
           source_type?: string
           source_url?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
           title?: string | null
           updated_at?: string | null
         }
