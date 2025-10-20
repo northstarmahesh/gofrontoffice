@@ -297,7 +297,12 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !contactName || selectedChannels.length === 0) return;
+    if (!message.trim() || !contactName || selectedChannels.length === 0) {
+      console.log("Send blocked:", { message: message.trim(), contactName, selectedChannels });
+      if (!message.trim()) toast.error("Please enter a message");
+      if (selectedChannels.length === 0) toast.error("Please select at least one channel");
+      return;
+    }
 
     setIsSending(true);
     try {
@@ -318,6 +323,9 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         return;
       }
 
+      const phoneToUse = contactInfo || contact?.phone;
+      console.log("Sending message to:", { contactName, phoneToUse, channels: selectedChannels });
+
       // Send message to all selected channels
       const insertPromises = selectedChannels.map(channel =>
         supabase
@@ -326,10 +334,10 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
             user_id: user.id,
             clinic_id: clinicData.clinic_id,
             type: channel,
-            title: `${channel.toUpperCase()} message`,
+            title: `${channel.toUpperCase()} to ${contactName}`,
             summary: message,
             contact_name: contactName,
-            contact_info: contactInfo || contact?.phone,
+            contact_info: phoneToUse,
             status: 'pending',
             direction: 'outbound'
           })
@@ -339,6 +347,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       const errors = results.filter(r => r.error);
       
       if (errors.length > 0) {
+        console.error("Send errors:", errors);
         throw new Error("Failed to send to some channels");
       }
 
