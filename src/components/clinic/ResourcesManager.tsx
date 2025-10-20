@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { KnowledgeBase } from "./KnowledgeBase";
-import { Loader2, Play } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -17,16 +17,26 @@ interface ResourcesManagerProps {
 }
 
 const AVAILABLE_VOICES = [
-  { value: "alloy", label: "Alloy", description: "Neutral and balanced", preview: "https://cdn.openai.com/API/docs/audio/alloy.wav" },
-  { value: "echo", label: "Echo", description: "Warm and friendly", preview: "https://cdn.openai.com/API/docs/audio/echo.wav" },
-  { value: "fable", label: "Fable", description: "Expressive and engaging", preview: "https://cdn.openai.com/API/docs/audio/fable.wav" },
-  { value: "onyx", label: "Onyx", description: "Deep and authoritative", preview: "https://cdn.openai.com/API/docs/audio/onyx.wav" },
-  { value: "nova", label: "Nova", description: "Clear and professional", preview: "https://cdn.openai.com/API/docs/audio/nova.wav" },
+  {
+    value: "4xkUqaR9MYOJHoaC1Nak",
+    label: "Swedish Voice 1",
+    description: "Professional female voice"
+  },
+  {
+    value: "hMTrLL2ZiyJiyKrdg2z4",
+    label: "Swedish Voice 2",
+    description: "Clear male voice"
+  },
+  {
+    value: "RILOU7YmBhvwJGDGjNmP",
+    label: "Swedish Voice 3",
+    description: "Warm neutral voice"
+  }
 ];
 
 export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
   const [assistantPrompt, setAssistantPrompt] = useState("");
-  const [assistantVoice, setAssistantVoice] = useState("alloy");
+  const [assistantVoice, setAssistantVoice] = useState("4xkUqaR9MYOJHoaC1Nak");
   const [loading, setLoading] = useState(true);
   const [savingPrompt, setSavingPrompt] = useState(false);
   const [savingVoice, setSavingVoice] = useState(false);
@@ -34,7 +44,6 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
   const [hasStudioQuality, setHasStudioQuality] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
   const [voiceFile, setVoiceFile] = useState<File | null>(null);
-  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -44,7 +53,7 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
     try {
       const { data, error } = await supabase
         .from("clinics")
-        .select("assistant_prompt, assistant_voice")
+        .select("assistant_prompt, selected_elevenlabs_voice_id")
         .eq("id", clinicId)
         .single();
 
@@ -52,7 +61,7 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
 
       if (data) {
         setAssistantPrompt(data.assistant_prompt || "");
-        setAssistantVoice(data.assistant_voice || "alloy");
+        setAssistantVoice(data.selected_elevenlabs_voice_id || "4xkUqaR9MYOJHoaC1Nak");
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -72,7 +81,24 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
 
       if (error) throw error;
 
-      toast.success("Assistant instructions saved successfully");
+      // Trigger agent update
+      const { error: updateError } = await supabase.functions.invoke(
+        'elevenlabs-agent-update',
+        {
+          body: {
+            clinic_id: clinicId,
+            update_type: 'prompt',
+            value: assistantPrompt
+          }
+        }
+      );
+
+      if (updateError) {
+        console.error("Error updating agent:", updateError);
+        toast.error("Instructions saved but failed to update agent");
+      } else {
+        toast.success("Assistant instructions updated successfully");
+      }
     } catch (error) {
       console.error("Error saving instructions:", error);
       toast.error("Failed to save assistant instructions");
@@ -86,12 +112,29 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
     try {
       const { error } = await supabase
         .from("clinics")
-        .update({ assistant_voice: assistantVoice })
+        .update({ selected_elevenlabs_voice_id: assistantVoice })
         .eq("id", clinicId);
 
       if (error) throw error;
 
-      toast.success("Voice selection saved successfully");
+      // Trigger agent update
+      const { error: updateError } = await supabase.functions.invoke(
+        'elevenlabs-agent-update',
+        {
+          body: {
+            clinic_id: clinicId,
+            update_type: 'voice',
+            value: assistantVoice
+          }
+        }
+      );
+
+      if (updateError) {
+        console.error("Error updating agent:", updateError);
+        toast.error("Voice saved but failed to update agent");
+      } else {
+        toast.success("Voice updated successfully");
+      }
     } catch (error) {
       console.error("Error saving voice:", error);
       toast.error("Failed to save voice selection");
@@ -101,18 +144,8 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
   };
 
   const handlePlayVoice = (voiceValue: string) => {
-    if (playingVoice === voiceValue) {
-      setPlayingVoice(null);
-      return;
-    }
-    
-    const voice = AVAILABLE_VOICES.find(v => v.value === voiceValue);
-    if (voice?.preview) {
-      const audio = new Audio(voice.preview);
-      audio.play();
-      setPlayingVoice(voiceValue);
-      audio.onended = () => setPlayingVoice(null);
-    }
+    // Preview functionality removed - Eleven Labs voices don't have preview URLs
+    toast.info("Voice preview coming soon");
   };
 
   const handleVoiceUpload = async () => {
@@ -198,14 +231,6 @@ export const ResourcesManager = ({ clinicId }: ResourcesManagerProps) => {
                       </span>
                     </Label>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePlayVoice(voice.value)}
-                  >
-                    <Play className="h-4 w-4" />
-                  </Button>
                 </div>
               ))}
             </div>
