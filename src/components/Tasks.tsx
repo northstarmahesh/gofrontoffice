@@ -255,7 +255,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Optimized: Fetch only pending tasks with basic info first
+      // Fetch pending tasks with related inbound log basics
       const { data: tasks, error } = await supabase
         .from('tasks')
         .select(`
@@ -264,7 +264,8 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             contact_name,
             contact_info,
             summary,
-            type
+            type,
+            created_at
           )
         `)
         .eq('status', 'pending')
@@ -273,16 +274,48 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
       if (error) throw error;
 
-      // Map tasks without fetching full history initially (lazy load on expand)
-      const tasksWithBasicInfo = (tasks || []).map(task => ({
+      const today = new Date();
+      const isSameDay = (dateStr: string) => {
+        const d = new Date(dateStr);
+        return d.getFullYear() === today.getFullYear() &&
+               d.getMonth() === today.getMonth() &&
+               d.getDate() === today.getDate();
+      };
+
+      // Seed tasks with basic info and a date label for grouping
+      const tasksWithBasicInfo = (tasks || []).map((task: any) => ({
         ...task,
-        contact_name: task.activity_logs?.contact_name,
-        contact_info: task.activity_logs?.contact_info,
+        contact_name: (task as any).activity_logs?.contact_name,
+        contact_info: (task as any).activity_logs?.contact_info,
+        // Fallback to description; we enrich with real draft content below
         draft_message: task.description,
-        message_history: [], // Load on demand
+        draftMessage: task.description,
+        message_history: [],
+        date: isSameDay(task.created_at)
+          ? 'Today'
+          : format(new Date(task.created_at), 'MMM dd, yyyy'),
       }));
 
-      setHumanTasks(tasksWithBasicInfo);
+      // Enrich with actual AI draft text from draft_replies (co-pilot mode)
+      const enhancedTasks = await Promise.all(
+        tasksWithBasicInfo.map(async (t: any) => {
+          if (!t.related_log_id) return t;
+          const { data: draft } = await supabase
+            .from('draft_replies')
+            .select('draft_content, created_at, status')
+            .eq('log_id', t.related_log_id)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
+            .maybeSingle();
+
+          if (draft?.draft_content) {
+            return { ...t, draftMessage: draft.draft_content, draft_message: draft.draft_content };
+          }
+          return t;
+        })
+      );
+
+      setHumanTasks(enhancedTasks);
     } catch (error) {
       console.error('Error loading tasks:', error);
     } finally {
