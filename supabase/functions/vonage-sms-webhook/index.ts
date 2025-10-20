@@ -77,6 +77,22 @@ serve(async (req) => {
     const phoneMode = settings?.phone_mode || 'on';
     const autoPilotEnabled = settings?.auto_pilot_enabled ?? true;
 
+    // Get the first user from the clinic for activity log
+    const { data: clinicUser } = await supabase
+      .from('clinic_users')
+      .select('user_id')
+      .eq('clinic_id', phoneData.clinic_id)
+      .limit(1)
+      .maybeSingle();
+
+    if (!clinicUser?.user_id) {
+      console.error('No user found for clinic:', phoneData.clinic_id);
+      return new Response(JSON.stringify({ error: 'No user found for clinic' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // Log incoming message and get the ID
     const { data: activityLog, error: logError } = await supabase
       .from('activity_logs')
@@ -89,14 +105,20 @@ serve(async (req) => {
         contact_name: normalizedFrom,
         contact_info: normalizedFrom,
         direction: 'inbound',
-        user_id: phoneData.clinic_id, // Will be updated with actual user
+        user_id: clinicUser.user_id,
       })
       .select()
       .single();
 
     if (logError) {
       console.error('Error creating activity log:', logError);
+      return new Response(JSON.stringify({ error: 'Failed to create activity log', details: logError }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
+
+    console.log('Activity log created:', activityLog?.id);
 
     if (phoneMode === 'off') {
       console.log('Phone mode is off, not responding');
@@ -166,31 +188,25 @@ serve(async (req) => {
           contact_name: normalizedFrom,
           contact_info: normalizedFrom,
           direction: 'outbound',
+          user_id: clinicUser.user_id,
         });
     } else {
       // Co-pilot mode: save as draft
       if (activityLog?.id) {
-        // Get the first user from the clinic to assign the draft
-        const { data: clinicUser } = await supabase
-          .from('clinic_users')
-          .select('user_id')
-          .eq('clinic_id', phoneData.clinic_id)
-          .limit(1)
-          .maybeSingle();
-
-        if (clinicUser?.user_id) {
-          await supabase
-            .from('draft_replies')
-            .insert({
-              log_id: activityLog.id,
-              clinic_id: phoneData.clinic_id,
-              user_id: clinicUser.user_id,
-              draft_content: responseText,
-              status: 'pending',
-            });
-          console.log('Draft saved successfully for log:', activityLog.id);
+        const { error: draftError } = await supabase
+          .from('draft_replies')
+          .insert({
+            log_id: activityLog.id,
+            clinic_id: phoneData.clinic_id,
+            user_id: clinicUser.user_id,
+            draft_content: responseText,
+            status: 'pending',
+          });
+        
+        if (draftError) {
+          console.error('Error creating draft:', draftError);
         } else {
-          console.error('No user found for clinic:', phoneData.clinic_id);
+          console.log('Draft saved successfully for log:', activityLog.id);
         }
       }
     }
