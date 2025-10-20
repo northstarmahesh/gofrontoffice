@@ -513,7 +513,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
             <div className="flex items-center justify-between">
               <DialogTitle className="text-2xl flex items-center gap-2">
                 <User className="h-5 w-5" />
-                {isEditing ? "Edit Contact" : (contact?.name || contactName || "Unknown")}
+                {isEditing ? "Edit Contact" : (contact?.name || "New Contact")}
               </DialogTitle>
               <div className="flex items-center gap-2">
                 {isEditing ? (
