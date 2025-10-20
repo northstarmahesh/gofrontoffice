@@ -192,7 +192,7 @@ serve(async (req) => {
           },
           {
             action: 'record',
-            eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-recording?conversation_uuid=' + conversation_uuid + '&clinic_id=' + phoneData.clinic_id + '&from=' + normalizedFrom],
+            eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-recording'],
             endOnSilence: 3,
             endOnKey: '#',
             beepStart: true
@@ -237,7 +237,7 @@ serve(async (req) => {
       },
       {
         action: 'record',
-        eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording?conversation_uuid=${conversation_uuid}&clinic_id=${phoneData.clinic_id}`],
+        eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording`],
         format: 'mp3',
         split: 'conversation',
         channels: 1,

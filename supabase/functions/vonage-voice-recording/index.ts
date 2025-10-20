@@ -14,18 +14,12 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const url = new URL(req.url);
-    const conversation_uuid = url.searchParams.get('conversation_uuid');
-    const clinic_id = url.searchParams.get('clinic_id');
-    const from = url.searchParams.get('from');
     
-    // Normalize phone number
-    const normalizedFrom = normalizePhoneNumber(from);
+    // Extract conversation_uuid from body (Vonage always sends it)
+    const conversation_uuid = body.conversation_uuid;
     
     console.log('Recording webhook received:', {
       conversation_uuid,
-      clinic_id,
-      from,
       recording_url: body.recording_url,
       transcript: body.transcript,
       start_time: body.start_time,
@@ -37,13 +31,12 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // If we have a recording URL, update the activity log
-    if (body.recording_url && conversation_uuid && clinic_id) {
-      // Find the activity log for this conversation
+    // If we have a recording URL and conversation_uuid, update the activity log
+    if (body.recording_url && conversation_uuid) {
+      // Find the activity log for this conversation using conversation_uuid in summary
       const { data: activityLog, error: findError } = await supabase
         .from('activity_logs')
-        .select('id, user_id')
-        .eq('clinic_id', clinic_id)
+        .select('id, user_id, clinic_id, contact_info')
         .ilike('summary', `%${conversation_uuid}%`)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -53,6 +46,7 @@ serve(async (req) => {
         console.error('Error finding activity log:', findError);
       } else if (activityLog) {
         const transcriptText = body.transcript?.text || body.transcript || 'No transcript available';
+        const normalizedFrom = normalizePhoneNumber(activityLog.contact_info);
         
         // Update the activity log with the recording URL and transcript
         const { error: updateError } = await supabase
@@ -75,7 +69,7 @@ serve(async (req) => {
             .from('tasks')
             .insert({
               user_id: activityLog.user_id,
-              clinic_id: clinic_id,
+              clinic_id: activityLog.clinic_id,
               title: `Review voicemail from ${normalizedFrom || 'Unknown'}`,
               description: `Voicemail transcript: ${transcriptText}`,
               status: 'pending',
