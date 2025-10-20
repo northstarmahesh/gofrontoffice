@@ -268,7 +268,7 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
             placeholder="Search logs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-11"
           />
         </div>
 
