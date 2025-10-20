@@ -45,33 +45,33 @@ serve(async (req) => {
       if (findError) {
         console.error('Error finding activity log:', findError);
       } else if (activityLog) {
-        const transcriptText = body.transcript?.text || body.transcript || 'No transcript available';
         const normalizedFrom = normalizePhoneNumber(activityLog.contact_info);
+        const duration = body.duration ? `${body.duration}s` : 'unknown duration';
         
-        // Update the activity log with the recording URL and transcript
+        // Update the activity log with the recording URL
         const { error: updateError } = await supabase
           .from('activity_logs')
           .update({
             recording_url: body.recording_url,
             duration: body.duration ? `${body.duration}s` : null,
             status: 'completed',
-            summary: `Voicemail received - ${transcriptText.substring(0, 100)}${transcriptText.length > 100 ? '...' : ''}`,
+            summary: `Voicemail received (${duration}) - Recording available`,
           })
           .eq('id', activityLog.id);
 
         if (updateError) {
           console.error('Error updating activity log:', updateError);
         } else {
-          console.log('Successfully updated activity log with recording and transcript');
+          console.log('Successfully updated activity log with recording');
           
-          // Create a task for the voicemail
+          // Create a task for the voicemail with recording link
           const { error: taskError } = await supabase
             .from('tasks')
             .insert({
               user_id: activityLog.user_id,
               clinic_id: activityLog.clinic_id,
               title: `Review voicemail from ${normalizedFrom || 'Unknown'}`,
-              description: `Voicemail transcript: ${transcriptText}`,
+              description: `Voicemail recorded (${duration}). Listen to recording: ${body.recording_url}`,
               status: 'pending',
               priority: 'high',
               source: 'call',
