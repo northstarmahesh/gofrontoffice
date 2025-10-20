@@ -255,15 +255,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get clinic ID
-      const { data: clinicUsers } = await supabase
-        .from("clinic_users")
-        .select("clinic_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!clinicUsers?.clinic_id) return;
-
       // Fetch pending tasks with related inbound log basics
       const { data: tasks, error } = await supabase
         .from('tasks')
@@ -278,9 +269,8 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           )
         `)
         .eq('status', 'pending')
-        .eq('clinic_id', clinicUsers.clinic_id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(20);
 
       if (error) throw error;
 
@@ -297,7 +287,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         ...task,
         contact_name: (task as any).activity_logs?.contact_name,
         contact_info: (task as any).activity_logs?.contact_info,
-        source: (task as any).activity_logs?.type || task.source,
+        // Fallback to description; we enrich with real draft content below
         draft_message: task.description,
         draftMessage: task.description,
         message_history: [],
@@ -306,12 +296,10 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           : format(new Date(task.created_at), 'MMM dd, yyyy'),
       }));
 
-      // Enrich with actual AI draft text and autopilot status
+      // Enrich with actual AI draft text from draft_replies (co-pilot mode)
       const enhancedTasks = await Promise.all(
         tasksWithBasicInfo.map(async (t: any) => {
           if (!t.related_log_id) return t;
-          
-          // Get draft content
           const { data: draft } = await supabase
             .from('draft_replies')
             .select('draft_content, created_at, status')
@@ -320,44 +308,14 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             .order('created_at', { ascending: false })
             .maybeSingle();
 
-          // Get autopilot status for this channel/location
-          const { data: settings } = await supabase
-            .from('assistant_settings')
-            .select('sms_auto_pilot, whatsapp_auto_pilot, instagram_auto_pilot, messenger_auto_pilot')
-            .eq('location_id', selectedLocation)
-            .maybeSingle();
-
-          let autoPilotEnabled = false;
-          if (settings) {
-            const channelType = t.source;
-            if (channelType === 'sms') autoPilotEnabled = settings.sms_auto_pilot;
-            else if (channelType === 'whatsapp') autoPilotEnabled = settings.whatsapp_auto_pilot;
-            else if (channelType === 'instagram') autoPilotEnabled = settings.instagram_auto_pilot;
-            else if (channelType === 'messenger') autoPilotEnabled = settings.messenger_auto_pilot;
+          if (draft?.draft_content) {
+            return { ...t, draftMessage: draft.draft_content, draft_message: draft.draft_content };
           }
-
-          const taskData = { 
-            ...t, 
-            autoPilotEnabled,
-            draftMessage: draft?.draft_content || t.draftMessage,
-            draft_message: draft?.draft_content || t.draft_message
-          };
-
-          return taskData;
+          return t;
         })
       );
 
-      // Remove duplicates based on task ID and related_log_id
-      const uniqueTasks = Array.from(
-        new Map(
-          enhancedTasks.map(task => [
-            task.related_log_id || task.id,
-            task
-          ])
-        ).values()
-      );
-
-      setHumanTasks(uniqueTasks);
+      setHumanTasks(enhancedTasks);
     } catch (error) {
       console.error('Error loading tasks:', error);
     } finally {
@@ -904,11 +862,8 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     <Badge className={cn("bg-yellow-accent text-yellow-accent-foreground font-semibold", compactView ? "text-xs" : "text-xs")}>
                       ⚡ AI Draft - Manual Review Required
                     </Badge>
-                    <Badge variant="outline" className={cn(
-                      "text-xs",
-                      task.autoPilotEnabled ? "bg-green-500/10 text-green-600 border-green-500/30" : "text-muted-foreground"
-                    )}>
-                      Auto-pilot: {task.autoPilotEnabled ? 'ON' : 'OFF'}
+                    <Badge variant="outline" className="text-xs text-muted-foreground">
+                      Auto-pilot: OFF
                     </Badge>
                   </div>
                   {task.message_history && task.message_history.length > 0 && (
