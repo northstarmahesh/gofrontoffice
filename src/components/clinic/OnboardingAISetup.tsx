@@ -5,10 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Bot, User, Volume2, ExternalLink, Lock } from "lucide-react";
+import { Bot, User, Volume2, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -67,13 +66,22 @@ Be understanding, non-judgmental, and maintain strict confidentiality. Create a 
 Always be professional, helpful, and clear in your communication.`
 };
 
-const VOICE_OPTIONS = [
-  { value: "alloy", label: "Alloy - Balanced and professional" },
-  { value: "echo", label: "Echo - Warm and friendly" },
-  { value: "fable", label: "Fable - Clear and articulate" },
-  { value: "onyx", label: "Onyx - Deep and authoritative" },
-  { value: "nova", label: "Nova - Bright and energetic" },
-  { value: "shimmer", label: "Shimmer - Soft and soothing" },
+const SWEDISH_VOICES = [
+  {
+    value: "4xkUqaR9MYOJHoaC1Nak",
+    label: "Aria",
+    description: "Professionell kvinnlig röst"
+  },
+  {
+    value: "hMTrLL2ZiyJiyKrdg2z4",
+    label: "Liam",
+    description: "Tydlig manlig röst"
+  },
+  {
+    value: "RILOU7YmBhvwJGDGjNmP",
+    label: "River",
+    description: "Varm neutral röst"
+  }
 ];
 
 export const OnboardingAISetup = ({ 
@@ -86,7 +94,7 @@ export const OnboardingAISetup = ({
   const [loading, setLoading] = useState(false);
   const [aiMode, setAiMode] = useState<"autopilot" | "copilot">("copilot");
   const [assistantPrompt, setAssistantPrompt] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState("alloy");
+  const [selectedVoice, setSelectedVoice] = useState("4xkUqaR9MYOJHoaC1Nak");
   const [locationId, setLocationId] = useState<string | null>(null);
   const { permissions, isAdmin } = useUserPermissions(clinicId);
 
@@ -128,15 +136,15 @@ export const OnboardingAISetup = ({
       // Load clinic settings
       const { data: clinic } = await supabase
         .from("clinics")
-        .select("assistant_prompt, assistant_voice")
+        .select("assistant_prompt, selected_elevenlabs_voice_id")
         .eq("id", clinicId)
         .single();
 
       if (clinic?.assistant_prompt) {
         setAssistantPrompt(clinic.assistant_prompt);
       }
-      if (clinic?.assistant_voice) {
-        setSelectedVoice(clinic.assistant_voice);
+      if (clinic?.selected_elevenlabs_voice_id) {
+        setSelectedVoice(clinic.selected_elevenlabs_voice_id);
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -156,7 +164,7 @@ export const OnboardingAISetup = ({
         .from("clinics")
         .update({
           assistant_prompt: assistantPrompt,
-          assistant_voice: selectedVoice,
+          selected_elevenlabs_voice_id: selectedVoice,
         })
         .eq("id", clinicId);
 
@@ -184,11 +192,23 @@ export const OnboardingAISetup = ({
 
       if (settingsError) throw settingsError;
 
-      toast.success("AI assistant configured!");
+      // Create Eleven Labs agent
+      toast.info("Skapar AI-agent... Detta kan ta 10 sekunder.");
+
+      const { data, error: agentError } = await supabase.functions.invoke(
+        'elevenlabs-agent-create',
+        {
+          body: { clinic_id: clinicId }
+        }
+      );
+
+      if (agentError) throw agentError;
+
+      toast.success("AI-assistent konfigurerad! 🎉");
       onComplete();
     } catch (error: any) {
       console.error("Error saving settings:", error);
-      toast.error(error.message || "Failed to save settings");
+      toast.error(error.message || "Failed to configure AI assistant");
     } finally {
       setLoading(false);
     }
@@ -297,60 +317,44 @@ export const OnboardingAISetup = ({
         </CardContent>
       </Card>
 
-      {/* Voice Selection - Disabled for now as we use Vonage built-in TTS */}
-      {/* Will be re-enabled when OpenAI Realtime API is implemented */}
-      {false && hasPhoneConnection && aiMode === "autopilot" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Volume2 className="h-5 w-5" />
-              Voice Selection for Phone Calls
-            </CardTitle>
-            <CardDescription>
-              Choose the voice your AI will use when speaking with callers
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="voice">AI Voice</Label>
-              <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                <SelectTrigger id="voice">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {VOICE_OPTIONS.map((voice) => (
-                    <SelectItem key={voice.value} value={voice.value}>
-                      {voice.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {/* Voice Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Volume2 className="h-5 w-5" />
+            Välj röst för AI-assistenten
+          </CardTitle>
+          <CardDescription>
+            Välj vilken svensk röst din AI-assistent ska använda vid telefonsamtal
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <RadioGroup value={selectedVoice} onValueChange={setSelectedVoice}>
+            <div className="space-y-3">
+              {SWEDISH_VOICES.map((voice) => (
+                <Card key={voice.value} className={`cursor-pointer transition-all ${selectedVoice === voice.value ? "border-primary border-2" : "border"}`}>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem value={voice.value} id={voice.value} />
+                      <Label htmlFor={voice.value} className="flex flex-col cursor-pointer flex-1">
+                        <span className="font-medium">{voice.label}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {voice.description}
+                        </span>
+                      </Label>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-
-            <Card className="bg-muted/50 border-dashed">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start gap-3">
-                  <ExternalLink className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Want a custom voice?</p>
-                    <p className="text-xs text-muted-foreground">
-                      We can clone your voice or create a custom voice for your business. Contact our support team to get started.
-                    </p>
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild>
-                      <a href="mailto:support@frontoffice.com">Contact Support</a>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </CardContent>
-        </Card>
-      )}
+          </RadioGroup>
+        </CardContent>
+      </Card>
 
       {/* Action Buttons */}
       <div className="flex gap-3 pt-4">
         <Button onClick={handleSave} disabled={loading} className="flex-1" size="lg">
-          {loading ? "Saving..." : "Complete Setup"}
+          {loading ? "Skapar AI-agent..." : "Slutför inställning"}
         </Button>
       </div>
     </div>
