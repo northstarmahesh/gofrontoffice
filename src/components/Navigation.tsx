@@ -1,7 +1,7 @@
-import { Activity, Users, CheckSquare, Building2 } from "lucide-react";
+import { Activity, Users, CheckSquare, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type View = "status" | "contacts" | "tasks" | "clinic";
+type View = "tasks" | "activity" | "contacts" | "settings";
 
 interface NavigationProps {
   currentView: View;
@@ -10,10 +10,10 @@ interface NavigationProps {
 
 const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
   const navItems = [
-    { id: "tasks" as View, icon: CheckSquare, label: "TASKS", color: "text-primary" },
-    { id: "status" as View, icon: Activity, label: "STATUS", color: "text-primary" },
-    { id: "contacts" as View, icon: Users, label: "CONTACTS", color: "text-primary" },
-    { id: "clinic" as View, icon: Building2, label: "YOU", color: "text-primary" },
+    { id: "tasks" as View, icon: CheckSquare, label: "TASKS" },
+    { id: "activity" as View, icon: Activity, label: "ACTIVITY" },
+    { id: "contacts" as View, icon: Users, label: "CONTACTS" },
+    { id: "settings" as View, icon: SettingsIcon, label: "SETTINGS" },
   ];
 
   return (
@@ -29,7 +29,7 @@ const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
               className={cn(
                 "flex flex-col items-center gap-1.5 rounded-xl px-5 py-2 transition-all",
                 isActive
-                  ? `text-primary scale-110 font-bold bg-yellow-accent/20 border-2 border-yellow-accent shadow-lg`
+                  ? "text-primary scale-110 font-bold bg-yellow-accent/20 border-2 border-yellow-accent shadow-lg"
                   : "text-muted-foreground hover:text-primary hover:bg-primary/5"
               )}
             >

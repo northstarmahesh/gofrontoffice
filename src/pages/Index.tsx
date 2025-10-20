@@ -14,7 +14,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import frontOfficeLogo from "@/assets/front-office-logo-yellow-full.png";
-import Status from "@/components/Status";
+import Activity from "@/components/Activity";
 import Settings from "@/components/Settings";
 import Contacts from "@/components/Contacts";
 import Tasks from "@/components/Tasks";
@@ -22,17 +22,16 @@ import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 import { useInvitationAcceptance } from "@/hooks/useInvitationAcceptance";
 
-type View = "status" | "contacts" | "tasks" | "clinic";
+type View = "tasks" | "activity" | "contacts" | "settings";
 
 const Index = () => {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<View>("tasks");
   const [user, setUser] = useState<any>(null);
-  const [session, setSession] = useState<any>(null); // CRITICAL: Store session, not just user
+  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
   const [selectedContactName, setSelectedContactName] = useState<string | undefined>(undefined);
-  const [clinicTab, setClinicTab] = useState<string | undefined>(undefined);
   const [disabledLocations, setDisabledLocations] = useState<Array<{ id: string; name: string }>>([]);
   const [showEnableDialog, setShowEnableDialog] = useState(false);
   const [selectedLocationToEnable, setSelectedLocationToEnable] = useState<string>("");
@@ -89,7 +88,7 @@ const Index = () => {
         } catch (error) {
           console.log("Clinic check timeout or error - showing onboarding");
           setHasClinic(false);
-          setCurrentView("clinic");
+          setCurrentView("settings");
         } finally {
           setLoading(false);
         }
@@ -121,7 +120,7 @@ const Index = () => {
       if (error) {
         console.error("Error checking clinic:", error);
         setHasClinic(false);
-        setCurrentView("clinic");
+        setCurrentView("settings");
         return;
       }
 
@@ -131,12 +130,12 @@ const Index = () => {
         await loadSystemStatus(userId, data.clinic_id);
       } else {
         setHasClinic(false);
-        setCurrentView("clinic"); // Show clinic setup
+        setCurrentView("settings");
       }
     } catch (error) {
       console.error("Error checking clinic:", error);
       setHasClinic(false);
-      setCurrentView("clinic");
+      setCurrentView("settings");
     }
   };
 
@@ -223,8 +222,8 @@ const Index = () => {
 
   useEffect(() => {
     // If user doesn't have a business, redirect to business setup for onboarding
-    if (hasClinic === false && currentView !== "clinic") {
-      setCurrentView("clinic");
+    if (hasClinic === false && currentView !== "settings") {
+      setCurrentView("settings");
       toast.info("Welcome! Let's set up your business first.");
     }
   }, [hasClinic]);
@@ -259,19 +258,18 @@ const Index = () => {
     }
 
     switch (currentView) {
-      case "status":
-        return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
+      case "activity":
+        return <Activity />;
       case "contacts":
         return <Contacts selectedContactName={selectedContactName} onNavigateToTools={() => {
-          setClinicTab("tools");
-          setCurrentView("clinic");
+          setCurrentView("settings");
         }} />;
       case "tasks":
         return <Tasks onNavigateToContact={handleNavigateToContact} />;
-      case "clinic":
+      case "settings":
         return <Settings />;
       default:
-        return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
+        return <Activity />;
     }
   };
 
