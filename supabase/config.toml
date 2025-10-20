@@ -80,3 +80,6 @@ verify_jwt = true
 
 [functions.elevenlabs-knowledge-sync]
 verify_jwt = true
+
+[functions.elevenlabs-post-call-webhook]
+verify_jwt = false
