@@ -111,11 +111,30 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
           ])
         ).values()
       );
+
+      // Look up saved contact names for all logs
+      const logsWithContactNames = await Promise.all(
+        uniqueLogs.map(async (log) => {
+          if (log.contact_info) {
+            const { data: savedContact } = await supabase
+              .from('contacts')
+              .select('name')
+              .eq('clinic_id', clinicData.clinic_id)
+              .eq('phone', log.contact_info)
+              .maybeSingle();
+            
+            if (savedContact?.name) {
+              return { ...log, contact_name: savedContact.name };
+            }
+          }
+          return log;
+        })
+      );
       
       if (reset) {
-        setLogs(uniqueLogs);
+        setLogs(logsWithContactNames);
       } else {
-        setLogs(prev => [...prev, ...uniqueLogs]);
+        setLogs(prev => [...prev, ...logsWithContactNames]);
       }
 
       setHasMore((count ?? 0) > (currentPage + 1) * PAGE_SIZE);
