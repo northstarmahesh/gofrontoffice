@@ -191,6 +191,33 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
       const contactName = task.contact_name || relatedLog?.contact_name;
       const contactInfo = task.contact_info || relatedLog?.contact_info;
 
+      // Get clinic phone number for sending SMS
+      const { data: phoneNumberData } = await supabase
+        .from("clinic_phone_numbers")
+        .select("phone_number")
+        .eq("clinic_id", clinicData.clinic_id)
+        .eq("is_active", true)
+        .eq("is_verified", true)
+        .maybeSingle();
+
+      // Send actual SMS via Vonage if it's an SMS task
+      if (task.source === 'sms' && contactInfo && phoneNumberData?.phone_number) {
+        const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
+          body: {
+            to: contactInfo,
+            message: message,
+            from: phoneNumberData.phone_number
+          }
+        });
+
+        if (smsError || !smsResult?.success) {
+          console.error('[TaskDetailDialog] SMS send error:', smsError || smsResult);
+          throw new Error('Failed to send SMS: ' + (smsError?.message || smsResult?.error || 'Unknown error'));
+        }
+
+        console.log('[TaskDetailDialog] SMS sent successfully:', smsResult);
+      }
+
       // Create activity log for sent message with animation effect
       const { data: newLog, error: logError } = await supabase
         .from("activity_logs")

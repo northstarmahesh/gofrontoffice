@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.test-ai-response]
 verify_jwt = true
+
+[functions.send-sms]
+verify_jwt = true
