@@ -627,6 +627,11 @@ export type Database = {
           assistant_voice: string | null
           clinic_type: string | null
           created_at: string | null
+          elevenlabs_agent_id: string | null
+          elevenlabs_sip_uri: string | null
+          elevenlabs_voice_1_id: string | null
+          elevenlabs_voice_2_id: string | null
+          elevenlabs_voice_3_id: string | null
           email: string | null
           id: string
           is_demo_account: boolean | null
@@ -634,6 +639,7 @@ export type Database = {
           name: string
           phone: string | null
           prepared_by_admin_id: string | null
+          selected_elevenlabs_voice_id: string | null
           slug: string
           status: string | null
           timezone: string | null
@@ -647,6 +653,11 @@ export type Database = {
           assistant_voice?: string | null
           clinic_type?: string | null
           created_at?: string | null
+          elevenlabs_agent_id?: string | null
+          elevenlabs_sip_uri?: string | null
+          elevenlabs_voice_1_id?: string | null
+          elevenlabs_voice_2_id?: string | null
+          elevenlabs_voice_3_id?: string | null
           email?: string | null
           id?: string
           is_demo_account?: boolean | null
@@ -654,6 +665,7 @@ export type Database = {
           name: string
           phone?: string | null
           prepared_by_admin_id?: string | null
+          selected_elevenlabs_voice_id?: string | null
           slug: string
           status?: string | null
           timezone?: string | null
@@ -667,6 +679,11 @@ export type Database = {
           assistant_voice?: string | null
           clinic_type?: string | null
           created_at?: string | null
+          elevenlabs_agent_id?: string | null
+          elevenlabs_sip_uri?: string | null
+          elevenlabs_voice_1_id?: string | null
+          elevenlabs_voice_2_id?: string | null
+          elevenlabs_voice_3_id?: string | null
           email?: string | null
           id?: string
           is_demo_account?: boolean | null
@@ -674,6 +691,7 @@ export type Database = {
           name?: string
           phone?: string | null
           prepared_by_admin_id?: string | null
+          selected_elevenlabs_voice_id?: string | null
           slug?: string
           status?: string | null
           timezone?: string | null
