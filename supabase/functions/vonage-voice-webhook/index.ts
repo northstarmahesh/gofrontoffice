@@ -121,16 +121,18 @@ serve(async (req) => {
 
     console.log('Phone mode:', phoneMode, 'Auto-pilot:', autoPilotEnabled);
 
-    // Check business hours
+    // Check business hours - Convert UTC to Sweden timezone
+    const nowUTC = new Date();
+    const nowSweden = new Date(nowUTC.toLocaleString('en-US', { timeZone: 'Europe/Stockholm' }));
+    const swedenDayOfWeek = nowSweden.getDay();
+    const currentTime = `${nowSweden.getHours().toString().padStart(2, '0')}:${nowSweden.getMinutes().toString().padStart(2, '0')}:00`;
+
     const { data: schedule } = await supabase
       .from('assistant_schedules')
       .select('is_available, start_time, end_time')
       .eq('location_id', phoneData.location_id)
-      .eq('day_of_week', new Date().getDay())
+      .eq('day_of_week', swedenDayOfWeek)
       .maybeSingle();
-
-    const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:00`;
     
     // Check if outside business hours
     let isOutsideBusinessHours = !schedule?.is_available;
@@ -146,8 +148,10 @@ serve(async (req) => {
     }
 
     console.log('Schedule check:', { 
-      day: new Date().getDay(), 
-      currentTime, 
+      dayUTC: nowUTC.getDay(),
+      daySweden: swedenDayOfWeek, 
+      currentTimeSweden: currentTime,
+      timeUTC: `${nowUTC.getHours().toString().padStart(2, '0')}:${nowUTC.getMinutes().toString().padStart(2, '0')}`,
       isAvailable: schedule?.is_available,
       startTime: schedule?.start_time,
       endTime: schedule?.end_time,
