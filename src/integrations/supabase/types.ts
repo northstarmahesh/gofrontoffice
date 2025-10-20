@@ -906,6 +906,50 @@ export type Database = {
           },
         ]
       }
+      elevenlabs_call_logs: {
+        Row: {
+          call_direction: string | null
+          clinic_id: string
+          conversation_id: string
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          metadata: Json | null
+          transcript: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          call_direction?: string | null
+          clinic_id: string
+          conversation_id: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json | null
+          transcript?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          call_direction?: string | null
+          clinic_id?: string
+          conversation_id?: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json | null
+          transcript?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevenlabs_call_logs_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_verifications: {
         Row: {
           code: string
