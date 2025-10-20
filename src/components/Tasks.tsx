@@ -254,7 +254,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch pending tasks with related inbound log basics
+      // Fetch active tasks (new and pending) with related inbound log basics
       const { data: tasks, error } = await supabase
         .from('tasks')
         .select(`
@@ -267,7 +267,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             created_at
           )
         `)
-        .eq('status', 'pending')
+        .in('status', ['new', 'pending'])
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -348,6 +348,65 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
   const handleTaskComplete = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleStatusChange = async (taskId: string, newStatus: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Update task status
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update({ 
+          status: newStatus,
+          completed_at: newStatus === 'resolved' ? new Date().toISOString() : null
+        })
+        .eq('id', taskId);
+
+      if (updateError) throw updateError;
+
+      // If resolved, create activity log entry
+      if (newStatus === 'resolved') {
+        const task = humanTasks.find(t => t.id === taskId);
+        if (task) {
+          const { data: clinicData } = await supabase
+            .from("clinic_users")
+            .select("clinic_id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (clinicData?.clinic_id) {
+            await supabase
+              .from('activity_logs')
+              .insert({
+                user_id: user.id,
+                clinic_id: clinicData.clinic_id,
+                type: task.source || 'task',
+                title: `✅ Resolved: ${task.title}`,
+                summary: task.draftMessage || task.description,
+                contact_name: task.contact_name,
+                contact_info: task.contact_info,
+                status: 'completed',
+                direction: 'outbound'
+              });
+          }
+        }
+
+        toast.success("Task resolved and moved to Activity");
+      } else {
+        toast.success(`Task marked as ${newStatus}`);
+      }
+
+      // Refresh tasks
+      await loadTasks();
+      await loadActivityLogs();
+    } catch (error) {
+      console.error("Error changing task status:", error);
+      toast.error("Failed to change task status");
+    }
   };
 
   const handleQuickSend = async (task: any, e: React.MouseEvent) => {
@@ -716,6 +775,19 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     toast.success("Print dialog opened for PDF export");
   };
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'new':
+        return 'bg-blue-500/10 text-blue-600 border-blue-500/30';
+      case 'pending':
+        return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30';
+      case 'resolved':
+        return 'bg-green-500/10 text-green-600 border-green-500/30';
+      default:
+        return 'bg-muted text-muted-foreground border-muted';
+    }
+  };
+
   const getTaskTypeLabel = (task: any) => {
     if (task.callSummary) {
       return { label: "AI Call Summary", color: "bg-green-500/10 text-green-600 border-green-500/30" };
@@ -796,12 +868,17 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         )}
       >
         <div className={cn("space-y-3", !compactView && "space-y-4")}>
-          {/* Header: Type badge and Channel */}
+          {/* Header: Type badge, Status and Channel */}
           <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge className={cn("px-3 py-1 border", taskType.color, compactView ? "text-xs" : "text-sm")}>
                 {taskType.label}
               </Badge>
+              {!isAssistant && task.status && (
+                <Badge className={cn("px-3 py-1 border", getStatusVariant(task.status), compactView ? "text-xs" : "text-sm")}>
+                  {task.status === 'new' ? '⭕ New' : task.status === 'pending' ? '🔄 Pending' : '✅ Resolved'}
+                </Badge>
+              )}
               <Badge className={`flex items-center gap-1.5 border ${getChannelColor(task.source)}`}>
                 <ChannelIcon className="h-3.5 w-3.5" />
                 <span className="text-xs font-medium">{getChannelDisplay(task.source)}</span>
@@ -981,7 +1058,27 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           </div>
 
           {/* Footer: Actions only (time moved to message panes) */}
-          <div className="flex items-center justify-end pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+            {!isAssistant && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-sm flex items-center gap-1.5">
+                    Change Status <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="z-50 bg-background">
+                  <DropdownMenuItem onClick={(e) => handleStatusChange(task.id, 'new', e)}>
+                    ⭕ Mark as New
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => handleStatusChange(task.id, 'pending', e)}>
+                    🔄 Mark as Pending
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => handleStatusChange(task.id, 'resolved', e)}>
+                    ✅ Mark as Resolved
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <div className="flex items-center gap-2">
               {hasDraft ? (
                 <>

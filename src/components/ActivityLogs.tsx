@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Phone, MessageSquare, Clock, Search, Instagram, Mail, User } from "lucide-react";
+import { Phone, MessageSquare, Clock, Search, Instagram, Mail, User, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -368,26 +368,42 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
                         {/* Content */}
                         <div className="flex-1 space-y-1.5">
                           <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
+                            <div className="flex-1 flex items-center gap-2">
                               {/* Show contact name first if it's a contact activity */}
                               {isContact && log.contact_name ? (
                                 <>
-                                  <h4 className="text-base font-bold text-foreground">
-                                    {log.contact_name}
-                                  </h4>
-                                  <p className="text-sm text-foreground mt-0.5">
-                                    {log.title}
-                                  </p>
-                                </>
-                              ) : (
-                                <h4 className="text-sm font-semibold text-foreground">
-                                  {log.title}
-                                  {!isContact && (
-                                    <Badge variant="outline" className="ml-2 text-xs bg-muted">
-                                      Internal
+                                  <div>
+                                    <h4 className="text-base font-bold text-foreground">
+                                      {log.contact_name}
+                                    </h4>
+                                    <p className="text-sm text-foreground mt-0.5">
+                                      {log.title}
+                                    </p>
+                                  </div>
+                                  {log.title?.startsWith('✅ Resolved:') && (
+                                    <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-xs flex items-center gap-1">
+                                      <CheckCircle className="h-3 w-3" />
+                                      Task Resolved
                                     </Badge>
                                   )}
-                                </h4>
+                                </>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-sm font-semibold text-foreground">
+                                    {log.title}
+                                    {!isContact && (
+                                      <Badge variant="outline" className="ml-2 text-xs bg-muted">
+                                        Internal
+                                      </Badge>
+                                    )}
+                                  </h4>
+                                  {log.title?.startsWith('✅ Resolved:') && (
+                                    <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-xs flex items-center gap-1">
+                                      <CheckCircle className="h-3 w-3" />
+                                      Task Resolved
+                                    </Badge>
+                                  )}
+                                </div>
                               )}
                             </div>
                             <Badge
