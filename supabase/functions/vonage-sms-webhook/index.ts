@@ -77,8 +77,8 @@ serve(async (req) => {
     const phoneMode = settings?.phone_mode || 'on';
     const autoPilotEnabled = settings?.auto_pilot_enabled ?? true;
 
-    // Log incoming message
-    await supabase
+    // Log incoming message and get the ID
+    const { data: activityLog, error: logError } = await supabase
       .from('activity_logs')
       .insert({
         clinic_id: phoneData.clinic_id,
@@ -89,7 +89,14 @@ serve(async (req) => {
         contact_name: normalizedFrom,
         contact_info: normalizedFrom,
         direction: 'inbound',
-      });
+        user_id: phoneData.clinic_id, // Will be updated with actual user
+      })
+      .select()
+      .single();
+
+    if (logError) {
+      console.error('Error creating activity log:', logError);
+    }
 
     if (phoneMode === 'off') {
       console.log('Phone mode is off, not responding');
@@ -162,15 +169,30 @@ serve(async (req) => {
         });
     } else {
       // Co-pilot mode: save as draft
-      await supabase
-        .from('draft_replies')
-        .insert({
-          log_id: messageId,
-          clinic_id: phoneData.clinic_id,
-          user_id: phoneData.clinic_id,
-          draft_content: responseText,
-          status: 'pending',
-        });
+      if (activityLog?.id) {
+        // Get the first user from the clinic to assign the draft
+        const { data: clinicUser } = await supabase
+          .from('clinic_users')
+          .select('user_id')
+          .eq('clinic_id', phoneData.clinic_id)
+          .limit(1)
+          .maybeSingle();
+
+        if (clinicUser?.user_id) {
+          await supabase
+            .from('draft_replies')
+            .insert({
+              log_id: activityLog.id,
+              clinic_id: phoneData.clinic_id,
+              user_id: clinicUser.user_id,
+              draft_content: responseText,
+              status: 'pending',
+            });
+          console.log('Draft saved successfully for log:', activityLog.id);
+        } else {
+          console.error('No user found for clinic:', phoneData.clinic_id);
+        }
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
