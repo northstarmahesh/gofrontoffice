@@ -18,7 +18,7 @@ serve(async (req) => {
     let from = url.searchParams.get('from') || '';
     let to = url.searchParams.get('to') || '';
     let conversation_uuid = url.searchParams.get('conversation_uuid') || '';
-    
+
     // If params not in URL, try body (POST)
     if (!from || !to) {
       try {
@@ -39,30 +39,27 @@ serve(async (req) => {
         console.error('Body parse error:', e);
       }
     }
-    
-    console.log('Incoming call:', { method: req.method, from, to, conversation_uuid });
+
+    console.log('Incoming call - forwarding to Eleven Labs:', { from, to, conversation_uuid });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Normalize phone numbers using shared utility
+    // Normalize phone numbers
     const normalizedTo = normalizePhoneNumber(to);
     const normalizedFrom = normalizePhoneNumber(from);
 
     if (!normalizedTo || !normalizedFrom) {
-      console.error('Missing phone numbers:', { from, to, normalizedFrom, normalizedTo });
+      console.error('Missing phone numbers:', { from, to });
       return new Response(
-        JSON.stringify([
-          {
-            action: 'talk',
-            text: 'Unable to process call. Missing phone number information.',
-          }
-        ]),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
+        JSON.stringify([{
+          action: 'talk',
+          text: 'Unable to process call.',
+          voiceName: 'Astrid',
+          language: 'sv-SE',
+        }]),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -76,228 +73,103 @@ serve(async (req) => {
     if (phoneError || !phoneData) {
       console.error('Phone number not found:', phoneError);
       return new Response(
-        JSON.stringify([
-          {
-            action: 'talk',
-            text: 'Sorry, this number is not configured.',
-          }
-        ]),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
+        JSON.stringify([{
+          action: 'talk',
+          text: 'Förlåt, det här numret är inte konfigurerat.',
+          voiceName: 'Astrid',
+          language: 'sv-SE',
+        }]),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    // Determine a user_id to attribute logs (clinic owner/admin)
-    let logUserId: string | null = null;
-    const { data: adminCU } = await supabase
+
+    // Get clinic details and Eleven Labs SIP URI
+    const { data: clinic, error: clinicError } = await supabase
+      .from('clinics')
+      .select('id, name, elevenlabs_sip_uri')
+      .eq('id', phoneData.clinic_id)
+      .maybeSingle();
+
+    if (clinicError || !clinic) {
+      console.error('Clinic not found:', clinicError);
+      return new Response(
+        JSON.stringify([{
+          action: 'talk',
+          text: 'Förlåt, systemet är inte konfigurerat.',
+          voiceName: 'Astrid',
+          language: 'sv-SE',
+        }]),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!clinic.elevenlabs_sip_uri) {
+      console.error('Clinic has no Eleven Labs SIP URI configured');
+      return new Response(
+        JSON.stringify([{
+          action: 'talk',
+          text: 'Förlåt, AI-assistenten är inte aktiverad ännu.',
+          voiceName: 'Astrid',
+          language: 'sv-SE',
+        }]),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get a user_id for logging (clinic owner/admin)
+    const { data: clinicUser } = await supabase
       .from('clinic_users')
-      .select('user_id, role')
+      .select('user_id')
       .eq('clinic_id', phoneData.clinic_id)
-      .in('role', ['owner','admin'])
-      .order('created_at', { ascending: true })
       .limit(1)
       .maybeSingle();
-    logUserId = adminCU?.user_id || null;
-    if (!logUserId) {
-      const { data: anyCU } = await supabase
-        .from('clinic_users')
-        .select('user_id')
-        .eq('clinic_id', phoneData.clinic_id)
-        .limit(1)
-        .maybeSingle();
-      logUserId = anyCU?.user_id || null;
-    }
 
-    // Get settings
-    const { data: settings } = await supabase
-      .from('assistant_settings')
-      .select('phone_mode, auto_pilot_enabled')
-      .eq('location_id', phoneData.location_id)
-      .maybeSingle();
+    const logUserId = clinicUser?.user_id || null;
 
-    const phoneMode = settings?.phone_mode || 'on';
-    const autoPilotEnabled = settings?.auto_pilot_enabled ?? true;
-
-    console.log('Phone mode:', phoneMode, 'Auto-pilot:', autoPilotEnabled);
-
-    // Check business hours - Convert UTC to Sweden timezone
-    const nowUTC = new Date();
-    const nowSweden = new Date(nowUTC.toLocaleString('en-US', { timeZone: 'Europe/Stockholm' }));
-    const swedenDayOfWeek = nowSweden.getDay();
-    const currentTime = `${nowSweden.getHours().toString().padStart(2, '0')}:${nowSweden.getMinutes().toString().padStart(2, '0')}:00`;
-
-    const { data: schedule } = await supabase
-      .from('assistant_schedules')
-      .select('is_available, start_time, end_time')
-      .eq('location_id', phoneData.location_id)
-      .eq('day_of_week', swedenDayOfWeek)
-      .maybeSingle();
-    
-    // Check if outside business hours
-    let isOutsideBusinessHours = !schedule?.is_available;
-    
-    if (schedule?.is_available && schedule.start_time && schedule.end_time) {
-      // Handle case where end_time might be less than start_time (misconfiguration)
-      if (schedule.end_time < schedule.start_time) {
-        console.warn('Invalid schedule: end_time < start_time', schedule);
-        isOutsideBusinessHours = true; // Treat as closed
-      } else {
-        isOutsideBusinessHours = currentTime < schedule.start_time || currentTime > schedule.end_time;
-      }
-    }
-
-    console.log('Schedule check:', { 
-      dayUTC: nowUTC.getDay(),
-      daySweden: swedenDayOfWeek, 
-      currentTimeSweden: currentTime,
-      timeUTC: `${nowUTC.getHours().toString().padStart(2, '0')}:${nowUTC.getMinutes().toString().padStart(2, '0')}`,
-      isAvailable: schedule?.is_available,
-      startTime: schedule?.start_time,
-      endTime: schedule?.end_time,
-      isOutsideBusinessHours 
-    });
-
-    // If outside business hours or phone is off, leave voicemail
-    if (isOutsideBusinessHours || phoneMode === 'off') {
-      // Get clinic info for voicemail message
-      const { data: clinic } = await supabase
-        .from('clinics')
-        .select('name')
-        .eq('id', phoneData.clinic_id)
-        .single();
-
-      // Log the voicemail attempt
-      await supabase
-        .from('activity_logs')
-        .insert({
-          clinic_id: phoneData.clinic_id,
-          user_id: logUserId,
-          type: 'call',
-          title: `Voicemail from ${normalizedFrom}`,
-          summary: `Call received outside business hours - UUID: ${conversation_uuid}`,
-          status: 'pending',
-          contact_name: normalizedFrom,
-          contact_info: normalizedFrom,
-          direction: 'inbound',
-        });
-
-      const voicemailMessage = isOutsideBusinessHours 
-        ? 'Tack för att du ringer ' + (clinic?.name || 'oss') + '. Vi har stängt just nu. Våra öppettider är måndag till fredag, 9 till 17. Vänligen lämna ett meddelande efter tonen, så återkommer vi så snart som möjligt.'
-        : 'Tack för att du ringer ' + (clinic?.name || 'oss') + '. Vänligen lämna ett meddelande efter tonen.';
-
-      return new Response(
-        JSON.stringify([
-          {
-            action: 'talk',
-            text: voicemailMessage,
-            voiceName: 'Astrid',
-            language: 'sv-SE',
-          },
-          {
-            action: 'record',
-            eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-recording'],
-            endOnSilence: 3,
-            endOnKey: '#',
-            beepStart: true
-          }
-        ]),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      );
-    }
-
-    // Get clinic info
-    const { data: clinic } = await supabase
-      .from('clinics')
-      .select('name, phone, email, address, assistant_voice')
-      .eq('id', phoneData.clinic_id)
-      .single();
-
-    // Log the incoming call
+    // Log call attempt to activity_logs
     await supabase
       .from('activity_logs')
       .insert({
         clinic_id: phoneData.clinic_id,
         user_id: logUserId,
+        location_id: phoneData.location_id,
         type: 'call',
-        title: `Incoming Call from ${normalizedFrom}`,
-        summary: `Call received - UUID: ${conversation_uuid}`,
+        title: `Incoming Call - ${conversation_uuid.slice(0, 8)}`,
+        summary: `Call from ${normalizedFrom} forwarded to Eleven Labs AI`,
         status: 'pending',
         contact_name: normalizedFrom,
         contact_info: normalizedFrom,
         direction: 'inbound',
       });
 
-    // Return NCCO to handle the call with AI, consent announcement, and recording
-    const ncco = [
-      {
-        action: 'talk',
-        text: 'Detta samtal spelas in för kvalitet och utbildningsändamål.',
-        voiceName: 'Astrid',
-        language: 'sv-SE',
-        premium: true,
-      },
-      {
-        action: 'record',
-        eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording`],
-        eventMethod: 'POST',
-        format: 'mp3',
-        split: 'conversation',
-        channels: 2,
-        endOnSilence: 3,
-        endOnKey: '#',
-        timeOut: 7200,
-        beepStart: false,
-      },
-      {
-        action: 'talk',
-        text: 'Hej! Tack för att du ringer ' + (clinic?.name || 'vår klinik') + '. Vad kan jag hjälpa dig med?',
-        voiceName: 'Astrid',
-        language: 'sv-SE',
-        premium: true,
-        bargeIn: true,
-      },
-      {
-        action: 'input',
-        eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-input'],
-        eventMethod: 'POST',
-        type: ['speech'],
-        speech: {
-          context: ['kundservice', 'klinik', 'bokning', 'tidsbeställning'],
-          endOnSilence: 2,
-          maxDuration: 15,
-          language: 'sv-SE',
-        },
-      }
-    ];
+    // Return SIP connect NCCO to forward to Eleven Labs
+    console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
 
-    console.log('Returning NCCO for call:', conversation_uuid);
-
-    return new Response(JSON.stringify(ncco), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200
-    });
+    return new Response(
+      JSON.stringify([
+        {
+          action: "connect",
+          endpoint: [{
+            type: "sip",
+            uri: clinic.elevenlabs_sip_uri
+          }]
+        }
+      ]),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error: any) {
     console.error('Error in voice webhook:', error);
     console.error('Error stack:', error.stack);
-    console.error('Error details:', JSON.stringify(error, null, 2));
+    
     return new Response(
-      JSON.stringify([
-        {
-          action: 'talk',
-          text: 'Förlåt, det uppstod ett fel. Vänligen försök igen senare.',
-          voiceName: 'Astrid',
-          language: 'sv-SE',
-        }
-      ]),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
+      JSON.stringify([{
+        action: 'talk',
+        text: 'Förlåt, det uppstod ett tekniskt fel.',
+        voiceName: 'Astrid',
+        language: 'sv-SE',
+      }]),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
