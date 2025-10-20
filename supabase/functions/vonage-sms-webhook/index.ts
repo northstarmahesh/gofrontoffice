@@ -167,9 +167,10 @@ serve(async (req) => {
         body: JSON.stringify({
           api_key: vonageApiKey,
           api_secret: vonageApiSecret,
-          to: normalizedFrom,
-          from: normalizedTo,
+          to: normalizedFrom.replace(/\+/g, ''), // Remove + from phone number for Vonage
+          from: normalizedTo.replace(/\+/g, ''), // Remove + from phone number for Vonage
           text: responseText,
+          type: 'unicode', // Support all characters including Swedish
         }),
       });
 
