@@ -402,7 +402,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
 
       // Refresh tasks
       await loadTasks();
-      await loadActivityLogs();
     } catch (error) {
       console.error("Error changing task status:", error);
       toast.error("Failed to change task status");
