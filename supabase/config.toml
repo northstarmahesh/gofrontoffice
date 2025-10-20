@@ -65,3 +65,12 @@ verify_jwt = false
 
 [functions.test-ai-response]
 verify_jwt = true
+
+[functions.send-sms]
+verify_jwt = true
+
+[functions.process-recording-transcription]
+verify_jwt = false
+
+[functions.vonage-recording-proxy]
+verify_jwt = false

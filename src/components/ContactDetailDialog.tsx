@@ -112,18 +112,70 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
           notes: data.notes || ""
         });
       }
+    } else if (contactInfo) {
+      // Try to find existing contact by phone number
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicData?.clinic_id) return;
+
+      const { data: existingContact, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("clinic_id", clinicData.clinic_id)
+        .eq("phone", contactInfo)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error searching for contact:", error);
+      }
+
+      if (existingContact) {
+        // Found existing contact - load it
+        setContact(existingContact);
+        setEditForm({
+          name: existingContact.name,
+          phone: existingContact.phone,
+          email: existingContact.email || "",
+          notes: existingContact.notes || ""
+        });
+      } else {
+        // No existing contact - pre-fill only phone number
+        setEditForm({
+          name: "",
+          phone: contactInfo || "",
+          email: "",
+          notes: ""
+        });
+      }
     }
   };
 
   const loadContactHistory = async () => {
-    if (!contactName) return;
+    if (!contactName && !contactInfo) return;
     
     setLoading(true);
     try {
-      const { data: historyData, error: historyError } = await supabase
+      // Search by both contact name and phone number to get all conversations
+      let query = supabase
         .from("activity_logs")
-        .select("*")
-        .eq("contact_name", contactName)
+        .select("*");
+      
+      if (contactInfo) {
+        // If we have phone/contact info, search by that (most reliable)
+        query = query.eq("contact_info", contactInfo);
+      } else if (contactName) {
+        // Fallback to name if no contact info
+        query = query.eq("contact_name", contactName);
+      }
+      
+      const { data: historyData, error: historyError } = await query
         .order("created_at", { ascending: true });
 
       if (historyError) throw historyError;
@@ -297,7 +349,12 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !contactName || selectedChannels.length === 0) return;
+    if (!message.trim() || !contactName || selectedChannels.length === 0) {
+      console.log("Send blocked:", { message: message.trim(), contactName, selectedChannels });
+      if (!message.trim()) toast.error("Please enter a message");
+      if (selectedChannels.length === 0) toast.error("Please select at least one channel");
+      return;
+    }
 
     setIsSending(true);
     try {
@@ -318,27 +375,71 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         return;
       }
 
+      const phoneToUse = contactInfo || contact?.phone;
+      console.log("Sending message to:", { contactName, phoneToUse, channels: selectedChannels });
+
+      // Get clinic phone number for SMS sending
+      const { data: phoneData } = await supabase
+        .from("clinic_phone_numbers")
+        .select("phone_number")
+        .eq("clinic_id", clinicData.clinic_id)
+        .eq("is_verified", true)
+        .eq("is_active", true)
+        .maybeSingle();
+
       // Send message to all selected channels
-      const insertPromises = selectedChannels.map(channel =>
-        supabase
+      const sendPromises = selectedChannels.map(async (channel) => {
+        let status = 'pending';
+        let sendError = null;
+
+        // For SMS, actually send via backend function
+        if (channel === 'sms') {
+          if (!phoneData?.phone_number) {
+            toast.error("No verified clinic phone number configured for SMS");
+            throw new Error("No verified phone number");
+          }
+
+          const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
+            body: {
+              to: phoneToUse,
+              message: message,
+              from: phoneData.phone_number
+            }
+          });
+
+          if (smsError || !smsResult?.success) {
+            sendError = smsResult?.error || smsError?.message || "Failed to send SMS";
+            console.error("SMS send error:", sendError);
+            toast.error(`Failed to send SMS: ${sendError}`);
+            return { error: sendError };
+          }
+
+          // Mark as completed since we actually sent it
+          status = 'completed';
+        }
+        // For other channels, keep pending status (handled by their webhooks/functions)
+
+        // Log the message
+        return supabase
           .from("activity_logs")
           .insert({
             user_id: user.id,
             clinic_id: clinicData.clinic_id,
             type: channel,
-            title: `${channel.toUpperCase()} message`,
+            title: `${channel.toUpperCase()} to ${contactName}`,
             summary: message,
             contact_name: contactName,
-            contact_info: contactInfo || contact?.phone,
-            status: 'pending',
+            contact_info: phoneToUse,
+            status: status,
             direction: 'outbound'
-          })
-      );
+          });
+      });
 
-      const results = await Promise.all(insertPromises);
+      const results = await Promise.all(sendPromises);
       const errors = results.filter(r => r.error);
       
       if (errors.length > 0) {
+        console.error("Send errors:", errors);
         throw new Error("Failed to send to some channels");
       }
 
@@ -373,16 +474,22 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Invalid date";
       
-      const now = new Date();
-      const isToday = date.toDateString() === now.toDateString();
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const isYesterday = date.toDateString() === yesterday.toDateString();
+      const timezone = 'Europe/Stockholm';
       
-      const timeStr = date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
+      // Convert to Sweden timezone
+      const nowSweden = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+      const dateSweden = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+      
+      const isToday = dateSweden.toDateString() === nowSweden.toDateString();
+      const yesterday = new Date(nowSweden);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const isYesterday = dateSweden.toDateString() === yesterday.toDateString();
+      
+      const timeStr = date.toLocaleTimeString('sv-SE', {
+        timeZone: timezone, 
+        hour: '2-digit', 
         minute: '2-digit',
-        hour12: true 
+        hour12: false 
       });
       
       if (isToday) {
@@ -390,10 +497,11 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       } else if (isYesterday) {
         return `Yesterday at ${timeStr}`;
       } else {
-        return date.toLocaleDateString('en-US', { 
+        return date.toLocaleDateString('sv-SE', {
+          timeZone: timezone, 
           month: 'short', 
           day: 'numeric',
-          year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+          year: dateSweden.getFullYear() !== nowSweden.getFullYear() ? 'numeric' : undefined
         }) + ` at ${timeStr}`;
       }
     } catch {
@@ -456,19 +564,54 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
             <div className="flex items-center justify-between">
               <DialogTitle className="text-2xl flex items-center gap-2">
                 <User className="h-5 w-5" />
-                {isEditing ? "Edit Contact" : (contact?.name || contactName || "Unknown")}
+                {isEditing ? "Edit Contact" : (contact?.name || "New Contact")}
               </DialogTitle>
-              {!isEditing && onViewFullProfile && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={onViewFullProfile}
-                  className="flex items-center gap-2"
-                >
-                  <User className="h-4 w-4" />
-                  View Full Contact
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {isEditing ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsEditing(false)}
+                      className="flex items-center gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={handleSaveContact}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      Save
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    {onViewFullProfile && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={onViewFullProfile}
+                        className="flex items-center gap-2"
+                      >
+                        <User className="h-4 w-4" />
+                        View Full Contact
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
             {!isEditing && contactInfo && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -550,6 +693,81 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                   </Card>
                 )}
 
+                {/* Messaging Section - Moved to top */}
+                <Card className="border-2">
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-semibold">Send Message</Label>
+                      </div>
+                      <div className="flex gap-1 flex-wrap">
+                        {availableChannels.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">Loading channels...</p>
+                        ) : (
+                          availableChannels.map((ch) => {
+                            const isAvailable = ch.isConnected && ch.hasUsed;
+                            const isSelected = selectedChannels.includes(ch.channel);
+                            
+                            const getChannelIcon = () => {
+                              switch (ch.channel) {
+                                case 'sms': return <MessageSquare className="h-4 w-4" />;
+                                case 'whatsapp': return <span className="text-xs">WhatsApp</span>;
+                                case 'instagram': return <Instagram className="h-4 w-4" />;
+                                case 'messenger': return <Facebook className="h-4 w-4" />;
+                                case 'email': return <Mail className="h-4 w-4" />;
+                              }
+                            };
+
+                            const getTooltip = () => {
+                              if (!ch.isConnected) return `${ch.channel.toUpperCase()} not connected to your business`;
+                              if (!ch.hasUsed) return `Contact hasn't used ${ch.channel.toUpperCase()} yet`;
+                              return '';
+                            };
+
+                            return (
+                              <div key={ch.channel} className="relative group">
+                                <Button
+                                  type="button"
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  size="sm"
+                                  onClick={() => isAvailable && toggleChannel(ch.channel)}
+                                  disabled={!isAvailable}
+                                  className={!isAvailable ? 'opacity-40 cursor-not-allowed' : ''}
+                                  title={getTooltip()}
+                                >
+                                  {getChannelIcon()}
+                                </Button>
+                                {!isAvailable && (
+                                  <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 border shadow-md pointer-events-none">
+                                    {getTooltip()}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                    <Textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Type your message..."
+                      rows={8}
+                      className="min-h-[160px]"
+                    />
+                    <Button 
+                      onClick={handleSendMessage} 
+                      disabled={!message.trim() || isSending || selectedChannels.length === 0}
+                      className="w-full"
+                    >
+                      {isSending ? "Sending..." : selectedChannels.length === 1 
+                        ? `Send via ${selectedChannels[0].toUpperCase()}` 
+                        : `Send to ${selectedChannels.length} channels`
+                      }
+                    </Button>
+                  </div>
+                </Card>
+
                 {loading ? (
                   <div className="flex justify-center py-8">
                     <p className="text-sm text-muted-foreground">Loading conversation history...</p>
@@ -563,12 +781,12 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                   <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <MessageSquare className="h-4 w-4" />
-                      Complete Conversation History ({activityHistory.length} interactions)
+                      Recent Messages
                     </h3>
                     
-                    {/* Chat-style messages - chronological order */}
+                    {/* Chat-style messages - show last 5 messages in reverse chronological */}
                     <div className="space-y-4">
-                      {activityHistory.map((log) => {
+                      {activityHistory.slice(-5).reverse().map((log) => {
                         const fromAI = isFromAI(log.title, log.type);
                         const phoneCall = isPhoneCall(log.type);
                         const isCallSummary = log.type.toLowerCase() === 'call_summary';
@@ -724,83 +942,6 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                       })}
                     </div>
                   </div>
-                )}
-
-                {/* Messaging Section */}
-                {!isEditing && (
-                  <Card className="border-2 mt-4">
-                    <div className="p-4 space-y-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Label className="text-sm font-semibold">Send Message</Label>
-                        </div>
-                        <div className="flex gap-1 flex-wrap">
-                          {availableChannels.length === 0 ? (
-                            <p className="text-xs text-muted-foreground">Loading channels...</p>
-                          ) : (
-                            availableChannels.map((ch) => {
-                              const isAvailable = ch.isConnected && ch.hasUsed;
-                              const isSelected = selectedChannels.includes(ch.channel);
-                              
-                              const getChannelIcon = () => {
-                                switch (ch.channel) {
-                                  case 'sms': return <MessageSquare className="h-4 w-4" />;
-                                  case 'whatsapp': return <span className="text-xs">WhatsApp</span>;
-                                  case 'instagram': return <Instagram className="h-4 w-4" />;
-                                  case 'messenger': return <Facebook className="h-4 w-4" />;
-                                  case 'email': return <Mail className="h-4 w-4" />;
-                                }
-                              };
-
-                              const getTooltip = () => {
-                                if (!ch.isConnected) return `${ch.channel.toUpperCase()} not connected to your business`;
-                                if (!ch.hasUsed) return `Contact hasn't used ${ch.channel.toUpperCase()} yet`;
-                                return '';
-                              };
-
-                              return (
-                                <div key={ch.channel} className="relative group">
-                                  <Button
-                                    type="button"
-                                    variant={isSelected ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => isAvailable && toggleChannel(ch.channel)}
-                                    disabled={!isAvailable}
-                                    className={!isAvailable ? 'opacity-40 cursor-not-allowed' : ''}
-                                    title={getTooltip()}
-                                  >
-                                    {getChannelIcon()}
-                                  </Button>
-                                  {!isAvailable && (
-                                    <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 border shadow-md pointer-events-none">
-                                      {getTooltip()}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                      <Textarea
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Type your message..."
-                        rows={8}
-                        className="min-h-[160px]"
-                      />
-                      <Button 
-                        onClick={handleSendMessage} 
-                        disabled={!message.trim() || isSending || selectedChannels.length === 0}
-                        className="w-full"
-                      >
-                        {isSending ? "Sending..." : selectedChannels.length === 1 
-                          ? `Send via ${selectedChannels[0].toUpperCase()}` 
-                          : `Send to ${selectedChannels.length} channels`
-                        }
-                      </Button>
-                    </div>
-                  </Card>
                 )}
               </>
             )}

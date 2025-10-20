@@ -121,16 +121,18 @@ serve(async (req) => {
 
     console.log('Phone mode:', phoneMode, 'Auto-pilot:', autoPilotEnabled);
 
-    // Check business hours
+    // Check business hours - Convert UTC to Sweden timezone
+    const nowUTC = new Date();
+    const nowSweden = new Date(nowUTC.toLocaleString('en-US', { timeZone: 'Europe/Stockholm' }));
+    const swedenDayOfWeek = nowSweden.getDay();
+    const currentTime = `${nowSweden.getHours().toString().padStart(2, '0')}:${nowSweden.getMinutes().toString().padStart(2, '0')}:00`;
+
     const { data: schedule } = await supabase
       .from('assistant_schedules')
       .select('is_available, start_time, end_time')
       .eq('location_id', phoneData.location_id)
-      .eq('day_of_week', new Date().getDay())
+      .eq('day_of_week', swedenDayOfWeek)
       .maybeSingle();
-
-    const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:00`;
     
     // Check if outside business hours
     let isOutsideBusinessHours = !schedule?.is_available;
@@ -146,8 +148,10 @@ serve(async (req) => {
     }
 
     console.log('Schedule check:', { 
-      day: new Date().getDay(), 
-      currentTime, 
+      dayUTC: nowUTC.getDay(),
+      daySweden: swedenDayOfWeek, 
+      currentTimeSweden: currentTime,
+      timeUTC: `${nowUTC.getHours().toString().padStart(2, '0')}:${nowUTC.getMinutes().toString().padStart(2, '0')}`,
       isAvailable: schedule?.is_available,
       startTime: schedule?.start_time,
       endTime: schedule?.end_time,
@@ -192,7 +196,7 @@ serve(async (req) => {
           },
           {
             action: 'record',
-            eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-recording?conversation_uuid=' + conversation_uuid + '&clinic_id=' + phoneData.clinic_id + '&from=' + normalizedFrom],
+            eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-recording'],
             endOnSilence: 3,
             endOnKey: '#',
             beepStart: true
@@ -234,31 +238,37 @@ serve(async (req) => {
         text: 'Detta samtal spelas in för kvalitet och utbildningsändamål.',
         voiceName: 'Astrid',
         language: 'sv-SE',
+        premium: true,
       },
       {
         action: 'record',
-        eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording?conversation_uuid=${conversation_uuid}&clinic_id=${phoneData.clinic_id}`],
+        eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-recording`],
+        eventMethod: 'POST',
         format: 'mp3',
         split: 'conversation',
-        channels: 1,
+        channels: 2,
         endOnSilence: 3,
         endOnKey: '#',
-        timeOut: 7200, // 2 hours max
+        timeOut: 7200,
+        beepStart: false,
       },
       {
         action: 'talk',
         text: 'Hej! Tack för att du ringer ' + (clinic?.name || 'vår klinik') + '. Vad kan jag hjälpa dig med?',
         voiceName: 'Astrid',
         language: 'sv-SE',
+        premium: true,
+        bargeIn: true,
       },
       {
         action: 'input',
         eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-input'],
+        eventMethod: 'POST',
         type: ['speech'],
         speech: {
           context: ['kundservice', 'klinik', 'bokning', 'tidsbeställning'],
-          endOnSilence: 3,
-          maxDuration: 30,
+          endOnSilence: 2,
+          maxDuration: 15,
           language: 'sv-SE',
         },
       }

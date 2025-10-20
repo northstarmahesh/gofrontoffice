@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Phone, MessageSquare, Clock, Search, Instagram, Mail, User } from "lucide-react";
+import { Phone, MessageSquare, Clock, Search, Instagram, Mail, User, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,30 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
 
   useEffect(() => {
     loadActivityLogs(true);
+
+    // Subscribe to realtime updates for activity logs
+    const channel = supabase
+      .channel('activity_logs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'activity_logs'
+        },
+        (payload) => {
+          console.log('Activity log updated:', payload);
+          // Reload logs when transcription is added
+          if (payload.new.summary !== payload.old.summary) {
+            loadActivityLogs(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -111,11 +135,30 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
           ])
         ).values()
       );
+
+      // Look up saved contact names for all logs
+      const logsWithContactNames = await Promise.all(
+        uniqueLogs.map(async (log) => {
+          if (log.contact_info) {
+            const { data: savedContact } = await supabase
+              .from('contacts')
+              .select('name')
+              .eq('clinic_id', clinicData.clinic_id)
+              .eq('phone', log.contact_info)
+              .maybeSingle();
+            
+            if (savedContact?.name) {
+              return { ...log, contact_name: savedContact.name };
+            }
+          }
+          return log;
+        })
+      );
       
       if (reset) {
-        setLogs(uniqueLogs);
+        setLogs(logsWithContactNames);
       } else {
-        setLogs(prev => [...prev, ...uniqueLogs]);
+        setLogs(prev => [...prev, ...logsWithContactNames]);
       }
 
       setHasMore((count ?? 0) > (currentPage + 1) * PAGE_SIZE);
@@ -154,9 +197,9 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         }
       }
 
-      // If status is pending, use the summary as the draft message
+      // If status is pending AND it's an outbound message, use the summary as the draft message
       // (the AI draft is stored in the summary field of pending outbound messages)
-      if (log.status === "pending" && log.summary) {
+      if (log.status === "pending" && log.summary && log.direction === "outbound") {
         draftMessage = log.summary;
         console.log("Found draft in activity log summary:", draftMessage);
       }
@@ -195,16 +238,22 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday = date.toDateString() === yesterday.toDateString();
+    const timezone = 'Europe/Stockholm';
     
-    const timeStr = date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
+    // Convert to Sweden timezone
+    const nowSweden = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+    const dateSweden = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+    
+    const isToday = dateSweden.toDateString() === nowSweden.toDateString();
+    const yesterday = new Date(nowSweden);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = dateSweden.toDateString() === yesterday.toDateString();
+    
+    const timeStr = date.toLocaleTimeString('sv-SE', { 
+      timeZone: timezone,
+      hour: '2-digit', 
       minute: '2-digit',
-      hour12: true 
+      hour12: false 
     });
     
     if (isToday) {
@@ -212,7 +261,8 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
     } else if (isYesterday) {
       return { date: "Yesterday", time: `Yesterday, ${timeStr}` };
     } else {
-      const dateStr = date.toLocaleDateString('en-US', { 
+      const dateStr = date.toLocaleDateString('sv-SE', {
+        timeZone: timezone, 
         month: 'short', 
         day: 'numeric'
       });
@@ -263,13 +313,13 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
       {/* Filters */}
       <div className="space-y-2">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search logs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pr-9"
           />
+          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         </div>
 
         <Tabs value={channelFilter} onValueChange={setChannelFilter}>
@@ -325,26 +375,42 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
                         {/* Content */}
                         <div className="flex-1 space-y-1.5">
                           <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
+                            <div className="flex-1 flex items-center gap-2">
                               {/* Show contact name first if it's a contact activity */}
                               {isContact && log.contact_name ? (
                                 <>
-                                  <h4 className="text-base font-bold text-foreground">
-                                    {log.contact_name}
-                                  </h4>
-                                  <p className="text-sm text-foreground mt-0.5">
-                                    {log.title}
-                                  </p>
-                                </>
-                              ) : (
-                                <h4 className="text-sm font-semibold text-foreground">
-                                  {log.title}
-                                  {!isContact && (
-                                    <Badge variant="outline" className="ml-2 text-xs bg-muted">
-                                      Internal
+                                  <div>
+                                    <h4 className="text-base font-bold text-foreground">
+                                      {log.contact_name}
+                                    </h4>
+                                    <p className="text-sm text-foreground mt-0.5">
+                                      {log.title}
+                                    </p>
+                                  </div>
+                                  {log.title?.startsWith('✅ Resolved:') && (
+                                    <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-xs flex items-center gap-1">
+                                      <CheckCircle className="h-3 w-3" />
+                                      Task Resolved
                                     </Badge>
                                   )}
-                                </h4>
+                                </>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-sm font-semibold text-foreground">
+                                    {log.title}
+                                    {!isContact && (
+                                      <Badge variant="outline" className="ml-2 text-xs bg-muted">
+                                        Internal
+                                      </Badge>
+                                    )}
+                                  </h4>
+                                  {log.title?.startsWith('✅ Resolved:') && (
+                                    <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-xs flex items-center gap-1">
+                                      <CheckCircle className="h-3 w-3" />
+                                      Task Resolved
+                                    </Badge>
+                                  )}
+                                </div>
                               )}
                             </div>
                             <Badge
@@ -373,17 +439,20 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
                           )}
 
                           {log.recording_url && (
-                            <div className="mt-2">
+                            <div className="mt-2 space-y-1">
                               <audio 
                                 controls 
                                 className="w-full h-8"
                                 preload="metadata"
                               >
-                                <source src={log.recording_url} type="audio/mpeg" />
+                                <source 
+                                  src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vonage-recording-proxy?url=${encodeURIComponent(log.recording_url)}`} 
+                                  type="audio/mpeg" 
+                                />
                                 Your browser does not support the audio element.
                               </audio>
                               {log.duration && (
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-xs text-muted-foreground">
                                   Duration: {log.duration}
                                 </p>
                               )}

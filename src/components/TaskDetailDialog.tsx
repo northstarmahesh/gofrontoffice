@@ -64,26 +64,16 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [inboundMessage, setInboundMessage] = useState("");
+  const [aiDraft, setAiDraft] = useState("");
+  const [draftReplyId, setDraftReplyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (task && open) {
       setMessage(task.draft_message || task.description || "");
       setShowAllHistory(false);
       
-      // Use mock history if available, otherwise load from database
-      if (task.message_history) {
-        setActivityHistory(task.message_history as any);
-        setRelatedLog({
-          id: task.id,
-          title: task.title,
-          type: task.source || "message",
-          summary: task.description,
-          contact_name: task.contact_name || null,
-          contact_info: task.contact_info || null,
-          status: task.status,
-          created_at: task.created_at || new Date().toISOString(),
-        });
-      } else if (task.related_log_id) {
+      if (task.related_log_id) {
         loadTaskDetails();
       }
     }
@@ -94,6 +84,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
     
     setLoading(true);
     try {
+      // Load the inbound activity log (the message/call from customer)
       const { data: logData, error: logError } = await supabase
         .from("activity_logs")
         .select("*")
@@ -102,6 +93,23 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
 
       if (logError) throw logError;
       setRelatedLog(logData as ActivityLog);
+      
+      // Set the inbound message (what customer sent)
+      setInboundMessage(logData.summary || "");
+
+      // Load the AI draft reply
+      const { data: draftData, error: draftError } = await supabase
+        .from("draft_replies")
+        .select("*")
+        .eq("log_id", task.related_log_id)
+        .eq("status", "pending")
+        .maybeSingle();
+
+      if (draftData) {
+        setAiDraft(draftData.draft_content || "");
+        setMessage(draftData.draft_content || "");
+        setDraftReplyId(draftData.id);
+      }
 
       // Load activity history for the same contact
       if (logData?.contact_name) {
@@ -183,6 +191,33 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
       const contactName = task.contact_name || relatedLog?.contact_name;
       const contactInfo = task.contact_info || relatedLog?.contact_info;
 
+      // Get clinic phone number for sending SMS
+      const { data: phoneNumberData } = await supabase
+        .from("clinic_phone_numbers")
+        .select("phone_number")
+        .eq("clinic_id", clinicData.clinic_id)
+        .eq("is_active", true)
+        .eq("is_verified", true)
+        .maybeSingle();
+
+      // Send actual SMS via Vonage if it's an SMS task
+      if (task.source === 'sms' && contactInfo && phoneNumberData?.phone_number) {
+        const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
+          body: {
+            to: contactInfo,
+            message: message,
+            from: phoneNumberData.phone_number
+          }
+        });
+
+        if (smsError || !smsResult?.success) {
+          console.error('[TaskDetailDialog] SMS send error:', smsError || smsResult);
+          throw new Error('Failed to send SMS: ' + (smsError?.message || smsResult?.error || 'Unknown error'));
+        }
+
+        console.log('[TaskDetailDialog] SMS sent successfully:', smsResult);
+      }
+
       // Create activity log for sent message with animation effect
       const { data: newLog, error: logError } = await supabase
         .from("activity_logs")
@@ -204,6 +239,14 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
       if (logError) {
         console.error("Activity log error:", logError);
         throw logError;
+      }
+
+      // Mark draft as approved if it exists
+      if (draftReplyId) {
+        await supabase
+          .from("draft_replies")
+          .update({ status: "approved", approved_at: new Date().toISOString() })
+          .eq("id", draftReplyId);
       }
 
       // Ensure contact exists
@@ -386,197 +429,116 @@ const TaskDetailDialog = ({ task, open, onOpenChange, onViewContact, onTaskCompl
 
         <ScrollArea className="max-h-[70vh] pr-4">
           <div className="space-y-6">
-            {/* Contact Info - Only show if available */}
-            {relatedLog?.summary && (
-              <div className="p-4 rounded-lg bg-muted/30">
-                <p className="text-sm text-foreground leading-relaxed">{relatedLog.summary}</p>
-              </div>
-            )}
-
-            {/* Message History */}
-            {activityHistory.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Conversation History</h3>
-                
-                <div className="space-y-3 bg-muted/20 rounded-lg p-4 max-h-[400px] overflow-y-auto">
-                  {(showAllHistory ? activityHistory : activityHistory.slice(0, 3)).map((log) => {
-                    const fromAI = isFromAI(log.title, log.type);
-                    const phoneCall = isPhoneCall(log.type);
-                    
-                    // Extract contact name from summary if present (format: "Name: message")
-                    let displayName = relatedLog?.contact_name || null;
-                    let messageText = log.summary || "";
-                    if (!fromAI && messageText) {
-                      const nameMatch = messageText.match(/^([^:]+):\s*(.+)$/);
-                      if (nameMatch) {
-                        displayName = nameMatch[1];
-                        messageText = nameMatch[2];
-                      }
-                    }
-                    
-                    // Render phone call summary card
-                    if (phoneCall) {
-                      return (
-                        <div key={log.id} className="flex justify-center">
-                          <Card className="w-[85%] border-l-4 border-l-primary bg-primary/5">
-                            <div className="p-4 space-y-3">
-                              {/* Call header with icon, direction, and duration */}
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  {log.direction === 'inbound' ? (
-                                    <PhoneIncoming className="h-5 w-5 text-primary" />
-                                  ) : (
-                                    <PhoneOutgoing className="h-5 w-5 text-primary" />
-                                  )}
-                                  <span className="font-semibold text-sm">
-                                    {log.direction === 'inbound' ? 'Incoming Call' : 'Outgoing Call'}
-                                  </span>
-                                </div>
-                                {log.duration && (
-                                  <Badge variant="secondary" className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {log.duration}
-                                  </Badge>
-                                )}
-                              </div>
-                              
-                              {/* Call summary */}
-                              {log.summary && (
-                                <div className="space-y-1">
-                                  <p className="text-xs font-medium text-muted-foreground">Summary:</p>
-                                  <p className="text-sm text-foreground leading-relaxed">{log.summary}</p>
-                                </div>
-                              )}
-                              
-                              {/* Timestamp */}
-                              <div className="text-xs text-muted-foreground pt-1 border-t border-border/50">
-                                {formatDateTime(log.created_at)}
-                              </div>
-                            </div>
-                          </Card>
-                        </div>
-                      );
-                    }
-                    
-                    // Regular message rendering
-                    return (
-                      <div key={log.id} className={`flex gap-2 ${fromAI ? 'justify-end' : 'justify-start'}`}>
-                        {/* Channel icon on left for received messages */}
-                        {!fromAI && (
-                          <div className="shrink-0 mt-1">
-                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                              {getChannelIcon(log.type)}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Message bubble */}
-                        <div className={`flex flex-col max-w-[75%] ${fromAI ? 'items-end' : 'items-start'}`}>
-                          {/* Contact name above bubble for received messages */}
-                          {!fromAI && displayName && (
-                            <span className="text-xs font-semibold text-foreground mb-1 px-1">
-                              {displayName}
-                            </span>
-                          )}
-                          
-                          <div className={`rounded-2xl px-4 py-2 ${
-                            fromAI 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-background border border-border'
-                          }`}>
-                            <p className="text-sm">{messageText}</p>
-                          </div>
-                          
-                          {/* Timestamp and type */}
-                          <div className="flex items-center gap-2 mt-1 px-1">
-                            <span className="text-xs text-muted-foreground">
-                              {formatDateTime(log.created_at)}
-                            </span>
-                            {fromAI && (
-                              <Badge variant="outline" className="text-xs px-1.5 py-0">
-                                AI Draft
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* AI icon on right for sent messages */}
-                        {fromAI && (
-                          <div className="shrink-0 mt-1">
-                            <div className="h-9 w-9 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                              <MessageSquare className="h-5 w-5" />
-                            </div>
-                          </div>
-                        )}
+            {/* For Phone Calls - Show transcript and call actions */}
+            {isPhoneCall(task.source || "") ? (
+              <div className="space-y-4">
+                {/* Call Info Card */}
+                <Card className="border-l-4 border-l-primary bg-primary/5">
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <PhoneIncoming className="h-5 w-5 text-primary" />
+                        <span className="font-semibold text-sm">Incoming Call</span>
                       </div>
-                    );
-                  })}
+                      {relatedLog?.duration && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {relatedLog.duration}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {inboundMessage && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">📝 TRANSCRIPT:</p>
+                        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{inboundMessage}</p>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+
+                {/* Call Action Buttons */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" disabled>
+                    <Phone className="mr-2 h-4 w-4" />
+                    Call Back
+                  </Button>
+                  <Button variant="outline" onClick={handleMarkAsDone}>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Done
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* For Messages (SMS/WhatsApp/etc) - Show inbound + AI draft */
+              <div className="space-y-4">
+                {/* Inbound Message Card */}
+                {inboundMessage && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      📥 MESAJ PRIMIT:
+                    </label>
+                    <Card className="border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20">
+                      <div className="p-4">
+                        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{inboundMessage}</p>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+
+                <Separator />
+
+                {/* AI Draft - Editable */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    🤖 AI DRAFT - Edit if needed:
+                  </label>
+                  <Textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Type your message here..."
+                    className="min-h-[120px] resize-none"
+                  />
                 </div>
 
-                {showAllHistory && activityHistory.length > 3 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowAllHistory(false)}
-                    className="w-full text-xs"
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={isSending || !message.trim()}
+                    className="w-full"
                   >
-                    Show Less
+                    <Send className="mr-2 h-4 w-4" />
+                    {isSending ? "Sending..." : "Send Message"}
                   </Button>
-                )}
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleMarkAsDone}
+                      disabled={isSending}
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Skip
+                    </Button>
+                    
+                    {relatedLog?.contact_name && onViewContact && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          onViewContact(relatedLog.contact_name!);
+                          onOpenChange(false);
+                        }}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Contact
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
-            <Separator />
-
-            {/* Draft Message to Send - At Bottom like WhatsApp */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Send className="h-4 w-4" />
-                Your Reply
-              </label>
-              <Textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type your message here..."
-                className="min-h-[120px] resize-none"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={handleSendMessage}
-                disabled={isSending || !message.trim()}
-                className="w-full"
-              >
-                <Send className="mr-2 h-4 w-4" />
-                {isSending ? "Sending..." : "Send Message"}
-              </Button>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleMarkAsDone}
-                  disabled={isSending}
-                >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Mark as Done
-                </Button>
-                
-                {relatedLog?.contact_name && onViewContact && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      onViewContact(relatedLog.contact_name!);
-                      onOpenChange(false);
-                    }}
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    View Contact History
-                  </Button>
-                )}
-              </div>
-            </div>
 
             {loading && (
               <div className="flex justify-center py-4">

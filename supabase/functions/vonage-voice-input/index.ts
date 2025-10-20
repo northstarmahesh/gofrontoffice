@@ -12,19 +12,49 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
+    // Enhanced logging for debugging
+    const contentType = req.headers.get('content-type') || 'unknown';
+    console.log('Voice input request:', {
+      method: req.method,
+      contentType,
+      url: req.url,
+    });
+
+    // Handle both JSON and form-urlencoded payloads
+    let body: any;
+    if (contentType.includes('application/json')) {
+      body = await req.json();
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      const text = await req.text();
+      const params = new URLSearchParams(text);
+      body = {
+        speech: params.get('speech') ? JSON.parse(params.get('speech')!) : null,
+        from: params.get('from'),
+        to: params.get('to'),
+        conversation_uuid: params.get('conversation_uuid'),
+      };
+    } else {
+      // Fallback: try JSON
+      body = await req.json();
+    }
+
     const { speech, from, to, conversation_uuid } = body;
     const userInput = speech?.results?.[0]?.text || '';
 
-    console.log('Voice input - Speech:', userInput, 'From:', from);
+    console.log('Voice input - Parsed:', {
+      userInput,
+      from,
+      to,
+      conversation_uuid,
+    });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Normalize phone number - add + if missing
-    const normalizedTo = to?.startsWith('+') ? to : `+${to}`;
-    const normalizedFrom = from?.startsWith('+') ? from : `+${from}`;
+    // Robust phone number normalization
+    const normalizedTo = to ? (to.startsWith('+') ? to : `+${to}`) : '';
+    const normalizedFrom = from ? (from.startsWith('+') ? from : `+${from}`) : '';
 
     // Find clinic
     const { data: phoneData } = await supabase
@@ -127,19 +157,41 @@ serve(async (req) => {
     console.log('Response length (chars):', responseText.length);
     console.log('Estimated speaking time (seconds):', Math.ceil(responseText.length / 15));
 
-    // Update activity log
-    await supabase
+    // Update existing activity log to in_progress if found, or create new one
+    const { data: existingLog } = await supabase
       .from('activity_logs')
-      .insert({
-        clinic_id: phoneData.clinic_id,
-        type: 'call',
-        title: 'Call with ' + normalizedFrom,
-        summary: 'Caller: "' + userInput + '"\n\nResponse: "' + responseText + '"',
-        status: autoPilotEnabled ? 'completed' : 'pending',
-        contact_name: normalizedFrom,
-        contact_info: normalizedFrom,
-        direction: 'inbound',
-      });
+      .select('*')
+      .eq('title', `Incoming Call from ${normalizedFrom}`)
+      .eq('clinic_id', phoneData.clinic_id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingLog) {
+      // Update existing log
+      await supabase
+        .from('activity_logs')
+        .update({
+          status: 'in_progress',
+          summary: 'Caller: "' + userInput + '"\n\nResponse: "' + responseText + '"',
+        })
+        .eq('id', existingLog.id);
+    } else {
+      // Create new log if not found
+      await supabase
+        .from('activity_logs')
+        .insert({
+          clinic_id: phoneData.clinic_id,
+          type: 'call',
+          title: 'Call with ' + normalizedFrom + ' [' + conversation_uuid.substring(0, 8) + ']',
+          summary: 'Caller: "' + userInput + '"\n\nResponse: "' + responseText + '"',
+          status: autoPilotEnabled ? 'in_progress' : 'pending',
+          contact_name: normalizedFrom,
+          contact_info: normalizedFrom,
+          direction: 'inbound',
+        });
+    }
 
     if (autoPilotEnabled) {
       // Auto-pilot: Respond immediately
@@ -194,12 +246,17 @@ serve(async (req) => {
     }
 
   } catch (error: any) {
-    console.error('Error in voice input:', error);
+    console.error('Error in voice input:', {
+      message: error.message,
+      stack: error.stack,
+    });
+    
+    // Fallback NCCO to prevent call hangup
     return new Response(
       JSON.stringify([
         {
           action: 'talk',
-          text: 'Förlåt, jag har tekniska problem just nu. Vänligen ring tillbaka senare.',
+          text: 'Förlåt, vi har tekniska problem just nu. Försök gärna igen om en stund.',
           voiceName: 'Astrid',
           language: 'sv-SE',
           premium: true,

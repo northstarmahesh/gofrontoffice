@@ -70,12 +70,12 @@ serve(async (req) => {
     // Get settings
     const { data: settings } = await supabase
       .from('assistant_settings')
-      .select('sms_enabled, phone_mode, auto_pilot_enabled')
+      .select('sms_enabled, phone_mode, sms_auto_pilot')
       .eq('location_id', phoneData.location_id)
       .maybeSingle();
 
     const phoneMode = settings?.phone_mode || 'on';
-    const autoPilotEnabled = settings?.auto_pilot_enabled ?? true;
+    const autoPilotEnabled = settings?.sms_auto_pilot ?? true;
 
     // Get the first user from the clinic for activity log
     const { data: clinicUser } = await supabase
@@ -167,9 +167,10 @@ serve(async (req) => {
         body: JSON.stringify({
           api_key: vonageApiKey,
           api_secret: vonageApiSecret,
-          to: normalizedFrom,
-          from: normalizedTo,
+          to: normalizedFrom.replace(/\+/g, ''), // Remove + from phone number for Vonage
+          from: normalizedTo.replace(/\+/g, ''), // Remove + from phone number for Vonage
           text: responseText,
+          type: 'unicode', // Support all characters including Swedish
         }),
       });
 

@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import ActivityLogs from "./ActivityLogs";
 
 interface TasksProps {
   onNavigateToContact?: (contactName: string) => void;
@@ -255,7 +254,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch pending tasks with related inbound log basics
+      // Fetch active tasks (new and pending) with related inbound log basics
       const { data: tasks, error } = await supabase
         .from('tasks')
         .select(`
@@ -268,7 +267,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             created_at
           )
         `)
-        .eq('status', 'pending')
+        .in('status', ['new', 'pending'])
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -281,6 +280,13 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                d.getMonth() === today.getMonth() &&
                d.getDate() === today.getDate();
       };
+
+      // Get clinic_id for contact lookup
+      const { data: clinicUsers } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       // Seed tasks with basic info and a date label for grouping
       const tasksWithBasicInfo = (tasks || []).map((task: any) => ({
@@ -296,10 +302,27 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           : format(new Date(task.created_at), 'MMM dd, yyyy'),
       }));
 
-      // Enrich with actual AI draft text from draft_replies (co-pilot mode)
+      // Enrich with actual AI draft text from draft_replies AND lookup saved contact names
       const enhancedTasks = await Promise.all(
         tasksWithBasicInfo.map(async (t: any) => {
-          if (!t.related_log_id) return t;
+          // Look up saved contact name by phone number
+          let contactName = t.contact_name;
+          if (t.contact_info && clinicUsers?.clinic_id) {
+            const { data: savedContact } = await supabase
+              .from('contacts')
+              .select('name')
+              .eq('clinic_id', clinicUsers.clinic_id)
+              .eq('phone', t.contact_info)
+              .maybeSingle();
+            
+            if (savedContact?.name) {
+              contactName = savedContact.name;
+            }
+          }
+
+          // Fetch draft content
+          if (!t.related_log_id) return { ...t, contact_name: contactName };
+          
           const { data: draft } = await supabase
             .from('draft_replies')
             .select('draft_content, created_at, status')
@@ -309,9 +332,9 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             .maybeSingle();
 
           if (draft?.draft_content) {
-            return { ...t, draftMessage: draft.draft_content, draft_message: draft.draft_content };
+            return { ...t, contact_name: contactName, draftMessage: draft.draft_content, draft_message: draft.draft_content };
           }
-          return t;
+          return { ...t, contact_name: contactName };
         })
       );
 
@@ -327,6 +350,64 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     setRefreshKey(prev => prev + 1);
   };
 
+  const handleStatusChange = async (taskId: string, newStatus: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Update task status
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update({ 
+          status: newStatus,
+          completed_at: newStatus === 'resolved' ? new Date().toISOString() : null
+        })
+        .eq('id', taskId);
+
+      if (updateError) throw updateError;
+
+      // If resolved, create activity log entry
+      if (newStatus === 'resolved') {
+        const task = humanTasks.find(t => t.id === taskId);
+        if (task) {
+          const { data: clinicData } = await supabase
+            .from("clinic_users")
+            .select("clinic_id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (clinicData?.clinic_id) {
+            await supabase
+              .from('activity_logs')
+              .insert({
+                user_id: user.id,
+                clinic_id: clinicData.clinic_id,
+                type: task.source || 'task',
+                title: `✅ Resolved: ${task.title}`,
+                summary: task.draftMessage || task.description,
+                contact_name: task.contact_name,
+                contact_info: task.contact_info,
+                status: 'completed',
+                direction: 'outbound'
+              });
+          }
+        }
+
+        toast.success("Task resolved and moved to Activity");
+      } else {
+        toast.success(`Task marked as ${newStatus}`);
+      }
+
+      // Refresh tasks
+      await loadTasks();
+    } catch (error) {
+      console.error("Error changing task status:", error);
+      toast.error("Failed to change task status");
+    }
+  };
+
   const handleQuickSend = async (task: any, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     
@@ -339,46 +420,100 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Send the message via the appropriate channel
-      const { error: logError } = await supabase
-        .from('activity_logs')
-        .insert({
-          user_id: user.id,
-          clinic_id: task.clinic_id,
-          type: task.source,
-          title: `${task.source.toUpperCase()} message`,
-          summary: task.draftMessage,
-          contact_name: task.contact_name,
-          contact_info: task.contact_info,
-          status: 'completed',
-          direction: 'outbound'
+      // Get clinic phone number for SMS sending
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicData?.clinic_id) {
+        toast.error("No business found for user");
+        return;
+      }
+
+      let sendSuccess = false;
+      let errorMessage = "";
+
+      // If source is SMS, actually send via backend function
+      if (task.source === 'sms') {
+        // Get verified clinic phone number
+        const { data: phoneData } = await supabase
+          .from("clinic_phone_numbers")
+          .select("phone_number")
+          .eq("clinic_id", clinicData.clinic_id)
+          .eq("is_verified", true)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (!phoneData?.phone_number) {
+          toast.error("No verified clinic phone number configured for SMS");
+          return;
+        }
+
+        // Call send-sms backend function
+        const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
+          body: {
+            to: task.contact_info,
+            message: task.draftMessage,
+            from: phoneData.phone_number
+          }
         });
 
-      if (logError) throw logError;
+        if (smsError || !smsResult?.success) {
+          errorMessage = smsResult?.error || smsError?.message || "Failed to send SMS";
+          toast.error(`Failed to send SMS: ${errorMessage}`);
+          return;
+        }
 
-      // Mark task as completed
-      if (task.id) {
-        const { error: taskError } = await supabase
-          .from('tasks')
-          .update({ status: 'completed', completed_at: new Date().toISOString() })
-          .eq('id', task.id);
-
-        if (taskError) throw taskError;
+        sendSuccess = true;
+      } else {
+        // For other channels, mark as pending (will be handled by their respective webhooks/functions)
+        sendSuccess = true;
       }
 
-      // Update draft_replies status if exists
-      if (task.related_log_id) {
-        const { error: draftError } = await supabase
-          .from('draft_replies')
-          .update({ status: 'approved', approved_at: new Date().toISOString() })
-          .eq('log_id', task.related_log_id)
-          .eq('status', 'pending');
+      if (sendSuccess) {
+        // Log the sent message
+        const { error: logError } = await supabase
+          .from('activity_logs')
+          .insert({
+            user_id: user.id,
+            clinic_id: clinicData.clinic_id,
+            type: task.source,
+            title: `${task.source.toUpperCase()} to ${task.contact_name}`,
+            summary: task.draftMessage,
+            contact_name: task.contact_name,
+            contact_info: task.contact_info,
+            status: 'completed',
+            direction: 'outbound'
+          });
 
-        if (draftError) console.error("Error updating draft:", draftError);
+        if (logError) throw logError;
+
+        // Mark task as completed
+        if (task.id) {
+          const { error: taskError } = await supabase
+            .from('tasks')
+            .update({ status: 'completed', completed_at: new Date().toISOString() })
+            .eq('id', task.id);
+
+          if (taskError) throw taskError;
+        }
+
+        // Update draft_replies status if exists
+        if (task.related_log_id) {
+          const { error: draftError } = await supabase
+            .from('draft_replies')
+            .update({ status: 'approved', approved_at: new Date().toISOString() })
+            .eq('log_id', task.related_log_id)
+            .eq('status', 'pending');
+
+          if (draftError) console.error("Error updating draft:", draftError);
+        }
+
+        toast.success(`Message sent via ${task.source.toUpperCase()}`);
+        setRefreshKey(prev => prev + 1);
       }
-
-      toast.success(`Message sent via ${task.source.toUpperCase()}`);
-      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
@@ -639,6 +774,19 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
     toast.success("Print dialog opened for PDF export");
   };
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'new':
+        return 'bg-blue-500/10 text-blue-600 border-blue-500/30';
+      case 'pending':
+        return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30';
+      case 'resolved':
+        return 'bg-green-500/10 text-green-600 border-green-500/30';
+      default:
+        return 'bg-muted text-muted-foreground border-muted';
+    }
+  };
+
   const getTaskTypeLabel = (task: any) => {
     if (task.callSummary) {
       return { label: "AI Call Summary", color: "bg-green-500/10 text-green-600 border-green-500/30" };
@@ -719,12 +867,17 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
         )}
       >
         <div className={cn("space-y-3", !compactView && "space-y-4")}>
-          {/* Header: Type badge and Channel */}
+          {/* Header: Type badge, Status and Channel */}
           <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge className={cn("px-3 py-1 border", taskType.color, compactView ? "text-xs" : "text-sm")}>
                 {taskType.label}
               </Badge>
+              {!isAssistant && task.status && (
+                <Badge className={cn("px-3 py-1 border", getStatusVariant(task.status), compactView ? "text-xs" : "text-sm")}>
+                  {task.status === 'new' ? '⭕ New' : task.status === 'pending' ? '🔄 Pending' : '✅ Resolved'}
+                </Badge>
+              )}
               <Badge className={`flex items-center gap-1.5 border ${getChannelColor(task.source)}`}>
                 <ChannelIcon className="h-3.5 w-3.5" />
                 <span className="text-xs font-medium">{getChannelDisplay(task.source)}</span>
@@ -817,6 +970,7 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     {task.message_history && task.message_history[0]?.created_at && (
                       <span className="text-xs text-muted-foreground">
                         {new Date(task.message_history[0].created_at).toLocaleTimeString('sv-SE', { 
+                          timeZone: 'Europe/Stockholm',
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}
@@ -883,8 +1037,9 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                             </Badge>
                             <span className="text-xs text-muted-foreground">
                               {draftTime.toLocaleTimeString('sv-SE', { 
+                                timeZone: 'Europe/Stockholm',
                                 hour: '2-digit', 
-                                minute: '2-digit' 
+                                minute: '2-digit'
                               })}
                             </span>
                           </>
@@ -904,7 +1059,27 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           </div>
 
           {/* Footer: Actions only (time moved to message panes) */}
-          <div className="flex items-center justify-end pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+            {!isAssistant && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-sm flex items-center gap-1.5">
+                    Change Status <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="z-50 bg-background">
+                  <DropdownMenuItem onClick={(e) => handleStatusChange(task.id, 'new', e)}>
+                    ⭕ Mark as New
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => handleStatusChange(task.id, 'pending', e)}>
+                    🔄 Mark as Pending
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => handleStatusChange(task.id, 'resolved', e)}>
+                    ✅ Mark as Resolved
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <div className="flex items-center gap-2">
               {hasDraft ? (
                 <>
@@ -1056,11 +1231,6 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                     </div>
                   )}
 
-                  {/* Activity Logs */}
-                  <div className="pt-6 border-t">
-                    <h3 className="text-xl font-bold text-foreground mb-4">Activity Logs</h3>
-                    <ActivityLogs onNavigateToContact={onNavigateToContact} />
-                  </div>
                 </>
               )}
 
