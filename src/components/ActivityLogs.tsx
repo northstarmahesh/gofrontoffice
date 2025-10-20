@@ -47,6 +47,30 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
 
   useEffect(() => {
     loadActivityLogs(true);
+
+    // Subscribe to realtime updates for activity logs
+    const channel = supabase
+      .channel('activity_logs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'activity_logs'
+        },
+        (payload) => {
+          console.log('Activity log updated:', payload);
+          // Reload logs when transcription is added
+          if (payload.new.summary !== payload.old.summary) {
+            loadActivityLogs(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
