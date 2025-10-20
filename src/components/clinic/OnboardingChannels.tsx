@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PhoneVerificationDialog } from "./PhoneVerificationDialog";
+import { normalizePhoneNumber, isValidPhoneNumber } from "@/lib/phone-utils";
 
 interface OnboardingChannelsProps {
   clinicId: string;
@@ -132,6 +133,13 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
       return;
     }
 
+    // Normalize and validate phone number
+    const normalizedPhone = normalizePhoneNumber(phoneNumber);
+    if (!isValidPhoneNumber(normalizedPhone)) {
+      toast.error("Invalid phone number format. Please use international format (e.g., +46701234567)");
+      return;
+    }
+
     setAdding(true);
     try {
       const { data: phoneData, error } = await supabase
@@ -139,7 +147,7 @@ export const OnboardingChannels = ({ clinicId, onChannelsConnected }: Onboarding
         .insert({
           clinic_id: clinicId,
           location_id: locationId,
-          phone_number: phoneNumber,
+          phone_number: normalizedPhone,
           channels: phoneChannels,
           is_verified: false,
           is_active: true,

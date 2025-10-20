@@ -38,7 +38,10 @@ serve(async (req) => {
         JSON.stringify([
           {
             action: 'talk',
-            text: 'Sorry, there was an error processing your request.',
+            text: 'Förlåt, det uppstod ett fel. Försök gärna igen senare.',
+            voiceName: 'Astrid',
+            language: 'sv-SE',
+            premium: true,
           }
         ]),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -70,21 +73,25 @@ serve(async (req) => {
     const knowledgeContent = knowledgeBase?.map(kb => kb.content).join('\n\n') || '';
 
     // Build system prompt with custom instructions
-    const basePrompt = clinic?.assistant_prompt || `You are a helpful AI assistant for ${clinic?.name || 'a clinic'}.`;
-    const systemPrompt = `${basePrompt}
-
-You are speaking on the phone, so keep responses brief and conversational.
-
-Clinic Information:
-- Name: ${clinic?.name}
-- Phone: ${clinic?.phone}
-- Email: ${clinic?.email}
-- Address: ${clinic?.address}
-
-Knowledge Base:
-${knowledgeContent || 'No additional information available.'}
-
-Important: Keep your response under 30 seconds when spoken aloud. Be friendly and professional.`;
+    const basePrompt = clinic?.assistant_prompt || 'Du är en hjälpsam AI-assistent för ' + (clinic?.name || 'en klinik') + '.';
+    const systemPrompt = basePrompt + '\n\n' +
+      'Du pratar i telefon, så håll svaren KORTA och naturliga. Svara alltid på svenska.\n\n' +
+      'VIKTIGT - Regler för konversation:\n' +
+      '- Svara med MAX 15-30 ord per gång\n' +
+      '- Tala naturligt och vänligt\n' +
+      '- Ställ EN fråga i taget\n' +
+      '- Vänta på svar innan du fortsätter\n\n' +
+      'Klinkinformation:\n' +
+      '- Namn: ' + clinic?.name + '\n' +
+      '- Telefon: ' + clinic?.phone + '\n' +
+      '- Email: ' + clinic?.email + '\n' +
+      '- Adress: ' + clinic?.address + '\n\n' +
+      'Kunskapsbas:\n' +
+      (knowledgeContent || 'Ingen ytterligare information tillgänglig.') + '\n\n' +
+      'Exempel på bra svar:\n' +
+      '- "Hej! Vad kan jag hjälpa dig med?"\n' +
+      '- "Okej, vilken tid passar dig bäst?"\n' +
+      '- "Perfekt! Ska jag boka det?"';
 
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!lovableApiKey) {
@@ -110,13 +117,15 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('AI API error:', aiResponse.status, errorText);
-      throw new Error(`AI API request failed: ${aiResponse.status}`);
+      throw new Error('AI API request failed: ' + aiResponse.status);
     }
 
     const aiData = await aiResponse.json();
     const responseText = aiData.choices[0].message.content;
 
     console.log('AI Response:', responseText);
+    console.log('Response length (chars):', responseText.length);
+    console.log('Estimated speaking time (seconds):', Math.ceil(responseText.length / 15));
 
     // Update activity log
     await supabase
@@ -124,8 +133,8 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
       .insert({
         clinic_id: phoneData.clinic_id,
         type: 'call',
-        title: `Call with ${normalizedFrom}`,
-        summary: `Caller: "${userInput}"\n\nResponse: "${responseText}"`,
+        title: 'Call with ' + normalizedFrom,
+        summary: 'Caller: "' + userInput + '"\n\nResponse: "' + responseText + '"',
         status: autoPilotEnabled ? 'completed' : 'pending',
         contact_name: normalizedFrom,
         contact_info: normalizedFrom,
@@ -139,15 +148,20 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
           {
             action: 'talk',
             text: responseText,
+            voiceName: 'Astrid',
+            language: 'sv-SE',
+            premium: true,
+            bargeIn: true,
           },
           {
             action: 'input',
-            eventUrl: [`${supabaseUrl}/functions/v1/vonage-voice-input`],
+            eventUrl: [supabaseUrl + '/functions/v1/vonage-voice-input'],
             type: ['speech'],
             speech: {
-              context: ['customer service', 'clinic', 'appointment'],
-              endOnSilence: 2,
-              language: 'en-US',
+              context: ['kundservice', 'klinik', 'bokning', 'tidsbeställning'],
+              endOnSilence: 3,
+              maxDuration: 30,
+              language: 'sv-SE',
             },
           }
         ]),
@@ -169,7 +183,10 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
         JSON.stringify([
           {
             action: 'talk',
-            text: 'Thank you for your question. One of our team members will call you back shortly.',
+            text: 'Tack för din fråga. En av våra medarbetare kommer att ringa upp dig inom kort.',
+            voiceName: 'Astrid',
+            language: 'sv-SE',
+            premium: true,
           }
         ]),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -182,7 +199,10 @@ Important: Keep your response under 30 seconds when spoken aloud. Be friendly an
       JSON.stringify([
         {
           action: 'talk',
-          text: 'I apologize, but I\'m having trouble right now. Please try calling back later.',
+          text: 'Förlåt, jag har tekniska problem just nu. Vänligen ring tillbaka senare.',
+          voiceName: 'Astrid',
+          language: 'sv-SE',
+          premium: true,
         }
       ]),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

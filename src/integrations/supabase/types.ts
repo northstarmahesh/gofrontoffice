@@ -139,17 +139,21 @@ export type Database = {
           auto_pilot_enabled: boolean | null
           created_at: string | null
           id: string
+          instagram_auto_pilot: boolean | null
           instagram_delay_seconds: number | null
           instagram_enabled: boolean | null
           location_id: string | null
+          messenger_auto_pilot: boolean | null
           messenger_delay_seconds: number | null
           messenger_enabled: boolean | null
           phone_mode: string | null
+          sms_auto_pilot: boolean | null
           sms_delay_seconds: number | null
           sms_enabled: boolean | null
           system_enabled: boolean | null
           updated_at: string | null
           user_id: string
+          whatsapp_auto_pilot: boolean | null
           whatsapp_delay_seconds: number | null
           whatsapp_enabled: boolean | null
         }
@@ -157,17 +161,21 @@ export type Database = {
           auto_pilot_enabled?: boolean | null
           created_at?: string | null
           id?: string
+          instagram_auto_pilot?: boolean | null
           instagram_delay_seconds?: number | null
           instagram_enabled?: boolean | null
           location_id?: string | null
+          messenger_auto_pilot?: boolean | null
           messenger_delay_seconds?: number | null
           messenger_enabled?: boolean | null
           phone_mode?: string | null
+          sms_auto_pilot?: boolean | null
           sms_delay_seconds?: number | null
           sms_enabled?: boolean | null
           system_enabled?: boolean | null
           updated_at?: string | null
           user_id: string
+          whatsapp_auto_pilot?: boolean | null
           whatsapp_delay_seconds?: number | null
           whatsapp_enabled?: boolean | null
         }
@@ -175,17 +183,21 @@ export type Database = {
           auto_pilot_enabled?: boolean | null
           created_at?: string | null
           id?: string
+          instagram_auto_pilot?: boolean | null
           instagram_delay_seconds?: number | null
           instagram_enabled?: boolean | null
           location_id?: string | null
+          messenger_auto_pilot?: boolean | null
           messenger_delay_seconds?: number | null
           messenger_enabled?: boolean | null
           phone_mode?: string | null
+          sms_auto_pilot?: boolean | null
           sms_delay_seconds?: number | null
           sms_enabled?: boolean | null
           system_enabled?: boolean | null
           updated_at?: string | null
           user_id?: string
+          whatsapp_auto_pilot?: boolean | null
           whatsapp_delay_seconds?: number | null
           whatsapp_enabled?: boolean | null
         }

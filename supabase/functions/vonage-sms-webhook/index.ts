@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { generateAiResponse } from "../_shared/ai-service.ts";
+import { normalizePhoneNumber } from "../_shared/phone-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,9 +43,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Normalize phone number - add + if missing and trim whitespace
-    const normalizedTo = (to?.trim().startsWith('+') ? to.trim() : `+${to?.trim()}`);
-    const normalizedFrom = (from?.trim().startsWith('+') ? from.trim() : `+${from?.trim()}`);
+    // Normalize phone numbers using shared utility
+    const normalizedTo = normalizePhoneNumber(to);
+    const normalizedFrom = normalizePhoneNumber(from);
 
     console.log('Normalized numbers - From:', normalizedFrom, 'To:', normalizedTo);
 
@@ -76,19 +77,48 @@ serve(async (req) => {
     const phoneMode = settings?.phone_mode || 'on';
     const autoPilotEnabled = settings?.auto_pilot_enabled ?? true;
 
-    // Log incoming message
-    await supabase
+    // Get the first user from the clinic for activity log
+    const { data: clinicUser } = await supabase
+      .from('clinic_users')
+      .select('user_id')
+      .eq('clinic_id', phoneData.clinic_id)
+      .limit(1)
+      .maybeSingle();
+
+    if (!clinicUser?.user_id) {
+      console.error('No user found for clinic:', phoneData.clinic_id);
+      return new Response(JSON.stringify({ error: 'No user found for clinic' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Log incoming message and get the ID
+    const { data: activityLog, error: logError } = await supabase
       .from('activity_logs')
       .insert({
         clinic_id: phoneData.clinic_id,
         type: 'sms',
-        title: `SMS from ${from}`,
+        title: `SMS from ${normalizedFrom}`,
         summary: text,
         status: 'pending',
-        contact_name: from,
-        contact_info: from,
+        contact_name: normalizedFrom,
+        contact_info: normalizedFrom,
         direction: 'inbound',
+        user_id: clinicUser.user_id,
+      })
+      .select()
+      .single();
+
+    if (logError) {
+      console.error('Error creating activity log:', logError);
+      return new Response(JSON.stringify({ error: 'Failed to create activity log', details: logError }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    console.log('Activity log created:', activityLog?.id);
 
     if (phoneMode === 'off') {
       console.log('Phone mode is off, not responding');
@@ -158,18 +188,27 @@ serve(async (req) => {
           contact_name: normalizedFrom,
           contact_info: normalizedFrom,
           direction: 'outbound',
+          user_id: clinicUser.user_id,
         });
     } else {
       // Co-pilot mode: save as draft
-      await supabase
-        .from('draft_replies')
-        .insert({
-          log_id: messageId,
-          clinic_id: phoneData.clinic_id,
-          user_id: phoneData.clinic_id,
-          draft_content: responseText,
-          status: 'pending',
-        });
+      if (activityLog?.id) {
+        const { error: draftError } = await supabase
+          .from('draft_replies')
+          .insert({
+            log_id: activityLog.id,
+            clinic_id: phoneData.clinic_id,
+            user_id: clinicUser.user_id,
+            draft_content: responseText,
+            status: 'pending',
+          });
+        
+        if (draftError) {
+          console.error('Error creating draft:', draftError);
+        } else {
+          console.log('Draft saved successfully for log:', activityLog.id);
+        }
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {

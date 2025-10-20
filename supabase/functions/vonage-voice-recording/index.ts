@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { normalizePhoneNumber } from "../_shared/phone-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,11 +17,17 @@ serve(async (req) => {
     const url = new URL(req.url);
     const conversation_uuid = url.searchParams.get('conversation_uuid');
     const clinic_id = url.searchParams.get('clinic_id');
+    const from = url.searchParams.get('from');
+    
+    // Normalize phone number
+    const normalizedFrom = normalizePhoneNumber(from);
     
     console.log('Recording webhook received:', {
       conversation_uuid,
       clinic_id,
+      from,
       recording_url: body.recording_url,
+      transcript: body.transcript,
       start_time: body.start_time,
       end_time: body.end_time,
       duration: body.duration,
@@ -35,7 +42,7 @@ serve(async (req) => {
       // Find the activity log for this conversation
       const { data: activityLog, error: findError } = await supabase
         .from('activity_logs')
-        .select('id')
+        .select('id, user_id')
         .eq('clinic_id', clinic_id)
         .ilike('summary', `%${conversation_uuid}%`)
         .order('created_at', { ascending: false })
@@ -45,20 +52,43 @@ serve(async (req) => {
       if (findError) {
         console.error('Error finding activity log:', findError);
       } else if (activityLog) {
-        // Update the activity log with the recording URL
+        const transcriptText = body.transcript?.text || body.transcript || 'No transcript available';
+        
+        // Update the activity log with the recording URL and transcript
         const { error: updateError } = await supabase
           .from('activity_logs')
           .update({
             recording_url: body.recording_url,
             duration: body.duration ? `${body.duration}s` : null,
             status: 'completed',
+            summary: `Voicemail received - ${transcriptText.substring(0, 100)}${transcriptText.length > 100 ? '...' : ''}`,
           })
           .eq('id', activityLog.id);
 
         if (updateError) {
           console.error('Error updating activity log:', updateError);
         } else {
-          console.log('Successfully updated activity log with recording URL');
+          console.log('Successfully updated activity log with recording and transcript');
+          
+          // Create a task for the voicemail
+          const { error: taskError } = await supabase
+            .from('tasks')
+            .insert({
+              user_id: activityLog.user_id,
+              clinic_id: clinic_id,
+              title: `Review voicemail from ${normalizedFrom || 'Unknown'}`,
+              description: `Voicemail transcript: ${transcriptText}`,
+              status: 'pending',
+              priority: 'high',
+              source: 'call',
+              related_log_id: activityLog.id
+            });
+
+          if (taskError) {
+            console.error('Error creating task:', taskError);
+          } else {
+            console.log('Successfully created task for voicemail');
+          }
         }
       } else {
         console.warn('No activity log found for conversation:', conversation_uuid);

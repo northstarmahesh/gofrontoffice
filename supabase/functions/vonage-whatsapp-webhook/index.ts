@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { generateAiResponse } from "../_shared/ai-service.ts";
+import { normalizePhoneNumber } from "../_shared/phone-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,11 +42,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Normalize phone numbers - remove whatsapp: prefix and add + if missing
-    const cleanTo = to?.replace('whatsapp:', '');
-    const cleanFrom = from?.replace('whatsapp:', '');
-    const normalizedTo = cleanTo?.startsWith('+') ? cleanTo : `+${cleanTo}`;
-    const normalizedFrom = cleanFrom?.startsWith('+') ? cleanFrom : `+${cleanFrom}`;
+    // Normalize phone numbers using shared utility
+    const normalizedTo = normalizePhoneNumber(to);
+    const normalizedFrom = normalizePhoneNumber(from);
 
     // Find clinic by phone number
     const { data: phoneData, error: phoneError } = await supabase

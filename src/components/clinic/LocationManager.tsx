@@ -13,6 +13,7 @@ import { MapPin, Plus, Trash2, Edit, Search, Phone, MessageSquare, Instagram, Me
 import { CreateUserDialog } from "./CreateUserDialog";
 import { PhoneVerificationDialog } from "./PhoneVerificationDialog";
 import { Badge } from "@/components/ui/badge";
+import { normalizePhoneNumber, isValidPhoneNumber } from "@/lib/phone-utils";
 
 interface Location {
   id: string;
@@ -187,12 +188,19 @@ export const LocationManager = ({ clinicId, onUpdate, onNavigateToTools }: Locat
       // Add phone number if enabled
       if (phoneNumberSetup.enabled && phoneNumberSetup.number && locationId) {
         const fullPhoneNumber = `${phoneNumberSetup.countryCode}${phoneNumberSetup.number}`;
+        const normalizedPhone = normalizePhoneNumber(fullPhoneNumber);
+        
+        if (!isValidPhoneNumber(normalizedPhone)) {
+          toast.error("Invalid phone number format. Please use international format (e.g., +46701234567)");
+          return;
+        }
+        
         const { data: phoneData, error: phoneError } = await supabase
           .from("clinic_phone_numbers")
           .insert({
             clinic_id: clinicId,
             location_id: locationId,
-            phone_number: fullPhoneNumber,
+            phone_number: normalizedPhone,
             channels: phoneNumberSetup.channels,
             is_active: true,
           })

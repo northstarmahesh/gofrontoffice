@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Settings, CreditCard, Users as UsersIcon, ChevronDown, AlertTriangle, Power, X, Bell } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, CreditCard, Users as UsersIcon, ChevronDown, AlertTriangle, Power, X, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,25 +14,24 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import frontOfficeLogo from "@/assets/front-office-logo-yellow-full.png";
-import Status from "@/components/Status";
-import ClinicManagement from "@/components/ClinicManagement";
+import Activity from "@/components/Activity";
+import Settings from "@/components/Settings";
 import Contacts from "@/components/Contacts";
 import Tasks from "@/components/Tasks";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 import { useInvitationAcceptance } from "@/hooks/useInvitationAcceptance";
 
-type View = "status" | "contacts" | "tasks" | "clinic";
+type View = "tasks" | "activity" | "contacts" | "settings";
 
 const Index = () => {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<View>("tasks");
   const [user, setUser] = useState<any>(null);
-  const [session, setSession] = useState<any>(null); // CRITICAL: Store session, not just user
+  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
   const [selectedContactName, setSelectedContactName] = useState<string | undefined>(undefined);
-  const [clinicTab, setClinicTab] = useState<string | undefined>(undefined);
   const [disabledLocations, setDisabledLocations] = useState<Array<{ id: string; name: string }>>([]);
   const [showEnableDialog, setShowEnableDialog] = useState(false);
   const [selectedLocationToEnable, setSelectedLocationToEnable] = useState<string>("");
@@ -69,10 +68,20 @@ const Index = () => {
 
         setSession(session);
         setUser(session.user);
-        
-        // Check clinic status
-        await checkClinicStatus(session.user.id);
-        setLoading(false);
+
+        // Quick clinic check with timeout
+        try {
+          await Promise.race([
+            checkClinicStatus(session.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000))
+          ]);
+        } catch (error) {
+          console.log("Clinic check timeout or error - showing onboarding");
+          setHasClinic(false);
+          setCurrentView("settings");
+        } finally {
+          setLoading(false);
+        }
       } catch (error) {
         console.error("Init error:", error);
         if (mounted) {
@@ -102,19 +111,22 @@ const Index = () => {
       if (error || !data) {
         console.error("Error checking clinic:", error);
         setHasClinic(false);
-        setCurrentView("clinic");
+        setCurrentView("settings");
         return;
       }
 
-      setHasClinic(true);
-      // Load AI system status (non-blocking)
-      loadSystemStatus(userId, data.clinic_id).catch(err => 
-        console.error("Error loading system status:", err)
-      );
+      if (data) {
+        setHasClinic(true);
+        // Load AI system status
+        await loadSystemStatus(userId, data.clinic_id);
+      } else {
+        setHasClinic(false);
+        setCurrentView("settings");
+      }
     } catch (error) {
       console.error("Error checking clinic:", error);
       setHasClinic(false);
-      setCurrentView("clinic");
+      setCurrentView("settings");
     }
   };
 
@@ -201,8 +213,8 @@ const Index = () => {
 
   useEffect(() => {
     // If user doesn't have a business, redirect to business setup for onboarding
-    if (hasClinic === false && currentView !== "clinic") {
-      setCurrentView("clinic");
+    if (hasClinic === false && currentView !== "settings") {
+      setCurrentView("settings");
       toast.info("Welcome! Let's set up your business first.");
     }
   }, [hasClinic]);
@@ -233,23 +245,22 @@ const Index = () => {
   const renderView = () => {
     // If user hasn't completed onboarding, show only onboarding
     if (hasClinic === false) {
-      return <ClinicManagement />;
+      return <Settings />;
     }
 
     switch (currentView) {
-      case "status":
-        return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
+      case "activity":
+        return <Activity />;
       case "contacts":
         return <Contacts selectedContactName={selectedContactName} onNavigateToTools={() => {
-          setClinicTab("tools");
-          setCurrentView("clinic");
+          setCurrentView("settings");
         }} />;
       case "tasks":
         return <Tasks onNavigateToContact={handleNavigateToContact} />;
-      case "clinic":
-        return <ClinicManagement initialTab={clinicTab} />;
+      case "settings":
+        return <Settings />;
       default:
-        return <Status onNavigateToTasks={() => setCurrentView("tasks")} onNavigateToClinic={() => setCurrentView("clinic")} />;
+        return <Activity />;
     }
   };
 
@@ -308,7 +319,7 @@ const Index = () => {
                 size="sm"
                 className="gap-2 hover:bg-accent"
               >
-                <Settings className="h-4 w-4" />
+                <SettingsIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Account</span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
@@ -321,7 +332,7 @@ const Index = () => {
                 <span>Team</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/auth-settings")} className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
+                <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Password & Login</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
