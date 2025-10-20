@@ -83,3 +83,6 @@ verify_jwt = true
 
 [functions.elevenlabs-post-call-webhook]
 verify_jwt = false
+
+[functions.elevenlabs-agent-update]
+verify_jwt = true
