@@ -71,7 +71,7 @@ serve(async (req) => {
               user_id: activityLog.user_id,
               clinic_id: activityLog.clinic_id,
               title: `Review voicemail from ${normalizedFrom || 'Unknown'}`,
-              description: `Voicemail recorded (${duration}). Listen to recording: ${body.recording_url}`,
+              description: `Voicemail recorded (${duration}). Transcription in progress... Listen to recording: ${body.recording_url}`,
               status: 'pending',
               priority: 'high',
               source: 'call',
@@ -83,6 +83,15 @@ serve(async (req) => {
           } else {
             console.log('Successfully created task for voicemail');
           }
+
+          // Trigger transcription processing in background (no await - fire and forget)
+          console.log('Triggering transcription for recording:', body.recording_url);
+          supabase.functions.invoke('process-recording-transcription', {
+            body: {
+              recording_url: body.recording_url,
+              activity_log_id: activityLog.id
+            }
+          }).catch(err => console.error('Failed to trigger transcription:', err));
         }
       } else {
         console.warn('No activity log found for conversation:', conversation_uuid);
