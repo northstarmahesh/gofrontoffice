@@ -550,6 +550,81 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                   </Card>
                 )}
 
+                {/* Messaging Section - Moved to top */}
+                <Card className="border-2">
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-semibold">Send Message</Label>
+                      </div>
+                      <div className="flex gap-1 flex-wrap">
+                        {availableChannels.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">Loading channels...</p>
+                        ) : (
+                          availableChannels.map((ch) => {
+                            const isAvailable = ch.isConnected && ch.hasUsed;
+                            const isSelected = selectedChannels.includes(ch.channel);
+                            
+                            const getChannelIcon = () => {
+                              switch (ch.channel) {
+                                case 'sms': return <MessageSquare className="h-4 w-4" />;
+                                case 'whatsapp': return <span className="text-xs">WhatsApp</span>;
+                                case 'instagram': return <Instagram className="h-4 w-4" />;
+                                case 'messenger': return <Facebook className="h-4 w-4" />;
+                                case 'email': return <Mail className="h-4 w-4" />;
+                              }
+                            };
+
+                            const getTooltip = () => {
+                              if (!ch.isConnected) return `${ch.channel.toUpperCase()} not connected to your business`;
+                              if (!ch.hasUsed) return `Contact hasn't used ${ch.channel.toUpperCase()} yet`;
+                              return '';
+                            };
+
+                            return (
+                              <div key={ch.channel} className="relative group">
+                                <Button
+                                  type="button"
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  size="sm"
+                                  onClick={() => isAvailable && toggleChannel(ch.channel)}
+                                  disabled={!isAvailable}
+                                  className={!isAvailable ? 'opacity-40 cursor-not-allowed' : ''}
+                                  title={getTooltip()}
+                                >
+                                  {getChannelIcon()}
+                                </Button>
+                                {!isAvailable && (
+                                  <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 border shadow-md pointer-events-none">
+                                    {getTooltip()}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                    <Textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Type your message..."
+                      rows={8}
+                      className="min-h-[160px]"
+                    />
+                    <Button 
+                      onClick={handleSendMessage} 
+                      disabled={!message.trim() || isSending || selectedChannels.length === 0}
+                      className="w-full"
+                    >
+                      {isSending ? "Sending..." : selectedChannels.length === 1 
+                        ? `Send via ${selectedChannels[0].toUpperCase()}` 
+                        : `Send to ${selectedChannels.length} channels`
+                      }
+                    </Button>
+                  </div>
+                </Card>
+
                 {loading ? (
                   <div className="flex justify-center py-8">
                     <p className="text-sm text-muted-foreground">Loading conversation history...</p>
@@ -563,12 +638,12 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                   <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <MessageSquare className="h-4 w-4" />
-                      Complete Conversation History ({activityHistory.length} interactions)
+                      Recent Messages
                     </h3>
                     
-                    {/* Chat-style messages - chronological order */}
+                    {/* Chat-style messages - show last 5 messages in reverse chronological */}
                     <div className="space-y-4">
-                      {activityHistory.map((log) => {
+                      {activityHistory.slice(-5).reverse().map((log) => {
                         const fromAI = isFromAI(log.title, log.type);
                         const phoneCall = isPhoneCall(log.type);
                         const isCallSummary = log.type.toLowerCase() === 'call_summary';
@@ -724,83 +799,6 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                       })}
                     </div>
                   </div>
-                )}
-
-                {/* Messaging Section */}
-                {!isEditing && (
-                  <Card className="border-2 mt-4">
-                    <div className="p-4 space-y-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Label className="text-sm font-semibold">Send Message</Label>
-                        </div>
-                        <div className="flex gap-1 flex-wrap">
-                          {availableChannels.length === 0 ? (
-                            <p className="text-xs text-muted-foreground">Loading channels...</p>
-                          ) : (
-                            availableChannels.map((ch) => {
-                              const isAvailable = ch.isConnected && ch.hasUsed;
-                              const isSelected = selectedChannels.includes(ch.channel);
-                              
-                              const getChannelIcon = () => {
-                                switch (ch.channel) {
-                                  case 'sms': return <MessageSquare className="h-4 w-4" />;
-                                  case 'whatsapp': return <span className="text-xs">WhatsApp</span>;
-                                  case 'instagram': return <Instagram className="h-4 w-4" />;
-                                  case 'messenger': return <Facebook className="h-4 w-4" />;
-                                  case 'email': return <Mail className="h-4 w-4" />;
-                                }
-                              };
-
-                              const getTooltip = () => {
-                                if (!ch.isConnected) return `${ch.channel.toUpperCase()} not connected to your business`;
-                                if (!ch.hasUsed) return `Contact hasn't used ${ch.channel.toUpperCase()} yet`;
-                                return '';
-                              };
-
-                              return (
-                                <div key={ch.channel} className="relative group">
-                                  <Button
-                                    type="button"
-                                    variant={isSelected ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => isAvailable && toggleChannel(ch.channel)}
-                                    disabled={!isAvailable}
-                                    className={!isAvailable ? 'opacity-40 cursor-not-allowed' : ''}
-                                    title={getTooltip()}
-                                  >
-                                    {getChannelIcon()}
-                                  </Button>
-                                  {!isAvailable && (
-                                    <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 border shadow-md pointer-events-none">
-                                      {getTooltip()}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                      <Textarea
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Type your message..."
-                        rows={8}
-                        className="min-h-[160px]"
-                      />
-                      <Button 
-                        onClick={handleSendMessage} 
-                        disabled={!message.trim() || isSending || selectedChannels.length === 0}
-                        className="w-full"
-                      >
-                        {isSending ? "Sending..." : selectedChannels.length === 1 
-                          ? `Send via ${selectedChannels[0].toUpperCase()}` 
-                          : `Send to ${selectedChannels.length} channels`
-                        }
-                      </Button>
-                    </div>
-                  </Card>
                 )}
               </>
             )}
