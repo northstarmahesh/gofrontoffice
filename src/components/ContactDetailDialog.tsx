@@ -112,6 +112,14 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
           notes: data.notes || ""
         });
       }
+    } else {
+      // Pre-fill form with contact info from activity history
+      setEditForm({
+        name: contactName || "",
+        phone: contactInfo || "",
+        email: "",
+        notes: ""
+      });
     }
   };
 
