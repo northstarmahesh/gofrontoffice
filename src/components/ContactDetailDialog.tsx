@@ -507,17 +507,52 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                 <User className="h-5 w-5" />
                 {isEditing ? "Edit Contact" : (contact?.name || contactName || "Unknown")}
               </DialogTitle>
-              {!isEditing && onViewFullProfile && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={onViewFullProfile}
-                  className="flex items-center gap-2"
-                >
-                  <User className="h-4 w-4" />
-                  View Full Contact
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {isEditing ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsEditing(false)}
+                      className="flex items-center gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={handleSaveContact}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      Save
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    {onViewFullProfile && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={onViewFullProfile}
+                        className="flex items-center gap-2"
+                      >
+                        <User className="h-4 w-4" />
+                        View Full Contact
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
             {!isEditing && contactInfo && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
