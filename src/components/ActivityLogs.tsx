@@ -392,17 +392,20 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
                           )}
 
                           {log.recording_url && (
-                            <div className="mt-2">
+                            <div className="mt-2 space-y-1">
                               <audio 
                                 controls 
                                 className="w-full h-8"
                                 preload="metadata"
                               >
-                                <source src={log.recording_url} type="audio/mpeg" />
+                                <source 
+                                  src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vonage-recording-proxy?url=${encodeURIComponent(log.recording_url)}`} 
+                                  type="audio/mpeg" 
+                                />
                                 Your browser does not support the audio element.
                               </audio>
                               {log.duration && (
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-xs text-muted-foreground">
                                   Duration: {log.duration}
                                 </p>
                               )}

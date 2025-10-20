@@ -12,11 +12,12 @@ serve(async (req) => {
   }
 
   try {
-    const { recording_url, activity_log_id } = await req.json();
+    const { recording_url, activity_log_id, is_voicemail } = await req.json();
     
     console.log('Processing transcription:', {
       recording_url,
       activity_log_id,
+      is_voicemail,
     });
 
     if (!recording_url || !activity_log_id) {
@@ -93,7 +94,11 @@ serve(async (req) => {
     }
 
     const duration = activityLog.duration || 'unknown duration';
-    const summaryText = `Voicemail (${duration}): "${transcript.substring(0, 200)}${transcript.length > 200 ? '...' : ''}"`;
+    
+    // Format summary based on whether it's a voicemail or conversation
+    const summaryText = is_voicemail
+      ? `Voicemail (${duration}):\n\n"${transcript}"`
+      : `Conversation (${duration}):\n\n${transcript}`;
 
     const { error: updateError } = await supabase
       .from('activity_logs')
@@ -117,7 +122,9 @@ serve(async (req) => {
 
     if (!taskFetchError && tasks && tasks.length > 0) {
       const task = tasks[0];
-      const newDescription = `Voicemail recorded (${duration}).\n\nTranscript:\n"${transcript}"\n\nListen to recording: ${recording_url}`;
+      const newDescription = is_voicemail 
+        ? `Voicemail recorded (${duration}).\n\nTranscript:\n"${transcript}"`
+        : `Conversation recorded (${duration}).\n\nFull transcript:\n${transcript}`;
       
       const { error: taskUpdateError } = await supabase
         .from('tasks')

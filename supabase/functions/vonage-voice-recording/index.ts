@@ -33,11 +33,11 @@ serve(async (req) => {
 
     // If we have a recording URL and conversation_uuid, update the activity log
     if (body.recording_url && conversation_uuid) {
-      // Find the activity log for this conversation using conversation_uuid in summary
+      // Find the activity log for this conversation using conversation_uuid in summary OR title
       const { data: activityLog, error: findError } = await supabase
         .from('activity_logs')
-        .select('id, user_id, clinic_id, contact_info')
-        .ilike('summary', `%${conversation_uuid}%`)
+        .select('id, user_id, clinic_id, contact_info, type, title')
+        .or(`summary.ilike.%${conversation_uuid}%,title.ilike.%${conversation_uuid}%`)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -48,6 +48,10 @@ serve(async (req) => {
         const normalizedFrom = normalizePhoneNumber(activityLog.contact_info);
         const duration = body.duration ? `${body.duration}s` : 'unknown duration';
         
+        // Determine if it's a voicemail (type contains voicemail) or regular call
+        const isVoicemail = activityLog.title?.toLowerCase().includes('voicemail') || 
+                           activityLog.type?.toLowerCase().includes('voicemail');
+        
         // Update the activity log with the recording URL
         const { error: updateError } = await supabase
           .from('activity_logs')
@@ -55,7 +59,9 @@ serve(async (req) => {
             recording_url: body.recording_url,
             duration: body.duration ? `${body.duration}s` : null,
             status: 'completed',
-            summary: `Voicemail received (${duration}) - Recording available`,
+            summary: isVoicemail 
+              ? `Voicemail received (${duration}) - Transcription in progress...`
+              : `Call completed (${duration}) - Transcription in progress...`,
           })
           .eq('id', activityLog.id);
 
@@ -64,32 +70,35 @@ serve(async (req) => {
         } else {
           console.log('Successfully updated activity log with recording');
           
-          // Create a task for the voicemail with recording link
-          const { error: taskError } = await supabase
-            .from('tasks')
-            .insert({
-              user_id: activityLog.user_id,
-              clinic_id: activityLog.clinic_id,
-              title: `Review voicemail from ${normalizedFrom || 'Unknown'}`,
-              description: `Voicemail recorded (${duration}). Transcription in progress... Listen to recording: ${body.recording_url}`,
-              status: 'pending',
-              priority: 'high',
-              source: 'call',
-              related_log_id: activityLog.id
-            });
+          // Create a task only for voicemails
+          if (isVoicemail) {
+            const { error: taskError } = await supabase
+              .from('tasks')
+              .insert({
+                user_id: activityLog.user_id,
+                clinic_id: activityLog.clinic_id,
+                title: `Review voicemail from ${normalizedFrom || 'Unknown'}`,
+                description: `Voicemail recorded (${duration}). Transcription in progress...`,
+                status: 'pending',
+                priority: 'high',
+                source: 'call',
+                related_log_id: activityLog.id
+              });
 
-          if (taskError) {
-            console.error('Error creating task:', taskError);
-          } else {
-            console.log('Successfully created task for voicemail');
+            if (taskError) {
+              console.error('Error creating task:', taskError);
+            } else {
+              console.log('Successfully created task for voicemail');
+            }
           }
 
-          // Trigger transcription processing in background (no await - fire and forget)
+          // Trigger transcription processing for ALL recordings (voicemail AND conversations)
           console.log('Triggering transcription for recording:', body.recording_url);
           supabase.functions.invoke('process-recording-transcription', {
             body: {
               recording_url: body.recording_url,
-              activity_log_id: activityLog.id
+              activity_log_id: activityLog.id,
+              is_voicemail: isVoicemail
             }
           }).catch(err => console.error('Failed to trigger transcription:', err));
         }
