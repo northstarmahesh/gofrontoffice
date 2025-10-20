@@ -154,9 +154,9 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         }
       }
 
-      // If status is pending, use the summary as the draft message
+      // If status is pending AND it's an outbound message, use the summary as the draft message
       // (the AI draft is stored in the summary field of pending outbound messages)
-      if (log.status === "pending" && log.summary) {
+      if (log.status === "pending" && log.summary && log.direction === "outbound") {
         draftMessage = log.summary;
         console.log("Found draft in activity log summary:", draftMessage);
       }
