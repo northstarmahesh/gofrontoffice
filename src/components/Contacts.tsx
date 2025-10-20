@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Users, Plus, Edit, Mail, Phone, MessageSquare, Eye, MapPin } from "lucide-react";
 import ContactDetailDialog from "./ContactDetailDialog";
+import { normalizePhoneNumber } from "@/lib/phone-utils";
 
 interface Contact {
   id: string;
@@ -189,7 +190,7 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
       const contactData = {
         clinic_id: clinicData.clinic_id,
         name: formData.name,
-        phone: formData.phone,
+        phone: normalizePhoneNumber(formData.phone),
         email: formData.email || null,
         notes: formData.notes || null
       };
@@ -240,10 +241,14 @@ export const Contacts = ({ selectedContactName, onNavigateToTools }: ContactsPro
     setDialogOpen(true);
   };
 
-  const filteredContacts = contacts.filter((contact) =>
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    contact.phone.includes(searchQuery)
-  );
+  const filteredContacts = contacts.filter((contact) => {
+    const normalizedQuery = normalizePhoneNumber(searchQuery);
+    const normalizedContactPhone = normalizePhoneNumber(contact.phone);
+    
+    return contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      normalizedContactPhone.includes(normalizedQuery) ||
+      contact.phone.includes(searchQuery);
+  });
 
   const openContactDetail = (contact: Contact) => {
     setSelectedContact(contact);
