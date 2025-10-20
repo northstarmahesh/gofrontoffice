@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.elevenlabs-agent-create]
 verify_jwt = true
+
+[functions.elevenlabs-knowledge-sync]
+verify_jwt = true
