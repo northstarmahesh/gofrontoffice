@@ -318,10 +318,55 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         return;
       }
 
-      // Send message to all selected channels
-      const insertPromises = selectedChannels.map(channel =>
+      // Resolve recipient phone
+      const recipientPhone = contactInfo || contact?.phone;
+
+      // If SMS selected, send via Edge Function first
+      if (selectedChannels.includes('sms')) {
+        if (!recipientPhone) {
+          toast.error('No phone number available for SMS');
+          setIsSending(false);
+          return;
+        }
+
+        // Get a verified active sender number for the clinic
+        const { data: clinicPhone, error: phoneErr } = await supabase
+          .from('clinic_phone_numbers')
+          .select('phone_number')
+          .eq('clinic_id', clinicData.clinic_id)
+          .eq('is_active', true)
+          .eq('is_verified', true)
+          .maybeSingle();
+
+        if (phoneErr || !clinicPhone?.phone_number) {
+          console.error('[ContactDetailDialog] clinic phone error:', phoneErr);
+          toast.error('No verified SMS number configured for your clinic');
+          setIsSending(false);
+          return;
+        }
+
+        // Invoke edge function to actually send SMS
+        const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
+          body: {
+            to: recipientPhone,
+            message,
+            from: clinicPhone.phone_number,
+          },
+        });
+
+        if (smsError || !smsResult?.success) {
+          console.error('[ContactDetailDialog] SMS send error:', smsError || smsResult);
+          const errMsg = (smsError as any)?.message || (smsResult as any)?.error || 'Unknown error';
+          toast.error(`Failed to send SMS: ${errMsg}`);
+          setIsSending(false);
+          return;
+        }
+      }
+
+      // Log outbound messages
+      const insertPromises = selectedChannels.map((channel) =>
         supabase
-          .from("activity_logs")
+          .from('activity_logs')
           .insert({
             user_id: user.id,
             clinic_id: clinicData.clinic_id,
@@ -329,24 +374,24 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
             title: `${channel.toUpperCase()} message`,
             summary: message,
             contact_name: contactName,
-            contact_info: contactInfo || contact?.phone,
-            status: 'pending',
-            direction: 'outbound'
+            contact_info: recipientPhone,
+            status: 'completed',
+            direction: 'outbound',
           })
       );
 
       const results = await Promise.all(insertPromises);
-      const errors = results.filter(r => r.error);
+      const errors = results.filter((r) => (r as any).error);
       
       if (errors.length > 0) {
-        throw new Error("Failed to send to some channels");
+        throw new Error('Failed to save some logs');
       }
 
       const channelText = selectedChannels.length === 1 
         ? selectedChannels[0].toUpperCase()
         : `${selectedChannels.length} channels`;
       toast.success(`Message sent via ${channelText}`);
-      setMessage("");
+      setMessage('');
       loadContactHistory();
     } catch (error) {
       console.error("Error sending message:", error);
