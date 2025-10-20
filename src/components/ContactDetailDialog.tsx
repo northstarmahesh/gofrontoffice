@@ -113,9 +113,9 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         });
       }
     } else {
-      // Pre-fill form with contact info from activity history
+      // Pre-fill only phone number from activity history
       setEditForm({
-        name: contactName || "",
+        name: "",
         phone: contactInfo || "",
         email: "",
         notes: ""
