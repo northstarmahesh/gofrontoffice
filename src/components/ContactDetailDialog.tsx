@@ -326,9 +326,49 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       const phoneToUse = contactInfo || contact?.phone;
       console.log("Sending message to:", { contactName, phoneToUse, channels: selectedChannels });
 
+      // Get clinic phone number for SMS sending
+      const { data: phoneData } = await supabase
+        .from("clinic_phone_numbers")
+        .select("phone_number")
+        .eq("clinic_id", clinicData.clinic_id)
+        .eq("is_verified", true)
+        .eq("is_active", true)
+        .maybeSingle();
+
       // Send message to all selected channels
-      const insertPromises = selectedChannels.map(channel =>
-        supabase
+      const sendPromises = selectedChannels.map(async (channel) => {
+        let status = 'pending';
+        let sendError = null;
+
+        // For SMS, actually send via backend function
+        if (channel === 'sms') {
+          if (!phoneData?.phone_number) {
+            toast.error("No verified clinic phone number configured for SMS");
+            throw new Error("No verified phone number");
+          }
+
+          const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
+            body: {
+              to: phoneToUse,
+              message: message,
+              from: phoneData.phone_number
+            }
+          });
+
+          if (smsError || !smsResult?.success) {
+            sendError = smsResult?.error || smsError?.message || "Failed to send SMS";
+            console.error("SMS send error:", sendError);
+            toast.error(`Failed to send SMS: ${sendError}`);
+            return { error: sendError };
+          }
+
+          // Mark as completed since we actually sent it
+          status = 'completed';
+        }
+        // For other channels, keep pending status (handled by their webhooks/functions)
+
+        // Log the message
+        return supabase
           .from("activity_logs")
           .insert({
             user_id: user.id,
@@ -338,12 +378,12 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
             summary: message,
             contact_name: contactName,
             contact_info: phoneToUse,
-            status: 'pending',
+            status: status,
             direction: 'outbound'
-          })
-      );
+          });
+      });
 
-      const results = await Promise.all(insertPromises);
+      const results = await Promise.all(sendPromises);
       const errors = results.filter(r => r.error);
       
       if (errors.length > 0) {

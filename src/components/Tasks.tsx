@@ -338,46 +338,100 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Send the message via the appropriate channel
-      const { error: logError } = await supabase
-        .from('activity_logs')
-        .insert({
-          user_id: user.id,
-          clinic_id: task.clinic_id,
-          type: task.source,
-          title: `${task.source.toUpperCase()} message`,
-          summary: task.draftMessage,
-          contact_name: task.contact_name,
-          contact_info: task.contact_info,
-          status: 'completed',
-          direction: 'outbound'
+      // Get clinic phone number for SMS sending
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicData?.clinic_id) {
+        toast.error("No business found for user");
+        return;
+      }
+
+      let sendSuccess = false;
+      let errorMessage = "";
+
+      // If source is SMS, actually send via backend function
+      if (task.source === 'sms') {
+        // Get verified clinic phone number
+        const { data: phoneData } = await supabase
+          .from("clinic_phone_numbers")
+          .select("phone_number")
+          .eq("clinic_id", clinicData.clinic_id)
+          .eq("is_verified", true)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (!phoneData?.phone_number) {
+          toast.error("No verified clinic phone number configured for SMS");
+          return;
+        }
+
+        // Call send-sms backend function
+        const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
+          body: {
+            to: task.contact_info,
+            message: task.draftMessage,
+            from: phoneData.phone_number
+          }
         });
 
-      if (logError) throw logError;
+        if (smsError || !smsResult?.success) {
+          errorMessage = smsResult?.error || smsError?.message || "Failed to send SMS";
+          toast.error(`Failed to send SMS: ${errorMessage}`);
+          return;
+        }
 
-      // Mark task as completed
-      if (task.id) {
-        const { error: taskError } = await supabase
-          .from('tasks')
-          .update({ status: 'completed', completed_at: new Date().toISOString() })
-          .eq('id', task.id);
-
-        if (taskError) throw taskError;
+        sendSuccess = true;
+      } else {
+        // For other channels, mark as pending (will be handled by their respective webhooks/functions)
+        sendSuccess = true;
       }
 
-      // Update draft_replies status if exists
-      if (task.related_log_id) {
-        const { error: draftError } = await supabase
-          .from('draft_replies')
-          .update({ status: 'approved', approved_at: new Date().toISOString() })
-          .eq('log_id', task.related_log_id)
-          .eq('status', 'pending');
+      if (sendSuccess) {
+        // Log the sent message
+        const { error: logError } = await supabase
+          .from('activity_logs')
+          .insert({
+            user_id: user.id,
+            clinic_id: clinicData.clinic_id,
+            type: task.source,
+            title: `${task.source.toUpperCase()} to ${task.contact_name}`,
+            summary: task.draftMessage,
+            contact_name: task.contact_name,
+            contact_info: task.contact_info,
+            status: 'completed',
+            direction: 'outbound'
+          });
 
-        if (draftError) console.error("Error updating draft:", draftError);
+        if (logError) throw logError;
+
+        // Mark task as completed
+        if (task.id) {
+          const { error: taskError } = await supabase
+            .from('tasks')
+            .update({ status: 'completed', completed_at: new Date().toISOString() })
+            .eq('id', task.id);
+
+          if (taskError) throw taskError;
+        }
+
+        // Update draft_replies status if exists
+        if (task.related_log_id) {
+          const { error: draftError } = await supabase
+            .from('draft_replies')
+            .update({ status: 'approved', approved_at: new Date().toISOString() })
+            .eq('log_id', task.related_log_id)
+            .eq('status', 'pending');
+
+          if (draftError) console.error("Error updating draft:", draftError);
+        }
+
+        toast.success(`Message sent via ${task.source.toUpperCase()}`);
+        setRefreshKey(prev => prev + 1);
       }
-
-      toast.success(`Message sent via ${task.source.toUpperCase()}`);
-      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
