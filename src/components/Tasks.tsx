@@ -281,6 +281,13 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                d.getDate() === today.getDate();
       };
 
+      // Get clinic_id for contact lookup
+      const { data: clinicUsers } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
       // Seed tasks with basic info and a date label for grouping
       const tasksWithBasicInfo = (tasks || []).map((task: any) => ({
         ...task,
@@ -295,10 +302,27 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
           : format(new Date(task.created_at), 'MMM dd, yyyy'),
       }));
 
-      // Enrich with actual AI draft text from draft_replies (co-pilot mode)
+      // Enrich with actual AI draft text from draft_replies AND lookup saved contact names
       const enhancedTasks = await Promise.all(
         tasksWithBasicInfo.map(async (t: any) => {
-          if (!t.related_log_id) return t;
+          // Look up saved contact name by phone number
+          let contactName = t.contact_name;
+          if (t.contact_info && clinicUsers?.clinic_id) {
+            const { data: savedContact } = await supabase
+              .from('contacts')
+              .select('name')
+              .eq('clinic_id', clinicUsers.clinic_id)
+              .eq('phone', t.contact_info)
+              .maybeSingle();
+            
+            if (savedContact?.name) {
+              contactName = savedContact.name;
+            }
+          }
+
+          // Fetch draft content
+          if (!t.related_log_id) return { ...t, contact_name: contactName };
+          
           const { data: draft } = await supabase
             .from('draft_replies')
             .select('draft_content, created_at, status')
@@ -308,9 +332,9 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             .maybeSingle();
 
           if (draft?.draft_content) {
-            return { ...t, draftMessage: draft.draft_content, draft_message: draft.draft_content };
+            return { ...t, contact_name: contactName, draftMessage: draft.draft_content, draft_message: draft.draft_content };
           }
-          return t;
+          return { ...t, contact_name: contactName };
         })
       );
 
