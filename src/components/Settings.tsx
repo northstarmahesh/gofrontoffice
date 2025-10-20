@@ -17,13 +17,18 @@ const Settings = () => {
   const [locationId, setLocationId] = useState<string | null>(null);
   const [clinicName, setClinicName] = useState<string>("");
   const [locationName, setLocationName] = useState<string>("");
-  const [phoneMode, setPhoneMode] = useState<"on" | "copilot" | "off">("on");
-  const [autoPilotEnabled, setAutoPilotEnabled] = useState(true);
+  const [phoneMode, setPhoneMode] = useState<"on" | "passive" | "off">("on");
   const [channels, setChannels] = useState({
     sms: true,
     whatsapp: true,
     instagram: false,
     messenger: false,
+  });
+  const [channelAutoPilot, setChannelAutoPilot] = useState({
+    sms: true,
+    whatsapp: true,
+    instagram: true,
+    messenger: true,
   });
 
   // Load settings from database
@@ -92,13 +97,18 @@ const Settings = () => {
 
       if (settings) {
         setSettingsId(settings.id);
-        setPhoneMode(settings.phone_mode as "on" | "copilot" | "off");
-        setAutoPilotEnabled(settings.auto_pilot_enabled ?? true);
+        setPhoneMode(settings.phone_mode as "on" | "passive" | "off");
         setChannels({
           sms: settings.sms_enabled,
           whatsapp: settings.whatsapp_enabled,
           instagram: settings.instagram_enabled,
           messenger: settings.messenger_enabled,
+        });
+        setChannelAutoPilot({
+          sms: settings.sms_auto_pilot ?? true,
+          whatsapp: settings.whatsapp_auto_pilot ?? true,
+          instagram: settings.instagram_auto_pilot ?? true,
+          messenger: settings.messenger_auto_pilot ?? true,
         });
       }
     } catch (error) {
@@ -127,19 +137,14 @@ const Settings = () => {
     }
   };
 
-  const handlePhoneModeChange = async (mode: "on" | "copilot" | "off") => {
+  const handlePhoneModeChange = async (mode: "on" | "passive" | "off") => {
     setPhoneMode(mode);
     
-    // Sync auto_pilot_enabled with phone_mode
-    const autoPilot = mode === "on";
-    setAutoPilotEnabled(autoPilot);
-    
     await updateSettings({ 
-      phone_mode: mode,
-      auto_pilot_enabled: autoPilot
+      phone_mode: mode
     });
     
-    const modeLabel = mode === "on" ? "Auto-Pilot" : mode === "copilot" ? "Co-Pilot" : "Off";
+    const modeLabel = mode === "on" ? "Auto-Pilot" : mode === "passive" ? "Co-Pilot" : "Off";
     toast.success(`Phone mode: ${modeLabel}`);
   };
 
@@ -157,11 +162,15 @@ const Settings = () => {
     );
   };
 
-  const handleAutoPilotToggle = async () => {
-    const newValue = !autoPilotEnabled;
-    setAutoPilotEnabled(newValue);
-    await updateSettings({ auto_pilot_enabled: newValue });
-    toast.success(`Messaging mode: ${newValue ? "Autopilot" : "Co-pilot"}`);
+  const handleChannelAutoPilotToggle = async (channel: keyof typeof channelAutoPilot) => {
+    const newValue = !channelAutoPilot[channel];
+    setChannelAutoPilot((prev) => ({ ...prev, [channel]: newValue }));
+    
+    const updateKey = `${channel}_auto_pilot`;
+    await updateSettings({ [updateKey]: newValue });
+    
+    const channelName = channel.charAt(0).toUpperCase() + channel.slice(1);
+    toast.success(`${channelName} mode: ${newValue ? "Autopilot" : "Co-pilot"}`);
   };
 
   if (loading) {
@@ -238,18 +247,18 @@ const Settings = () => {
               </button>
 
               <button
-                onClick={() => handlePhoneModeChange("copilot")}
+                onClick={() => handlePhoneModeChange("passive")}
                 className={`w-full rounded-lg border-2 p-4 text-left transition-all ${
-                  phoneMode === "copilot"
+                  phoneMode === "passive"
                     ? "border-primary bg-primary/5"
                     : "border-border bg-card hover:border-primary/50"
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                    phoneMode === "copilot" ? "border-primary" : "border-muted-foreground"
+                    phoneMode === "passive" ? "border-primary" : "border-muted-foreground"
                   }`}>
-                    {phoneMode === "copilot" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                    {phoneMode === "passive" && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-foreground">Co-Pilot</p>
@@ -310,9 +319,9 @@ const Settings = () => {
                 {channels.sms && (
                   <div className="flex gap-2 pl-8">
                     <button
-                      onClick={handleAutoPilotToggle}
+                      onClick={() => handleChannelAutoPilotToggle("sms")}
                       className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                        autoPilotEnabled
+                        channelAutoPilot.sms
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
@@ -320,9 +329,9 @@ const Settings = () => {
                       Autopilot
                     </button>
                     <button
-                      onClick={handleAutoPilotToggle}
+                      onClick={() => handleChannelAutoPilotToggle("sms")}
                       className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                        !autoPilotEnabled
+                        !channelAutoPilot.sms
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
@@ -349,9 +358,9 @@ const Settings = () => {
                 {channels.whatsapp && (
                   <div className="flex gap-2 pl-8">
                     <button
-                      onClick={handleAutoPilotToggle}
+                      onClick={() => handleChannelAutoPilotToggle("whatsapp")}
                       className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                        autoPilotEnabled
+                        channelAutoPilot.whatsapp
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
@@ -359,9 +368,9 @@ const Settings = () => {
                       Autopilot
                     </button>
                     <button
-                      onClick={handleAutoPilotToggle}
+                      onClick={() => handleChannelAutoPilotToggle("whatsapp")}
                       className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                        !autoPilotEnabled
+                        !channelAutoPilot.whatsapp
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
@@ -388,9 +397,9 @@ const Settings = () => {
                 {channels.instagram && (
                   <div className="flex gap-2 pl-8">
                     <button
-                      onClick={handleAutoPilotToggle}
+                      onClick={() => handleChannelAutoPilotToggle("instagram")}
                       className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                        autoPilotEnabled
+                        channelAutoPilot.instagram
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
@@ -398,9 +407,9 @@ const Settings = () => {
                       Autopilot
                     </button>
                     <button
-                      onClick={handleAutoPilotToggle}
+                      onClick={() => handleChannelAutoPilotToggle("instagram")}
                       className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                        !autoPilotEnabled
+                        !channelAutoPilot.instagram
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
@@ -427,9 +436,9 @@ const Settings = () => {
                 {channels.messenger && (
                   <div className="flex gap-2 pl-8">
                     <button
-                      onClick={handleAutoPilotToggle}
+                      onClick={() => handleChannelAutoPilotToggle("messenger")}
                       className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                        autoPilotEnabled
+                        channelAutoPilot.messenger
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
@@ -437,9 +446,9 @@ const Settings = () => {
                       Autopilot
                     </button>
                     <button
-                      onClick={handleAutoPilotToggle}
+                      onClick={() => handleChannelAutoPilotToggle("messenger")}
                       className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                        !autoPilotEnabled
+                        !channelAutoPilot.messenger
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
