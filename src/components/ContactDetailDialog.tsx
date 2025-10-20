@@ -112,14 +112,48 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
           notes: data.notes || ""
         });
       }
-    } else {
-      // Pre-fill only phone number from activity history
-      setEditForm({
-        name: "",
-        phone: contactInfo || "",
-        email: "",
-        notes: ""
-      });
+    } else if (contactInfo) {
+      // Try to find existing contact by phone number
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: clinicData } = await supabase
+        .from("clinic_users")
+        .select("clinic_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!clinicData?.clinic_id) return;
+
+      const { data: existingContact, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("clinic_id", clinicData.clinic_id)
+        .eq("phone", contactInfo)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error searching for contact:", error);
+      }
+
+      if (existingContact) {
+        // Found existing contact - load it
+        setContact(existingContact);
+        setEditForm({
+          name: existingContact.name,
+          phone: existingContact.phone,
+          email: existingContact.email || "",
+          notes: existingContact.notes || ""
+        });
+      } else {
+        // No existing contact - pre-fill only phone number
+        setEditForm({
+          name: "",
+          phone: contactInfo || "",
+          email: "",
+          notes: ""
+        });
+      }
     }
   };
 
