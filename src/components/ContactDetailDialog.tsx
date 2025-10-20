@@ -158,14 +158,24 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
   };
 
   const loadContactHistory = async () => {
-    if (!contactName) return;
+    if (!contactName && !contactInfo) return;
     
     setLoading(true);
     try {
-      const { data: historyData, error: historyError } = await supabase
+      // Search by both contact name and phone number to get all conversations
+      let query = supabase
         .from("activity_logs")
-        .select("*")
-        .eq("contact_name", contactName)
+        .select("*");
+      
+      if (contactInfo) {
+        // If we have phone/contact info, search by that (most reliable)
+        query = query.eq("contact_info", contactInfo);
+      } else if (contactName) {
+        // Fallback to name if no contact info
+        query = query.eq("contact_name", contactName);
+      }
+      
+      const { data: historyData, error: historyError } = await query
         .order("created_at", { ascending: true });
 
       if (historyError) throw historyError;
