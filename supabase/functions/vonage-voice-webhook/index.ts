@@ -159,18 +159,31 @@ serve(async (req) => {
       {
         action: "connect",
         eventUrl: [eventUrl],
-        timeout: 20, // Increased timeout to 20 seconds
+        timeout: 60, // Increased timeout to 60 seconds for Eleven Labs response
         from: normalizedTo,
         endpoint: [{
           type: "sip",
-          uri: clinic.elevenlabs_sip_uri
+          uri: clinic.elevenlabs_sip_uri,
+          headers: {
+            "X-Caller-Id": normalizedFrom,
+            "X-Clinic-Id": clinic.id,
+            "X-Conversation-Id": conversation_uuid
+          }
         }]
       },
       {
         action: "talk",
-        text: "Förlåt, assistenten är inte tillgänglig just nu. Vänligen försök igen senare.",
+        text: "Tack för ditt samtal. Lämna gärna ett meddelande efter signalen.",
         voiceName: "Astrid",
         language: "sv-SE"
+      },
+      {
+        action: "record",
+        eventUrl: [eventUrl],
+        endOnSilence: 3,
+        beepStart: true,
+        format: "mp3",
+        channels: 1
       }
     ];
 
