@@ -143,8 +143,8 @@ serve(async (req) => {
       });
 
     // Return NCCO with initial greeting, then connect to Eleven Labs SIP
-    console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
-    console.log('Agent ID:', clinic.elevenlabs_agent_id);
+    console.log(`[${new Date().toISOString()}] Forwarding call to Eleven Labs SIP URI:`, clinic.elevenlabs_sip_uri);
+    console.log(`[${new Date().toISOString()}] Agent ID:`, clinic.elevenlabs_agent_id);
 
     const ncco = [
       {
