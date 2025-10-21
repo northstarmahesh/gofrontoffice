@@ -60,9 +60,7 @@ serve(async (req) => {
 
     // Update or create activity log based on call status
     if (existingLog) {
-      const updateData: any = {
-        updated_at: new Date().toISOString(),
-      };
+      const updateData: any = {};
 
       // Map Vonage status to our status
       if (status === 'completed') {
