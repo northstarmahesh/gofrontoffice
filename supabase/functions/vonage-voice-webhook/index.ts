@@ -86,7 +86,7 @@ serve(async (req) => {
     // Get clinic details and Eleven Labs SIP URI
     const { data: clinic, error: clinicError } = await supabase
       .from('clinics')
-      .select('id, name, elevenlabs_sip_uri')
+      .select('id, name, elevenlabs_sip_uri, elevenlabs_agent_id')
       .eq('id', phoneData.clinic_id)
       .maybeSingle();
 
