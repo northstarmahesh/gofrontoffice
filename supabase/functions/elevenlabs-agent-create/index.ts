@@ -121,7 +121,8 @@ serve(async (req) => {
           language: "sv"
         },
         tts: {
-          voice_id: voiceId
+          voice_id: voiceId,
+          model_id: "eleven_turbo_v2_5"
         },
         asr: {
           language: "sv"

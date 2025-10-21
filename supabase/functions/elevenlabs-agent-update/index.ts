@@ -168,7 +168,8 @@ serve(async (req) => {
       patchBody = {
         conversation_config: {
           tts: {
-            voice_id: value
+            voice_id: value,
+            model_id: "eleven_turbo_v2_5"
           }
         }
       };
