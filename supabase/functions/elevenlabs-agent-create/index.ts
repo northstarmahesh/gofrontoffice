@@ -118,7 +118,8 @@ serve(async (req) => {
             tool_ids: []
           },
           first_message: firstMessage,
-          language: "sv"
+          language: "sv",
+          llm: "eleven_turbo_v2_5"
         },
         tts: {
           voice_id: voiceId

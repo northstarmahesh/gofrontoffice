@@ -159,7 +159,8 @@ serve(async (req) => {
           agent: {
             prompt: {
               prompt: value
-            }
+            },
+            llm: "eleven_turbo_v2_5"
           }
         }
       };
@@ -199,7 +200,8 @@ serve(async (req) => {
           agent: {
             prompt: {
               prompt: fullPrompt
-            }
+            },
+            llm: "eleven_turbo_v2_5"
           }
         }
       };
