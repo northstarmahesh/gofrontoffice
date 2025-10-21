@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import ContactDetailDialog from "./ContactDetailDialog";
+import CallTranscriptDialog from "./CallTranscriptDialog";
 import { toast } from "sonner";
 
 interface ActivityLog {
@@ -44,6 +45,12 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
     draftMessage?: string;
   } | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
+  const [selectedCallLog, setSelectedCallLog] = useState<{
+    id: string;
+    contactName?: string;
+    contactPhone?: string;
+  } | null>(null);
 
   useEffect(() => {
     loadActivityLogs(true);
@@ -173,6 +180,17 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
   };
 
   const handleLogClick = async (log: ActivityLog) => {
+    // Check if it's a call - open transcript dialog
+    if (log.type?.toLowerCase().includes('call')) {
+      setSelectedCallLog({
+        id: log.id,
+        contactName: log.contact_name || undefined,
+        contactPhone: log.contact_info || undefined,
+      });
+      setTranscriptDialogOpen(true);
+      return;
+    }
+
     if (log.contact_name) {
       // It's a contact activity - open contact detail dialog
       let contactId = undefined;
@@ -310,6 +328,17 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
         />
       )}
 
+      {/* Call Transcript Dialog */}
+      {selectedCallLog && (
+        <CallTranscriptDialog
+          open={transcriptDialogOpen}
+          onOpenChange={setTranscriptDialogOpen}
+          activityLogId={selectedCallLog.id}
+          contactName={selectedCallLog.contactName}
+          contactPhone={selectedCallLog.contactPhone}
+        />
+      )}
+
       {/* Filters */}
       <div className="space-y-2">
         <div className="relative">
@@ -358,11 +387,11 @@ const ActivityLogs = ({ onNavigateToContact }: ActivityLogsProps) => {
                     <Card 
                       key={log.id} 
                       className={`border-0 p-3 shadow-sm transition-all ${
-                        isContact 
+                        isContact || log.type?.toLowerCase().includes('call')
                           ? 'hover:shadow-md cursor-pointer hover:border-primary/20' 
                           : 'bg-muted/30 hover:bg-muted/50 cursor-default'
                       }`}
-                      onClick={() => isContact && handleLogClick(log)}
+                      onClick={() => (isContact || log.type?.toLowerCase().includes('call')) && handleLogClick(log)}
                     >
                       <div className="flex gap-3">
                         {/* Icon */}
