@@ -56,7 +56,7 @@ const CallTranscriptDialog = ({
   const loadTranscript = async () => {
     setLoading(true);
     try {
-      // First get the activity log to find the conversation_id or phone number
+      // Step 1: Get the activity log to extract conversation UUID from summary
       const { data: activityLog, error: logError } = await supabase
         .from('activity_logs')
         .select('*')
@@ -65,51 +65,55 @@ const CallTranscriptDialog = ({
 
       if (logError) {
         console.error('Error fetching activity log:', logError);
-        toast.error('Failed to load call details');
+        toast.error('Kunde inte ladda samtalsdetaljer');
+        setLoading(false);
         return;
       }
 
-      // Try to find the transcript by contact_info (phone) and approximate timestamp
+      // Step 2: Extract conversation_id from summary field
+      // Format: "Call received - UUID: CON-ea2a6eb4-9bd9-40ae-9be3-e2bc59a6d672"
+      const conversationIdMatch = activityLog.summary?.match(/UUID:\s*(CON-[a-f0-9-]+)/i);
+      const conversationId = conversationIdMatch?.[1];
+
+      if (!conversationId) {
+        console.warn('No conversation ID found in activity log summary');
+        setTranscriptData(null);
+        setLoading(false);
+        return;
+      }
+
+      // Step 3: Direct lookup using conversation_id
       const { data: callLog, error: callError } = await supabase
         .from('elevenlabs_call_logs')
         .select('*')
-        .eq('clinic_id', activityLog.clinic_id)
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .eq('conversation_id', conversationId)
+        .maybeSingle(); // Use maybeSingle() instead of single() to handle empty results gracefully
 
       if (callError) {
         console.error('Error fetching call log:', callError);
-        toast.error('Failed to load transcript');
+        toast.error('Kunde inte ladda transkription');
+        setLoading(false);
         return;
       }
 
-      // Find matching call by phone and approximate time (within 2 minutes)
-      const activityTime = new Date(activityLog.created_at).getTime();
-      const matchingCall = callLog?.find((log) => {
-        const callTime = new Date(log.created_at).getTime();
-        const timeDiff = Math.abs(activityTime - callTime);
-        const metadata = log.metadata as CallMetadata | null;
-        const phoneMatch = metadata?.phone_number === activityLog.contact_info;
-        return phoneMatch && timeDiff < 2 * 60 * 1000; // Within 2 minutes
-      });
-
-      if (matchingCall) {
-        // Type cast the Json types to proper TypeScript types
+      // Step 4: Handle result
+      if (callLog && callLog.transcript) {
         const typedData: CallTranscriptData = {
-          conversation_id: matchingCall.conversation_id,
-          transcript: ((matchingCall.transcript as unknown) as TranscriptTurn[]) || [],
-          metadata: ((matchingCall.metadata as unknown) as CallMetadata) || {},
-          duration_seconds: matchingCall.duration_seconds || 0,
-          created_at: matchingCall.created_at,
-          call_direction: matchingCall.call_direction || 'inbound',
+          conversation_id: callLog.conversation_id,
+          transcript: ((callLog.transcript as unknown) as TranscriptTurn[]) || [],
+          metadata: ((callLog.metadata as unknown) as CallMetadata) || {},
+          duration_seconds: callLog.duration_seconds || 0,
+          created_at: callLog.created_at,
+          call_direction: callLog.call_direction || 'inbound',
         };
         setTranscriptData(typedData);
       } else {
+        // Transcript not yet available (webhook pending)
         setTranscriptData(null);
       }
     } catch (error) {
       console.error('Error loading transcript:', error);
-      toast.error('Failed to load transcript');
+      toast.error('Kunde inte ladda transkription');
     } finally {
       setLoading(false);
     }
