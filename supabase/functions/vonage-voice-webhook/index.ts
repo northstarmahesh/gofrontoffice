@@ -146,9 +146,6 @@ serve(async (req) => {
     console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
     console.log('Agent ID:', clinic.elevenlabs_agent_id);
 
-    const eventUrl = `${supabaseUrl}/functions/v1/vonage-voice-events`;
-    console.log('Event URL for status updates:', eventUrl);
-
     const ncco = [
       {
         action: "talk",
@@ -158,8 +155,7 @@ serve(async (req) => {
       },
       {
         action: "connect",
-        eventUrl: [eventUrl],
-        timeout: 20, // Increased timeout to 20 seconds
+        timeout: 20,
         from: normalizedTo,
         endpoint: [{
           type: "sip",
