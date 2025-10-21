@@ -115,8 +115,7 @@ serve(async (req) => {
         agent: {
           prompt: {
             prompt: assistantPrompt,
-            tool_ids: [],
-            built_in_tools: ["end_call", "language_detection"]
+            tool_ids: []
           },
           first_message: firstMessage,
           language: "sv"
