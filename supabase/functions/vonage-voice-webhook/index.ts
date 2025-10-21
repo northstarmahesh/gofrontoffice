@@ -86,7 +86,7 @@ serve(async (req) => {
     // Get clinic details and Eleven Labs SIP URI
     const { data: clinic, error: clinicError } = await supabase
       .from('clinics')
-      .select('id, name, elevenlabs_sip_uri, elevenlabs_agent_id')
+      .select('id, name, elevenlabs_sip_uri')
       .eq('id', phoneData.clinic_id)
       .maybeSingle();
 
@@ -103,27 +103,12 @@ serve(async (req) => {
       );
     }
 
-    // Validate SIP URI completeness
     if (!clinic.elevenlabs_sip_uri) {
-      console.error('Missing ElevenLabs SIP URI');
+      console.error('Clinic has no Eleven Labs SIP URI configured');
       return new Response(
         JSON.stringify([{
           action: 'talk',
-          text: 'Förlåt, AI-assistenten är inte konfigurerad.',
-          voiceName: 'Astrid',
-          language: 'sv-SE',
-        }]),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate that SIP URI has user part (agent_id or number before @)
-    if (!clinic.elevenlabs_sip_uri.includes('@')) {
-      console.error('Invalid SIP URI - missing user part:', clinic.elevenlabs_sip_uri);
-      return new Response(
-        JSON.stringify([{
-          action: 'talk',
-          text: 'Förlåt, AI-assistentens konfiguration är inte komplett.',
+          text: 'Förlåt, AI-assistenten är inte aktiverad ännu.',
           voiceName: 'Astrid',
           language: 'sv-SE',
         }]),
@@ -160,8 +145,6 @@ serve(async (req) => {
     // Return NCCO with initial greeting, then connect to Eleven Labs SIP
     console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
     console.log('Agent ID:', clinic.elevenlabs_agent_id);
-    console.log('Clinic ID:', clinic.id);
-    console.log('Caller:', normalizedFrom, '→ Clinic number:', normalizedTo);
 
     const eventUrl = `${supabaseUrl}/functions/v1/vonage-voice-events`;
     console.log('Event URL for status updates:', eventUrl);
@@ -176,31 +159,18 @@ serve(async (req) => {
       {
         action: "connect",
         eventUrl: [eventUrl],
-        timeout: 60, // Increased timeout to 60 seconds for Eleven Labs response
+        timeout: 20, // Increased timeout to 20 seconds
         from: normalizedTo,
         endpoint: [{
           type: "sip",
-          uri: clinic.elevenlabs_sip_uri,
-          headers: {
-            "X-Caller-Id": normalizedFrom,
-            "X-Clinic-Id": clinic.id,
-            "X-Conversation-Id": conversation_uuid
-          }
+          uri: clinic.elevenlabs_sip_uri
         }]
       },
       {
         action: "talk",
-        text: "Tack för ditt samtal. Lämna gärna ett meddelande efter signalen.",
+        text: "Förlåt, assistenten är inte tillgänglig just nu. Vänligen försök igen senare.",
         voiceName: "Astrid",
         language: "sv-SE"
-      },
-      {
-        action: "record",
-        eventUrl: [eventUrl],
-        endOnSilence: 3,
-        beepStart: true,
-        format: "mp3",
-        channels: 1
       }
     ];
 

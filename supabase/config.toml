@@ -1,8 +1,5 @@
 project_id = "bzaqtvjereyqrymupapp"
 
-[functions.elevenlabs-conversation-init]
-verify_jwt = false
-
 [functions.send-notifications-cron]
 verify_jwt = false
 
