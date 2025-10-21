@@ -83,7 +83,7 @@ serve(async (req) => {
     const agentId = clinic.elevenlabs_agent_id;
 
     // Get Eleven Labs API key
-    const elevenLabsApiKey = Deno.env.get('ElevenLabs_API_KEY');
+    const elevenLabsApiKey = Deno.env.get('ELEVENLABS_API_KEY');
     if (!elevenLabsApiKey) {
       throw new Error('ELEVENLABS_API_KEY not configured');
     }
@@ -181,31 +181,54 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('Error in elevenlabs-knowledge-sync:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     
-    // Try to update database with error status
+    // CRITICAL: Always update database with error status
+    // Parse kb_entry_id from the original request
+    let kb_entry_id: string | undefined;
     try {
-      const { kb_entry_id } = await req.json();
-      const supabaseUrl = Deno.env.get('SUPABASE_URL');
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-      
-      if (supabaseUrl && supabaseKey && kb_entry_id) {
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        await supabase
-          .from('clinic_knowledge_base')
-          .update({
-            sync_status: 'failed',
-            sync_error: error.message
-          })
-          .eq('id', kb_entry_id);
+      const body = await req.clone().json();
+      kb_entry_id = body.kb_entry_id;
+    } catch (parseError) {
+      console.error('Could not parse request body for error handling:', parseError);
+    }
+    
+    if (kb_entry_id) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        
+        if (supabaseUrl && supabaseKey) {
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          const { error: updateError } = await supabase
+            .from('clinic_knowledge_base')
+            .update({
+              sync_status: 'failed',
+              sync_error: error.message || 'Unknown sync error',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', kb_entry_id);
+          
+          if (updateError) {
+            console.error('Failed to update error status in database:', updateError);
+          } else {
+            console.log('Successfully updated sync status to failed for entry:', kb_entry_id);
+          }
+        }
+      } catch (dbError) {
+        console.error('Critical: Failed to update error status in database:', dbError);
       }
-    } catch (dbError) {
-      console.error('Failed to update error status in database:', dbError);
     }
     
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Unknown error occurred',
-        success: false
+        success: false,
+        kb_entry_id
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

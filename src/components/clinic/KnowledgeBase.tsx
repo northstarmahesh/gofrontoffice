@@ -26,6 +26,8 @@ interface KBEntry {
   synced_at?: string;
   sync_error?: string;
   elevenlabs_doc_id?: string;
+  updated_at?: string;
+  created_at?: string;
 }
 
 export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
@@ -41,6 +43,13 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
 
   useEffect(() => {
     loadEntries();
+    
+    // Poll for status updates every 5 seconds
+    const pollInterval = setInterval(() => {
+      loadEntries();
+    }, 5000);
+    
+    return () => clearInterval(pollInterval);
   }, [clinicId]);
 
   const loadEntries = async () => {
@@ -55,7 +64,35 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
       toast.error("Failed to load knowledge base");
       console.error(error);
     } else {
-      setEntries((data || []) as KBEntry[]);
+      const entries = (data || []) as KBEntry[];
+      
+      // Detect stuck documents (syncing for > 5 minutes)
+      const now = new Date();
+      const stuckEntries = entries.filter(e => {
+        if (e.sync_status !== 'syncing') return false;
+        const updatedAt = e.updated_at ? new Date(e.updated_at) : null;
+        if (!updatedAt) return false;
+        const minutesElapsed = (now.getTime() - updatedAt.getTime()) / 1000 / 60;
+        return minutesElapsed > 5;
+      });
+      
+      // Auto-reset stuck documents
+      if (stuckEntries.length > 0) {
+        console.log(`Found ${stuckEntries.length} stuck document(s), resetting...`);
+        for (const stuck of stuckEntries) {
+          await supabase
+            .from('clinic_knowledge_base')
+            .update({
+              sync_status: 'failed',
+              sync_error: 'Sync timeout - please retry'
+            })
+            .eq('id', stuck.id);
+        }
+        // Reload to show updated status
+        setTimeout(() => loadEntries(), 1000);
+      }
+      
+      setEntries(entries);
     }
     setLoading(false);
   };
