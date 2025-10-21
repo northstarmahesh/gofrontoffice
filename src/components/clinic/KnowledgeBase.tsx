@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { BookOpen, Plus, Trash2, Globe, FileText } from "lucide-react";
+import { BookOpen, Plus, Trash2, Globe, FileText, RefreshCw, Loader2 } from "lucide-react";
 
 interface KnowledgeBaseProps {
   clinicId: string;
@@ -20,6 +22,12 @@ interface KBEntry {
   file_path?: string;
   content?: string;
   title?: string;
+  sync_status?: 'pending' | 'syncing' | 'synced' | 'failed';
+  synced_at?: string;
+  sync_error?: string;
+  elevenlabs_doc_id?: string;
+  updated_at?: string;
+  created_at?: string;
 }
 
 export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
@@ -30,10 +38,32 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
   const [urls, setUrls] = useState(["", "", ""]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [acceptedTypes] = useState(".pdf,.doc,.docx,.xls,.xlsx,.csv");
+  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
+  const [syncingAll, setSyncingAll] = useState(false);
+  const [creatingAgent, setCreatingAgent] = useState(false);
+  const [agentExists, setAgentExists] = useState(false);
 
   useEffect(() => {
     loadEntries();
+    checkAgentStatus();
+    
+    // Poll for status updates every 5 seconds
+    const pollInterval = setInterval(() => {
+      loadEntries();
+    }, 5000);
+    
+    return () => clearInterval(pollInterval);
   }, [clinicId]);
+
+  const checkAgentStatus = async () => {
+    const { data } = await supabase
+      .from('clinics')
+      .select('elevenlabs_agent_id')
+      .eq('id', clinicId)
+      .single();
+    
+    setAgentExists(!!data?.elevenlabs_agent_id);
+  };
 
   const loadEntries = async () => {
     setLoading(true);
@@ -47,7 +77,35 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
       toast.error("Failed to load knowledge base");
       console.error(error);
     } else {
-      setEntries((data || []) as KBEntry[]);
+      const entries = (data || []) as KBEntry[];
+      
+      // Detect stuck documents (syncing for > 5 minutes)
+      const now = new Date();
+      const stuckEntries = entries.filter(e => {
+        if (e.sync_status !== 'syncing') return false;
+        const updatedAt = e.updated_at ? new Date(e.updated_at) : null;
+        if (!updatedAt) return false;
+        const minutesElapsed = (now.getTime() - updatedAt.getTime()) / 1000 / 60;
+        return minutesElapsed > 5;
+      });
+      
+      // Auto-reset stuck documents
+      if (stuckEntries.length > 0) {
+        console.log(`Found ${stuckEntries.length} stuck document(s), resetting...`);
+        for (const stuck of stuckEntries) {
+          await supabase
+            .from('clinic_knowledge_base')
+            .update({
+              sync_status: 'failed',
+              sync_error: 'Sync timeout - please retry'
+            })
+            .eq('id', stuck.id);
+        }
+        // Reload to show updated status
+        setTimeout(() => loadEntries(), 1000);
+      }
+      
+      setEntries(entries);
     }
     setLoading(false);
   };
@@ -78,6 +136,20 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
       toast.success(`Added ${validUrls.length} URL source(s)`);
       setUrls(["", "", ""]);
       setDialogOpen(false);
+      
+      // Auto-sync newly added URLs
+      const { data: newEntries } = await supabase
+        .from("clinic_knowledge_base")
+        .select("id")
+        .eq("clinic_id", clinicId)
+        .in("source_url", validUrls);
+      
+      if (newEntries) {
+        for (const entry of newEntries) {
+          triggerSync(entry.id);
+        }
+      }
+      
       loadEntries();
     } catch (error: any) {
       console.error("Error adding URLs:", error);
@@ -118,20 +190,28 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
 
       if (uploadError) throw uploadError;
 
-      const { error: dbError } = await supabase
+      const { data: newEntry, error: dbError } = await supabase
         .from("clinic_knowledge_base")
         .insert({
           clinic_id: clinicId,
           source_type: "pdf",
           file_path: fileName,
           title: pdfFile.name,
-        });
+        })
+        .select()
+        .single();
 
       if (dbError) throw dbError;
 
       toast.success("Document uploaded successfully");
       setPdfFile(null);
       setDialogOpen(false);
+      
+      // Auto-sync newly uploaded document
+      if (newEntry) {
+        triggerSync(newEntry.id);
+      }
+      
       loadEntries();
     } catch (error: any) {
       console.error("Error uploading document:", error);
@@ -169,6 +249,143 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
     }
   };
 
+  const triggerSync = async (kbEntryId: string) => {
+    setSyncingIds(prev => new Set(prev).add(kbEntryId));
+    
+    try {
+      const { error } = await supabase.functions.invoke(
+        'elevenlabs-knowledge-sync',
+        {
+          body: {
+            kb_entry_id: kbEntryId,
+            clinic_id: clinicId
+          }
+        }
+      );
+
+      if (error) {
+        console.error("Sync error:", error);
+        toast.error("Failed to sync document");
+      } else {
+        toast.success("Sync started");
+        // Poll for status updates
+        setTimeout(() => loadEntries(), 2000);
+      }
+    } catch (error) {
+      console.error("Error triggering sync:", error);
+      toast.error("Failed to trigger sync");
+    } finally {
+      setSyncingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(kbEntryId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleSyncAll = async () => {
+    if (!agentExists) {
+      toast.error("Please create the AI agent first");
+      return;
+    }
+
+    setSyncingAll(true);
+    const pendingOrFailed = entries.filter(
+      e => e.sync_status === 'pending' || e.sync_status === 'failed'
+    );
+    
+    if (pendingOrFailed.length === 0) {
+      toast.info("No documents need syncing");
+      setSyncingAll(false);
+      return;
+    }
+
+    toast.info(`Syncing ${pendingOrFailed.length} document(s)...`);
+    
+    for (const entry of pendingOrFailed) {
+      await triggerSync(entry.id);
+      // Add small delay between syncs
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    setSyncingAll(false);
+    toast.success("All documents synced");
+  };
+
+  const handleCreateAgent = async () => {
+    setCreatingAgent(true);
+    try {
+      toast.info("Creating AI agent... This may take 10 seconds.");
+      
+      const { data, error } = await supabase.functions.invoke(
+        'elevenlabs-agent-create',
+        { body: { clinic_id: clinicId } }
+      );
+
+      if (error) throw error;
+
+      toast.success("AI agent created successfully! 🎉");
+      setAgentExists(true);
+      await checkAgentStatus();
+    } catch (error: any) {
+      console.error('Error creating agent:', error);
+      toast.error(error.message || "Failed to create AI agent");
+    } finally {
+      setCreatingAgent(false);
+    }
+  };
+
+  const SyncStatusBadge = ({ entry }: { entry: KBEntry }) => {
+    const isSyncing = syncingIds.has(entry.id);
+    
+    if (isSyncing || entry.sync_status === 'syncing') {
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Syncing...
+        </Badge>
+      );
+    }
+
+    switch (entry.sync_status) {
+      case 'pending':
+        return <Badge variant="secondary">🟡 Pending</Badge>;
+      case 'synced':
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                  ✅ Synced
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                {entry.synced_at 
+                  ? `Synced ${new Date(entry.synced_at).toLocaleString('sv-SE')}`
+                  : 'Synced'
+                }
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'failed':
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Badge variant="destructive">❌ Failed</Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                {entry.sync_error || 'Sync failed'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -177,14 +394,45 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
             <BookOpen className="h-5 w-5 text-primary" />
             <CardTitle>Knowledge Base</CardTitle>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Source
+          <div className="flex gap-2">
+            {!agentExists && (
+              <Button 
+                onClick={handleCreateAgent}
+                disabled={creatingAgent}
+                size="sm"
+                variant="default"
+              >
+                {creatingAgent ? "Creating..." : "Create AI Agent"}
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            )}
+            {entries.some(e => e.sync_status === 'pending' || e.sync_status === 'failed') && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleSyncAll}
+                disabled={syncingAll || !agentExists}
+              >
+                {syncingAll ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Sync All
+                  </>
+                )}
+              </Button>
+            )}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" disabled={!agentExists}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Source
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Add Knowledge Source</DialogTitle>
               </DialogHeader>
@@ -262,30 +510,42 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
               </Tabs>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
         <CardDescription>
           Add website URLs or documents (PDF, Word, Excel, CSV) to build your business's knowledge base
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {!agentExists && !loading && (
+          <div className="mb-4 p-4 border border-yellow-500/50 bg-yellow-500/10 rounded-lg">
+            <p className="text-sm font-medium mb-2">⚠️ AI Agent Not Created</p>
+            <p className="text-sm text-muted-foreground">
+              Before you can sync knowledge base entries, you need to create the AI agent. 
+              Click "Create AI Agent" above to set up your assistant.
+            </p>
+          </div>
+        )}
         {loading ? (
           <p className="text-muted-foreground">Loading...</p>
         ) : entries.length === 0 ? (
-          <p className="text-muted-foreground">No sources yet. Add your first one!</p>
+          <p className="text-muted-foreground">
+            No sources yet. {agentExists ? "Add your first one!" : "Create the AI agent first."}
+          </p>
         ) : (
           <div className="space-y-3">
             {entries.map((entry) => (
               <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   {entry.source_type === "pdf" ? (
-                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   ) : (
-                    <Globe className="h-5 w-5 text-muted-foreground" />
+                    <Globe className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   )}
-                  <div>
-                    <p className="font-medium">{entry.title || "Untitled"}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{entry.title || "Untitled"}</p>
                     {entry.source_url && (
-                      <p className="text-sm text-muted-foreground truncate max-w-md">
+                      <p className="text-sm text-muted-foreground truncate">
                         {entry.source_url}
                       </p>
                     )}
@@ -293,11 +553,26 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
                       {entry.source_type === "pdf" ? "Document" : "Website"}
                     </span>
                   </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <SyncStatusBadge entry={entry} />
+                    {(entry.sync_status === 'failed' || entry.sync_status === 'pending') && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => triggerSync(entry.id)}
+                        disabled={syncingIds.has(entry.id)}
+                        title="Retry sync"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDelete(entry)}
+                  className="flex-shrink-0"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

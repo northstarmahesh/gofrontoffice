@@ -114,6 +114,19 @@ export const OnboardingSchedule = ({ clinicId, onComplete }: OnboardingScheduleP
 
       if (error) throw error;
 
+      // Update Eleven Labs agent with new schedule
+      try {
+        await supabase.functions.invoke('elevenlabs-agent-update', {
+          body: {
+            clinic_id: clinicId,
+            update_type: 'schedule'
+          }
+        });
+      } catch (agentError) {
+        console.error("Error updating agent schedule:", agentError);
+        // Don't block completion if agent update fails
+      }
+
       toast.success("Schedule saved!");
       onComplete();
     } catch (error: any) {

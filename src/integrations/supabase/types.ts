@@ -387,10 +387,14 @@ export type Database = {
           clinic_id: string
           content: string | null
           created_at: string | null
+          elevenlabs_doc_id: string | null
           file_path: string | null
           id: string
           source_type: string
           source_url: string | null
+          sync_error: string | null
+          sync_status: string | null
+          synced_at: string | null
           title: string | null
           updated_at: string | null
         }
@@ -398,10 +402,14 @@ export type Database = {
           clinic_id: string
           content?: string | null
           created_at?: string | null
+          elevenlabs_doc_id?: string | null
           file_path?: string | null
           id?: string
           source_type?: string
           source_url?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
           title?: string | null
           updated_at?: string | null
         }
@@ -409,10 +417,14 @@ export type Database = {
           clinic_id?: string
           content?: string | null
           created_at?: string | null
+          elevenlabs_doc_id?: string | null
           file_path?: string | null
           id?: string
           source_type?: string
           source_url?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
           title?: string | null
           updated_at?: string | null
         }
@@ -627,6 +639,11 @@ export type Database = {
           assistant_voice: string | null
           clinic_type: string | null
           created_at: string | null
+          elevenlabs_agent_id: string | null
+          elevenlabs_sip_uri: string | null
+          elevenlabs_voice_1_id: string | null
+          elevenlabs_voice_2_id: string | null
+          elevenlabs_voice_3_id: string | null
           email: string | null
           id: string
           is_demo_account: boolean | null
@@ -634,6 +651,7 @@ export type Database = {
           name: string
           phone: string | null
           prepared_by_admin_id: string | null
+          selected_elevenlabs_voice_id: string | null
           slug: string
           status: string | null
           timezone: string | null
@@ -647,6 +665,11 @@ export type Database = {
           assistant_voice?: string | null
           clinic_type?: string | null
           created_at?: string | null
+          elevenlabs_agent_id?: string | null
+          elevenlabs_sip_uri?: string | null
+          elevenlabs_voice_1_id?: string | null
+          elevenlabs_voice_2_id?: string | null
+          elevenlabs_voice_3_id?: string | null
           email?: string | null
           id?: string
           is_demo_account?: boolean | null
@@ -654,6 +677,7 @@ export type Database = {
           name: string
           phone?: string | null
           prepared_by_admin_id?: string | null
+          selected_elevenlabs_voice_id?: string | null
           slug: string
           status?: string | null
           timezone?: string | null
@@ -667,6 +691,11 @@ export type Database = {
           assistant_voice?: string | null
           clinic_type?: string | null
           created_at?: string | null
+          elevenlabs_agent_id?: string | null
+          elevenlabs_sip_uri?: string | null
+          elevenlabs_voice_1_id?: string | null
+          elevenlabs_voice_2_id?: string | null
+          elevenlabs_voice_3_id?: string | null
           email?: string | null
           id?: string
           is_demo_account?: boolean | null
@@ -674,6 +703,7 @@ export type Database = {
           name?: string
           phone?: string | null
           prepared_by_admin_id?: string | null
+          selected_elevenlabs_voice_id?: string | null
           slug?: string
           status?: string | null
           timezone?: string | null
@@ -872,6 +902,50 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elevenlabs_call_logs: {
+        Row: {
+          call_direction: string | null
+          clinic_id: string
+          conversation_id: string
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          metadata: Json | null
+          transcript: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          call_direction?: string | null
+          clinic_id: string
+          conversation_id: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json | null
+          transcript?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          call_direction?: string | null
+          clinic_id?: string
+          conversation_id?: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json | null
+          transcript?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevenlabs_call_logs_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
             referencedColumns: ["id"]
           },
         ]
