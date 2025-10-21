@@ -86,7 +86,7 @@ serve(async (req) => {
     // Get clinic details and Eleven Labs SIP URI
     const { data: clinic, error: clinicError } = await supabase
       .from('clinics')
-      .select('id, name, elevenlabs_sip_uri')
+      .select('id, name, elevenlabs_sip_uri, elevenlabs_agent_id')
       .eq('id', phoneData.clinic_id)
       .maybeSingle();
 
@@ -103,12 +103,27 @@ serve(async (req) => {
       );
     }
 
+    // Validate SIP URI completeness
     if (!clinic.elevenlabs_sip_uri) {
-      console.error('Clinic has no Eleven Labs SIP URI configured');
+      console.error('Missing ElevenLabs SIP URI');
       return new Response(
         JSON.stringify([{
           action: 'talk',
-          text: 'Förlåt, AI-assistenten är inte aktiverad ännu.',
+          text: 'Förlåt, AI-assistenten är inte konfigurerad.',
+          voiceName: 'Astrid',
+          language: 'sv-SE',
+        }]),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate that SIP URI has user part (agent_id or number before @)
+    if (!clinic.elevenlabs_sip_uri.includes('@')) {
+      console.error('Invalid SIP URI - missing user part:', clinic.elevenlabs_sip_uri);
+      return new Response(
+        JSON.stringify([{
+          action: 'talk',
+          text: 'Förlåt, AI-assistentens konfiguration är inte komplett.',
           voiceName: 'Astrid',
           language: 'sv-SE',
         }]),
@@ -145,6 +160,8 @@ serve(async (req) => {
     // Return NCCO with initial greeting, then connect to Eleven Labs SIP
     console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
     console.log('Agent ID:', clinic.elevenlabs_agent_id);
+    console.log('Clinic ID:', clinic.id);
+    console.log('Caller:', normalizedFrom, '→ Clinic number:', normalizedTo);
 
     const eventUrl = `${supabaseUrl}/functions/v1/vonage-voice-events`;
     console.log('Event URL for status updates:', eventUrl);
