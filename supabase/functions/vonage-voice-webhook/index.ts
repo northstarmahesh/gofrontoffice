@@ -86,7 +86,7 @@ serve(async (req) => {
     // Get clinic details and Eleven Labs SIP URI
     const { data: clinic, error: clinicError } = await supabase
       .from('clinics')
-      .select('id, name, elevenlabs_sip_uri')
+      .select('id, name, elevenlabs_sip_uri, elevenlabs_agent_id')
       .eq('id', phoneData.clinic_id)
       .maybeSingle();
 
@@ -143,11 +143,10 @@ serve(async (req) => {
       });
 
     // Return NCCO with initial greeting, then connect to Eleven Labs SIP
-    console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
-    console.log('Agent ID:', clinic.elevenlabs_agent_id);
-
     const eventUrl = `${supabaseUrl}/functions/v1/vonage-voice-events`;
     console.log('Event URL for status updates:', eventUrl);
+    console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
+    console.log('Agent ID:', clinic.elevenlabs_agent_id);
 
     const ncco = [
       {
@@ -159,18 +158,17 @@ serve(async (req) => {
       {
         action: "connect",
         eventUrl: [eventUrl],
-        timeout: 20, // Increased timeout to 20 seconds
-        from: normalizedTo,
+        timeout: 60,
+        from: normalizedFrom,
         endpoint: [{
           type: "sip",
-          uri: clinic.elevenlabs_sip_uri
+          uri: clinic.elevenlabs_sip_uri,
+          headers: {
+            "X-Caller-Id": normalizedFrom,
+            "X-Clinic-Id": phoneData.clinic_id,
+            "X-Conversation-Id": conversation_uuid
+          }
         }]
-      },
-      {
-        action: "talk",
-        text: "Förlåt, assistenten är inte tillgänglig just nu. Vänligen försök igen senare.",
-        voiceName: "Astrid",
-        language: "sv-SE"
       }
     ];
 
