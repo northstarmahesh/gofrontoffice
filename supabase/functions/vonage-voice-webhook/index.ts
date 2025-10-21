@@ -169,12 +169,6 @@ serve(async (req) => {
             "X-Conversation-Id": conversation_uuid
           }
         }]
-      },
-      {
-        action: "talk",
-        text: "Förlåt, assistenten är inte tillgänglig just nu. Vänligen försök igen senare.",
-        voiceName: "Astrid",
-        language: "sv-SE"
       }
     ];
 
