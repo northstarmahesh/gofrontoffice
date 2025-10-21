@@ -6,6 +6,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+async function buildSchedulePrompt(supabase: any, locationId: string): Promise<string> {
+  const { data: schedules } = await supabase
+    .from('assistant_schedules')
+    .select('*')
+    .eq('location_id', locationId)
+    .order('day_of_week');
+
+  if (!schedules || schedules.length === 0) {
+    return "\n\nBusiness hours: Not configured yet.";
+  }
+
+  let prompt = '\n\nBusiness Hours (Stockholm/Europe timezone):\n';
+
+  schedules.forEach((schedule: any) => {
+    const dayName = DAYS[schedule.day_of_week];
+    if (schedule.is_available) {
+      prompt += `- ${dayName}: ${schedule.start_time.slice(0, 5)} - ${schedule.end_time.slice(0, 5)}\n`;
+    } else {
+      prompt += `- ${dayName}: Stängd (Closed)\n`;
+    }
+  });
+
+  prompt += '\nIf someone calls outside business hours, politely inform them in Swedish: "Vi är stängda just nu" and tell them when you open next.\n';
+
+  return prompt;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -51,6 +80,14 @@ serve(async (req) => {
 
     console.log('Clinic found:', clinic.name);
 
+    // Get location for schedule
+    const { data: location } = await supabase
+      .from('clinic_locations')
+      .select('id')
+      .eq('clinic_id', clinic_id)
+      .limit(1)
+      .single();
+
     // Get Eleven Labs API key
     const elevenLabsApiKey = Deno.env.get('ElevenLabs_API_KEY');
     
@@ -59,8 +96,14 @@ serve(async (req) => {
     }
 
     // Prepare agent configuration
-    const assistantPrompt = clinic.assistant_prompt || 
+    let assistantPrompt = clinic.assistant_prompt || 
       `Du är en hjälpsam AI-assistent för ${clinic.name}. Du hjälper patienter med bokningar, frågor om behandlingar och allmän information om kliniken.`;
+    
+    // Add schedule to prompt
+    if (location) {
+      const schedulePrompt = await buildSchedulePrompt(supabase, location.id);
+      assistantPrompt += schedulePrompt;
+    }
     
     const voiceId = clinic.selected_elevenlabs_voice_id || '4xkUqaR9MYOJHoaC1Nak';
     

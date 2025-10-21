@@ -6,6 +6,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+async function buildSchedulePrompt(supabase: any, locationId: string): Promise<string> {
+  const { data: schedules } = await supabase
+    .from('assistant_schedules')
+    .select('*')
+    .eq('location_id', locationId)
+    .order('day_of_week');
+
+  if (!schedules || schedules.length === 0) {
+    return "\n\nBusiness hours: Not configured yet.";
+  }
+
+  let prompt = '\n\nBusiness Hours (Stockholm/Europe timezone):\n';
+
+  schedules.forEach((schedule: any) => {
+    const dayName = DAYS[schedule.day_of_week];
+    if (schedule.is_available) {
+      prompt += `- ${dayName}: ${schedule.start_time.slice(0, 5)} - ${schedule.end_time.slice(0, 5)}\n`;
+    } else {
+      prompt += `- ${dayName}: Stängd (Closed)\n`;
+    }
+  });
+
+  prompt += '\nIf someone calls outside business hours, politely inform them in Swedish: "Vi är stängda just nu" and tell them when you open next.\n';
+
+  return prompt;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -19,12 +48,17 @@ serve(async (req) => {
     console.log('Update request:', { clinic_id, update_type, value_length: value?.length });
 
     // Validate input
-    if (!clinic_id || !update_type || !value) {
-      throw new Error('Missing required parameters: clinic_id, update_type, and value are required');
+    if (!clinic_id || !update_type) {
+      throw new Error('Missing required parameters: clinic_id and update_type are required');
     }
 
-    if (!['prompt', 'voice'].includes(update_type)) {
-      throw new Error('update_type must be either "prompt" or "voice"');
+    if (!['prompt', 'voice', 'schedule'].includes(update_type)) {
+      throw new Error('update_type must be "prompt", "voice", or "schedule"');
+    }
+
+    // Value is optional for schedule type
+    if (update_type !== 'schedule' && !value) {
+      throw new Error('value is required for prompt and voice updates');
     }
 
     // Get authenticated user
@@ -89,7 +123,7 @@ serve(async (req) => {
     console.log('Fetching clinic agent details');
     const { data: clinic, error: clinicError } = await supabaseAdmin
       .from('clinics')
-      .select('elevenlabs_agent_id, name')
+      .select('elevenlabs_agent_id, name, assistant_prompt')
       .eq('id', clinic_id)
       .maybeSingle();
 
@@ -135,6 +169,37 @@ serve(async (req) => {
         conversation_config: {
           tts: {
             voice_id: value
+          }
+        }
+      };
+    } else if (update_type === 'schedule') {
+      console.log('Updating agent schedule');
+      
+      // Get location for schedule
+      const { data: location } = await supabaseAdmin
+        .from('clinic_locations')
+        .select('id')
+        .eq('clinic_id', clinic_id)
+        .limit(1)
+        .single();
+
+      if (!location) {
+        throw new Error('No location found for clinic');
+      }
+
+      // Build new prompt with schedule
+      let basePrompt = clinic.assistant_prompt || 
+        `Du är en hjälpsam AI-assistent för ${clinic.name}. Du hjälper patienter med bokningar, frågor om behandlingar och allmän information om kliniken.`;
+      
+      const schedulePrompt = await buildSchedulePrompt(supabaseAdmin, location.id);
+      const fullPrompt = basePrompt + schedulePrompt;
+
+      patchBody = {
+        conversation_config: {
+          agent: {
+            prompt: {
+              prompt: fullPrompt
+            }
           }
         }
       };

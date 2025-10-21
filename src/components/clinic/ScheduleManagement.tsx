@@ -94,6 +94,29 @@ export const ScheduleManagement = ({ locationId }: ScheduleManagementProps) => {
         .insert(schedulesToInsert);
 
       if (error) throw error;
+
+      // Get clinic_id for this location
+      const { data: location } = await supabase
+        .from("clinic_locations")
+        .select("clinic_id")
+        .eq("id", locationId)
+        .single();
+
+      // Update Eleven Labs agent with new schedule
+      if (location) {
+        try {
+          await supabase.functions.invoke('elevenlabs-agent-update', {
+            body: {
+              clinic_id: location.clinic_id,
+              update_type: 'schedule'
+            }
+          });
+        } catch (agentError) {
+          console.error("Error updating agent schedule:", agentError);
+          // Don't block success if agent update fails
+        }
+      }
+
       toast.success("Schedule saved successfully!");
       loadSchedules();
     } catch (error: any) {
