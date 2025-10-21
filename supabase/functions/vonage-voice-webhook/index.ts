@@ -142,17 +142,34 @@ serve(async (req) => {
         direction: 'inbound',
       });
 
-    // Return SIP connect NCCO to forward to Eleven Labs
+    // Return NCCO with initial greeting, then connect to Eleven Labs SIP
     console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
+
+    const eventUrl = `${supabaseUrl}/functions/v1/vonage-voice-events`;
 
     return new Response(
       JSON.stringify([
         {
+          action: "talk",
+          text: "Ett ögonblick, jag kopplar dig till vår assistent.",
+          voiceName: "Astrid",
+          language: "sv-SE"
+        },
+        {
           action: "connect",
+          eventUrl: [eventUrl],
+          timeout: 15,
+          from: normalizedTo,
           endpoint: [{
             type: "sip",
             uri: clinic.elevenlabs_sip_uri
           }]
+        },
+        {
+          action: "talk",
+          text: "Förlåt, assistenten är inte tillgänglig just nu. Vänligen försök igen senare.",
+          voiceName: "Astrid",
+          language: "sv-SE"
         }
       ]),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
