@@ -13,46 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    let body: any = {};
-    const url = new URL(req.url);
-    const contentType = req.headers.get('content-type') || '';
-
-    // Parse body from JSON, form-encoded, or GET query params (Vonage may send any of these)
-    if (req.method === 'GET') {
-      url.searchParams.forEach((value, key) => {
-        body[key] = value;
-      });
-    } else if (contentType.includes('application/json')) {
-      try {
-        body = await req.json();
-      } catch (_) {
-        body = {};
-      }
-    } else if (contentType.includes('application/x-www-form-urlencoded')) {
-      const text = await req.text();
-      const params = new URLSearchParams(text);
-      params.forEach((value, key) => {
-        body[key] = value;
-      });
-    } else {
-      // Fallback attempts
-      try {
-        body = await req.json();
-      } catch (_) {
-        const text = await req.text();
-        if (text) {
-          try {
-            body = JSON.parse(text);
-          } catch {
-            const params = new URLSearchParams(text);
-            params.forEach((value, key) => {
-              body[key] = value;
-            });
-          }
-        }
-      }
-    }
-
+    const body = await req.json();
     console.log('=== VONAGE VOICE EVENT RECEIVED ===');
     console.log('Event body:', JSON.stringify(body, null, 2));
 
@@ -67,10 +28,10 @@ serve(async (req) => {
       to,
       timestamp,
       direction,
+      duration,
       end_time,
       start_time,
     } = body;
-    const duration = body?.duration != null ? Number(body.duration) : undefined;
 
     console.log('Call event details:', {
       conversation_uuid,

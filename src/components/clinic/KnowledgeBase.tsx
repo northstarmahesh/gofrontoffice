@@ -32,7 +32,7 @@ interface KBEntry {
 
 export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
   const [entries, setEntries] = useState<KBEntry[]>([]);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [urls, setUrls] = useState(["", "", ""]);
@@ -46,28 +46,13 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
   useEffect(() => {
     loadEntries();
     checkAgentStatus();
-
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('kb_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'clinic_knowledge_base',
-          filter: `clinic_id=eq.${clinicId}`
-        },
-        () => {
-          // Reload entries without showing loading state
-          loadEntries(false);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    
+    // Poll for status updates every 5 seconds
+    const pollInterval = setInterval(() => {
+      loadEntries();
+    }, 5000);
+    
+    return () => clearInterval(pollInterval);
   }, [clinicId]);
 
   const checkAgentStatus = async () => {
@@ -80,7 +65,8 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
     setAgentExists(!!data?.elevenlabs_agent_id);
   };
 
-  const loadEntries = async (showLoading = true) => {
+  const loadEntries = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from("clinic_knowledge_base")
       .select("*")
@@ -121,11 +107,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
       
       setEntries(entries);
     }
-    
-    // Mark initial loading as complete
-    if (initialLoading) {
-      setInitialLoading(false);
-    }
+    setLoading(false);
   };
 
   const handleAddUrls = async () => {
@@ -535,7 +517,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!agentExists && !initialLoading && (
+        {!agentExists && !loading && (
           <div className="mb-4 p-4 border border-yellow-500/50 bg-yellow-500/10 rounded-lg">
             <p className="text-sm font-medium mb-2">⚠️ AI Agent Not Created</p>
             <p className="text-sm text-muted-foreground">
@@ -544,7 +526,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
             </p>
           </div>
         )}
-        {initialLoading ? (
+        {loading ? (
           <p className="text-muted-foreground">Loading...</p>
         ) : entries.length === 0 ? (
           <p className="text-muted-foreground">

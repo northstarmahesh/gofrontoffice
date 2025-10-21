@@ -86,7 +86,7 @@ serve(async (req) => {
     // Get clinic details and Eleven Labs SIP URI
     const { data: clinic, error: clinicError } = await supabase
       .from('clinics')
-      .select('id, name, elevenlabs_sip_uri')
+      .select('id, name, elevenlabs_sip_uri, elevenlabs_agent_id')
       .eq('id', phoneData.clinic_id)
       .maybeSingle();
 
@@ -146,9 +146,6 @@ serve(async (req) => {
     console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
     console.log('Agent ID:', clinic.elevenlabs_agent_id);
 
-    const eventUrl = `${supabaseUrl}/functions/v1/vonage-voice-events`;
-    console.log('Event URL for status updates:', eventUrl);
-
     const ncco = [
       {
         action: "talk",
@@ -158,32 +155,18 @@ serve(async (req) => {
       },
       {
         action: "connect",
-        eventUrl: [eventUrl],
-        timeout: 60, // Increased timeout to 60 seconds for Eleven Labs response
+        timeout: 20,
         from: normalizedTo,
         endpoint: [{
           type: "sip",
-          uri: clinic.elevenlabs_sip_uri,
-          headers: {
-            "X-Caller-Id": normalizedFrom,
-            "X-Clinic-Id": clinic.id,
-            "X-Conversation-Id": conversation_uuid
-          }
+          uri: clinic.elevenlabs_sip_uri
         }]
       },
       {
         action: "talk",
-        text: "Tack för ditt samtal. Lämna gärna ett meddelande efter signalen.",
+        text: "Förlåt, assistenten är inte tillgänglig just nu. Vänligen försök igen senare.",
         voiceName: "Astrid",
         language: "sv-SE"
-      },
-      {
-        action: "record",
-        eventUrl: [eventUrl],
-        endOnSilence: 3,
-        beepStart: true,
-        format: "mp3",
-        channels: 1
       }
     ];
 

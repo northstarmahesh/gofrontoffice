@@ -18,9 +18,6 @@ verify_jwt = false
 [functions.vonage-voice-webhook]
 verify_jwt = false
 
-[functions.vonage-voice-events]
-verify_jwt = false
-
 [functions.vonage-whatsapp-webhook]
 verify_jwt = false
 
