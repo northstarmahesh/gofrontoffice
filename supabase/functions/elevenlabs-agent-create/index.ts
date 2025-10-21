@@ -89,7 +89,7 @@ serve(async (req) => {
       .single();
 
     // Get Eleven Labs API key
-    const elevenLabsApiKey = Deno.env.get('ElevenLabs_API_KEY');
+    const elevenLabsApiKey = Deno.env.get('ELEVENLABS_API_KEY');
     
     if (!elevenLabsApiKey) {
       throw new Error('ELEVENLABS_API_KEY not configured in secrets');

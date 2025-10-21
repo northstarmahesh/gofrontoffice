@@ -40,9 +40,12 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
   const [acceptedTypes] = useState(".pdf,.doc,.docx,.xls,.xlsx,.csv");
   const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
   const [syncingAll, setSyncingAll] = useState(false);
+  const [creatingAgent, setCreatingAgent] = useState(false);
+  const [agentExists, setAgentExists] = useState(false);
 
   useEffect(() => {
     loadEntries();
+    checkAgentStatus();
     
     // Poll for status updates every 5 seconds
     const pollInterval = setInterval(() => {
@@ -51,6 +54,16 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
     
     return () => clearInterval(pollInterval);
   }, [clinicId]);
+
+  const checkAgentStatus = async () => {
+    const { data } = await supabase
+      .from('clinics')
+      .select('elevenlabs_agent_id')
+      .eq('id', clinicId)
+      .single();
+    
+    setAgentExists(!!data?.elevenlabs_agent_id);
+  };
 
   const loadEntries = async () => {
     setLoading(true);
@@ -271,6 +284,11 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
   };
 
   const handleSyncAll = async () => {
+    if (!agentExists) {
+      toast.error("Please create the AI agent first");
+      return;
+    }
+
     setSyncingAll(true);
     const pendingOrFailed = entries.filter(
       e => e.sync_status === 'pending' || e.sync_status === 'failed'
@@ -292,6 +310,29 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
     
     setSyncingAll(false);
     toast.success("All documents synced");
+  };
+
+  const handleCreateAgent = async () => {
+    setCreatingAgent(true);
+    try {
+      toast.info("Creating AI agent... This may take 10 seconds.");
+      
+      const { data, error } = await supabase.functions.invoke(
+        'elevenlabs-agent-create',
+        { body: { clinic_id: clinicId } }
+      );
+
+      if (error) throw error;
+
+      toast.success("AI agent created successfully! 🎉");
+      setAgentExists(true);
+      await checkAgentStatus();
+    } catch (error: any) {
+      console.error('Error creating agent:', error);
+      toast.error(error.message || "Failed to create AI agent");
+    } finally {
+      setCreatingAgent(false);
+    }
   };
 
   const SyncStatusBadge = ({ entry }: { entry: KBEntry }) => {
@@ -354,12 +395,22 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
             <CardTitle>Knowledge Base</CardTitle>
           </div>
           <div className="flex gap-2">
+            {!agentExists && (
+              <Button 
+                onClick={handleCreateAgent}
+                disabled={creatingAgent}
+                size="sm"
+                variant="default"
+              >
+                {creatingAgent ? "Creating..." : "Create AI Agent"}
+              </Button>
+            )}
             {entries.some(e => e.sync_status === 'pending' || e.sync_status === 'failed') && (
               <Button 
                 size="sm" 
                 variant="outline"
                 onClick={handleSyncAll}
-                disabled={syncingAll}
+                disabled={syncingAll || !agentExists}
               >
                 {syncingAll ? (
                   <>
@@ -376,7 +427,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
             )}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">
+                <Button size="sm" disabled={!agentExists}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Source
                 </Button>
@@ -466,10 +517,21 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {!agentExists && !loading && (
+          <div className="mb-4 p-4 border border-yellow-500/50 bg-yellow-500/10 rounded-lg">
+            <p className="text-sm font-medium mb-2">⚠️ AI Agent Not Created</p>
+            <p className="text-sm text-muted-foreground">
+              Before you can sync knowledge base entries, you need to create the AI agent. 
+              Click "Create AI Agent" above to set up your assistant.
+            </p>
+          </div>
+        )}
         {loading ? (
           <p className="text-muted-foreground">Loading...</p>
         ) : entries.length === 0 ? (
-          <p className="text-muted-foreground">No sources yet. Add your first one!</p>
+          <p className="text-muted-foreground">
+            No sources yet. {agentExists ? "Add your first one!" : "Create the AI agent first."}
+          </p>
         ) : (
           <div className="space-y-3">
             {entries.map((entry) => (
