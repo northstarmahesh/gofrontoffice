@@ -14,7 +14,8 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log('Call event received:', JSON.stringify(body, null, 2));
+    console.log('=== VONAGE VOICE EVENT RECEIVED ===');
+    console.log('Event body:', JSON.stringify(body, null, 2));
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

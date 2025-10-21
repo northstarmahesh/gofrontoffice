@@ -144,34 +144,40 @@ serve(async (req) => {
 
     // Return NCCO with initial greeting, then connect to Eleven Labs SIP
     console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
+    console.log('Agent ID:', clinic.elevenlabs_agent_id);
 
     const eventUrl = `${supabaseUrl}/functions/v1/vonage-voice-events`;
+    console.log('Event URL for status updates:', eventUrl);
+
+    const ncco = [
+      {
+        action: "talk",
+        text: "Ett ögonblick, jag kopplar dig till vår assistent.",
+        voiceName: "Astrid",
+        language: "sv-SE"
+      },
+      {
+        action: "connect",
+        eventUrl: [eventUrl],
+        timeout: 20, // Increased timeout to 20 seconds
+        from: normalizedTo,
+        endpoint: [{
+          type: "sip",
+          uri: clinic.elevenlabs_sip_uri
+        }]
+      },
+      {
+        action: "talk",
+        text: "Förlåt, assistenten är inte tillgänglig just nu. Vänligen försök igen senare.",
+        voiceName: "Astrid",
+        language: "sv-SE"
+      }
+    ];
+
+    console.log('Returning NCCO:', JSON.stringify(ncco, null, 2));
 
     return new Response(
-      JSON.stringify([
-        {
-          action: "talk",
-          text: "Ett ögonblick, jag kopplar dig till vår assistent.",
-          voiceName: "Astrid",
-          language: "sv-SE"
-        },
-        {
-          action: "connect",
-          eventUrl: [eventUrl],
-          timeout: 15,
-          from: normalizedTo,
-          endpoint: [{
-            type: "sip",
-            uri: clinic.elevenlabs_sip_uri
-          }]
-        },
-        {
-          action: "talk",
-          text: "Förlåt, assistenten är inte tillgänglig just nu. Vänligen försök igen senare.",
-          voiceName: "Astrid",
-          language: "sv-SE"
-        }
-      ]),
+      JSON.stringify(ncco),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
