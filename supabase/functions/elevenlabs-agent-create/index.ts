@@ -163,8 +163,9 @@ serve(async (req) => {
       throw new Error('No agent_id returned from Eleven Labs API');
     }
 
-    // Build SIP URI
-    const sip_uri = `sip:${agent_id}@sip.rtc.elevenlabs.io:5060;transport=tcp`;
+    // Build SIP URI - Using ElevenLabs' actual SIP endpoint with TLS for better reliability
+    // This matches the Inbound SIP Trunk Configuration in ElevenLabs dashboard
+    const sip_uri = `sip:sip.rtc.elevenlabs.io:5061;transport=tls`;
     
     console.log('Saving agent details to database:', { agent_id, sip_uri });
 
