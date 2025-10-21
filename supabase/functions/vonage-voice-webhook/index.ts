@@ -143,8 +143,10 @@ serve(async (req) => {
       });
 
     // Return NCCO with initial greeting, then connect to Eleven Labs SIP
-    console.log(`[${new Date().toISOString()}] Forwarding call to Eleven Labs SIP URI:`, clinic.elevenlabs_sip_uri);
-    console.log(`[${new Date().toISOString()}] Agent ID:`, clinic.elevenlabs_agent_id);
+    const eventUrl = `${supabaseUrl}/functions/v1/vonage-voice-events`;
+    console.log('Event URL for status updates:', eventUrl);
+    console.log('Forwarding call to Eleven Labs SIP URI:', clinic.elevenlabs_sip_uri);
+    console.log('Agent ID:', clinic.elevenlabs_agent_id);
 
     const ncco = [
       {
@@ -155,11 +157,17 @@ serve(async (req) => {
       },
       {
         action: "connect",
-        timeout: 20,
-        from: normalizedTo,
+        eventUrl: [eventUrl],
+        timeout: 60,
+        from: normalizedFrom,
         endpoint: [{
           type: "sip",
-          uri: clinic.elevenlabs_sip_uri
+          uri: clinic.elevenlabs_sip_uri,
+          headers: {
+            "X-Caller-Id": normalizedFrom,
+            "X-Clinic-Id": phoneData.clinic_id,
+            "X-Conversation-Id": conversation_uuid
+          }
         }]
       },
       {
