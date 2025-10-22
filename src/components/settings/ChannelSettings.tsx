@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Phone, MessageSquare, Instagram, Facebook, Mail, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 interface ChannelSettingsProps {
@@ -155,7 +154,20 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
     }
   };
 
-  const handlePhoneModeChange = async (mode: "on" | "passive" | "off") => {
+  const handlePhoneToggle = async (checked: boolean) => {
+    if (!isAdmin && !permissions.can_change_ai_mode) {
+      toast.error("You don't have permission to change phone mode");
+      return;
+    }
+
+    const newMode = checked ? "on" : "off";
+    setPhoneMode(newMode);
+    await updateSettings({ phone_mode: newMode });
+
+    toast.success(`Phone calls ${checked ? "enabled (Autopilot)" : "disabled"}`);
+  };
+
+  const handlePhoneModeChange = async (mode: "on" | "passive") => {
     if (!isAdmin && !permissions.can_change_ai_mode) {
       toast.error("You don't have permission to change phone mode");
       return;
@@ -164,7 +176,7 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
     setPhoneMode(mode);
     await updateSettings({ phone_mode: mode });
 
-    const modeLabel = mode === "on" ? "Auto-Pilot" : mode === "passive" ? "Co-Pilot" : "Off";
+    const modeLabel = mode === "on" ? "Autopilot" : "Co-pilot";
     toast.success(`Phone mode: ${modeLabel}`);
   };
 
@@ -216,71 +228,63 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Phone Calls */}
-      <Card className="p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-primary/10 p-2.5">
-              <Phone className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Phone Calls</h3>
-              <p className="text-xs text-muted-foreground">Choose how AI handles incoming calls</p>
-            </div>
-          </div>
-          {connectionStatus.phone ? (
-            <Badge variant="outline" className="gap-1">
-              <CheckCircle2 className="h-3 w-3" />
-              Connected
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="gap-1 text-yellow-500 border-yellow-500/20">
-              <AlertCircle className="h-3 w-3" />
-              Not Connected
-            </Badge>
-          )}
-        </div>
-
-        <RadioGroup value={phoneMode} onValueChange={(value: any) => handlePhoneModeChange(value)}>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2 rounded-lg border p-3">
-              <RadioGroupItem value="on" id="phone-on" />
-              <Label htmlFor="phone-on" className="flex-1 cursor-pointer">
-                <p className="font-medium">Auto-Pilot</p>
-                <p className="text-xs text-muted-foreground">AI answers and responds automatically</p>
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2 rounded-lg border p-3">
-              <RadioGroupItem value="passive" id="phone-passive" />
-              <Label htmlFor="phone-passive" className="flex-1 cursor-pointer">
-                <p className="font-medium">Co-Pilot</p>
-                <p className="text-xs text-muted-foreground">AI drafts responses for your review</p>
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2 rounded-lg border p-3">
-              <RadioGroupItem value="off" id="phone-off" />
-              <Label htmlFor="phone-off" className="flex-1 cursor-pointer">
-                <p className="font-medium">Off</p>
-                <p className="text-xs text-muted-foreground">AI does not handle calls</p>
-              </Label>
-            </div>
-          </div>
-        </RadioGroup>
-      </Card>
-
-      {/* Messaging Channels */}
+      {/* Communication Channels */}
       <Card className="p-6">
         <div className="mb-4 flex items-center gap-3">
           <div className="rounded-xl bg-secondary/10 p-2.5">
             <MessageSquare className="h-5 w-5 text-secondary" />
           </div>
           <div>
-            <h3 className="font-semibold">Messaging Channels</h3>
+            <h3 className="font-semibold">Communication Channels</h3>
             <p className="text-xs text-muted-foreground">Configure each channel independently</p>
           </div>
         </div>
 
         <div className="space-y-4">
+          {/* Phone Calls */}
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <Phone className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <Label htmlFor="phone" className="text-sm font-medium">Phone Calls</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {connectionStatus.phone ? "Connected" : "Not Connected"}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="phone"
+                checked={phoneMode !== "off"}
+                onCheckedChange={handlePhoneToggle}
+              />
+            </div>
+            {phoneMode !== "off" && (
+              <div className="flex gap-2 pl-8">
+                <button
+                  onClick={() => handlePhoneModeChange("on")}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                    phoneMode === "on"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  Autopilot
+                </button>
+                <button
+                  onClick={() => handlePhoneModeChange("passive")}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                    phoneMode === "passive"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  Co-pilot
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* SMS */}
           <div className="rounded-lg border p-4">
             <div className="flex items-center justify-between mb-3">
@@ -325,48 +329,25 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
             )}
           </div>
 
-          {/* WhatsApp */}
-          <div className="rounded-lg border p-4">
+          {/* WhatsApp - Coming Soon */}
+          <div className="rounded-lg border p-4 opacity-60">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <MessageSquare className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <Label htmlFor="whatsapp" className="text-sm font-medium">WhatsApp</Label>
-                  {connectionStatus.whatsapp && (
-                    <p className="text-xs text-muted-foreground">Connected</p>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="whatsapp" className="text-sm font-medium">WhatsApp</Label>
+                    <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Meta integration required</p>
                 </div>
               </div>
               <Switch
                 id="whatsapp"
-                checked={channels.whatsapp}
-                onCheckedChange={() => handleChannelToggle("whatsapp")}
+                checked={false}
+                disabled={true}
               />
             </div>
-            {channels.whatsapp && (
-              <div className="flex gap-2 pl-8">
-                <button
-                  onClick={() => handleChannelAutoPilotToggle("whatsapp")}
-                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                    channelAutoPilot.whatsapp
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  }`}
-                >
-                  Autopilot
-                </button>
-                <button
-                  onClick={() => handleChannelAutoPilotToggle("whatsapp")}
-                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-                    !channelAutoPilot.whatsapp
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  }`}
-                >
-                  Co-pilot
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Instagram */}
