@@ -24,6 +24,7 @@ interface ActivityLog {
   duration?: string;
   direction?: 'inbound' | 'outbound';
   transcript_snippet?: string;
+  conversation_id?: string;
 }
 
 interface ContactDetailDialogProps {
@@ -168,7 +169,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
       // Search by both contact name and phone number to get all conversations
       let query = supabase
         .from("activity_logs")
-        .select("*");
+        .select("id,title,type,summary,contact_name,contact_info,status,created_at,duration,direction,conversation_id");
       
       if (contactInfo) {
         // If we have phone/contact info, search by that (most reliable)
@@ -561,7 +562,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-full sm:max-w-3xl lg:max-w-4xl max-h-[95vh] p-3 sm:p-6">
+      <DialogContent className="max-w-full sm:max-w-3xl lg:max-w-4xl max-h-[95vh] p-3 sm:p-6" aria-describedby="contact-detail-desc">
         <DialogHeader>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -624,6 +625,9 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
             )}
           </div>
         </DialogHeader>
+        <p id="contact-detail-desc" className="sr-only">
+          Detaljer om kontakt, konversationshistorik och tillgängliga åtgärder.
+        </p>
 
         <ScrollArea className="max-h-[75vh] pr-4">
           <div className="space-y-4">

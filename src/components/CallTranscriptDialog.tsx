@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Phone, Clock, User, Bot, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -46,6 +47,7 @@ const CallTranscriptDialog = ({
 }: CallTranscriptDialogProps) => {
   const [loading, setLoading] = useState(true);
   const [transcriptData, setTranscriptData] = useState<CallTranscriptData | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (open && activityLogId) {
@@ -55,11 +57,12 @@ const CallTranscriptDialog = ({
 
   const loadTranscript = async () => {
     setLoading(true);
+    setRetryCount(0);
     try {
-      // Step 1: Get conversation_id directly from activity_logs
+      // Step 1: Get conversation_id, title, summary from activity_logs
       const { data: activityLog, error: logError } = await supabase
         .from('activity_logs')
-        .select('conversation_id, clinic_id, created_at')
+        .select('conversation_id, clinic_id, created_at, title, summary')
         .eq('id', activityLogId)
         .single();
 
@@ -70,92 +73,104 @@ const CallTranscriptDialog = ({
         return;
       }
 
-      if (!activityLog?.conversation_id) {
-        console.warn('No conversation ID found in activity log, attempting fallback by time');
-        // Fallback: try to match by clinic and closest created_at time
-        const { data: recentCalls, error: recentErr } = await supabase
+      // Step 2: Try to extract conversation_id from title or summary if not present
+      let conversationId = activityLog?.conversation_id;
+      
+      if (!conversationId) {
+        const regex = /conv_[A-Za-z0-9_-]+/i;
+        const titleMatch = activityLog?.title?.match(regex);
+        const summaryMatch = activityLog?.summary?.match(regex);
+        conversationId = titleMatch?.[0] || summaryMatch?.[0];
+        
+        if (conversationId) {
+          console.log('Extracted conversation_id from text:', conversationId);
+        }
+      }
+
+      // Step 3: Direct lookup if we have conversation_id
+      if (conversationId) {
+        const { data: callLog, error: callError } = await supabase
           .from('elevenlabs_call_logs')
           .select('*')
-          .eq('clinic_id', activityLog.clinic_id)
-          .order('created_at', { ascending: false })
-          .limit(10);
+          .eq('conversation_id', conversationId)
+          .maybeSingle();
 
-        if (recentErr) {
-          console.error('Error fetching recent call logs:', recentErr);
-          setTranscriptData(null);
+        if (callError) {
+          console.error('Error fetching call log:', callError);
+        } else if (callLog && callLog.transcript) {
+          const typedData: CallTranscriptData = {
+            conversation_id: callLog.conversation_id,
+            transcript: ((callLog.transcript as unknown) as TranscriptTurn[]) || [],
+            metadata: ((callLog.metadata as unknown) as CallMetadata) || {},
+            duration_seconds: callLog.duration_seconds || 0,
+            created_at: callLog.created_at,
+            call_direction: callLog.call_direction || 'inbound',
+          };
+          setTranscriptData(typedData);
           setLoading(false);
           return;
         }
+      }
 
-        if (recentCalls && recentCalls.length > 0) {
-          const targetTime = new Date(activityLog.created_at).getTime();
-          let closest: any = null;
-          let minDiff = Number.POSITIVE_INFINITY;
+      // Step 4: Fallback - wider time window (±2 hours)
+      console.warn('No direct conversation_id match, attempting time-based fallback with ±2 hour window');
+      
+      const targetTime = new Date(activityLog.created_at);
+      const startTime = new Date(targetTime.getTime() - 2 * 60 * 60 * 1000); // -2 hours
+      const endTime = new Date(targetTime.getTime() + 2 * 60 * 60 * 1000); // +2 hours
 
-          for (const c of recentCalls) {
-            const t = new Date((c as any).created_at).getTime();
-            const diff = Math.abs(t - targetTime);
-            if (diff < minDiff) {
-              minDiff = diff;
-              closest = c;
-            }
-          }
+      const { data: recentCalls, error: recentErr } = await supabase
+        .from('elevenlabs_call_logs')
+        .select('*')
+        .eq('clinic_id', activityLog.clinic_id)
+        .gte('created_at', startTime.toISOString())
+        .lte('created_at', endTime.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-          // Accept match if within 15 minutes window
-          if (closest && minDiff <= 15 * 60 * 1000) {
-            const typedData: CallTranscriptData = {
-              conversation_id: (closest as any).conversation_id,
-              transcript: (((closest as any).transcript as unknown) as TranscriptTurn[]) || [],
-              metadata: (((closest as any).metadata as unknown) as CallMetadata) || {},
-              duration_seconds: (closest as any).duration_seconds || 0,
-              created_at: (closest as any).created_at,
-              call_direction: (closest as any).call_direction || 'inbound',
-            };
-            setTranscriptData(typedData);
-            setLoading(false);
-            return;
+      if (recentErr) {
+        console.error('Error fetching recent call logs:', recentErr);
+        setTranscriptData(null);
+        setLoading(false);
+        return;
+      }
+
+      if (recentCalls && recentCalls.length > 0) {
+        const targetTimeMs = targetTime.getTime();
+        let closest: any = null;
+        let minDiff = Number.POSITIVE_INFINITY;
+
+        for (const c of recentCalls) {
+          const t = new Date((c as any).created_at).getTime();
+          const diff = Math.abs(t - targetTimeMs);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closest = c;
           }
         }
 
-        // No suitable fallback match
-        setTranscriptData(null);
-        setLoading(false);
-        return;
+        // Accept match within 2 hour window
+        if (closest && minDiff <= 2 * 60 * 60 * 1000) {
+          const typedData: CallTranscriptData = {
+            conversation_id: (closest as any).conversation_id,
+            transcript: (((closest as any).transcript as unknown) as TranscriptTurn[]) || [],
+            metadata: (((closest as any).metadata as unknown) as CallMetadata) || {},
+            duration_seconds: (closest as any).duration_seconds || 0,
+            created_at: (closest as any).created_at,
+            call_direction: (closest as any).call_direction || 'inbound',
+          };
+          setTranscriptData(typedData);
+          setLoading(false);
+          return;
+        }
       }
 
-      // Step 2: Direct lookup using conversation_id
-      const { data: callLog, error: callError } = await supabase
-        .from('elevenlabs_call_logs')
-        .select('*')
-        .eq('conversation_id', activityLog.conversation_id)
-        .maybeSingle();
-
-      if (callError) {
-        console.error('Error fetching call log:', callError);
-        toast.error('Kunde inte ladda transkription');
-        setLoading(false);
-        return;
-      }
-
-      // Step 3: Handle result
-      if (callLog && callLog.transcript) {
-        const typedData: CallTranscriptData = {
-          conversation_id: callLog.conversation_id,
-          transcript: ((callLog.transcript as unknown) as TranscriptTurn[]) || [],
-          metadata: ((callLog.metadata as unknown) as CallMetadata) || {},
-          duration_seconds: callLog.duration_seconds || 0,
-          created_at: callLog.created_at,
-          call_direction: callLog.call_direction || 'inbound',
-        };
-        setTranscriptData(typedData);
-      } else {
-        // Transcript not yet available (webhook pending)
-        setTranscriptData(null);
-      }
+      // No suitable match found
+      setTranscriptData(null);
+      setLoading(false);
     } catch (error) {
       console.error('Error loading transcript:', error);
       toast.error('Kunde inte ladda transkription');
-    } finally {
       setLoading(false);
     }
   };
@@ -200,14 +215,28 @@ const CallTranscriptDialog = ({
           </div>
         ) : !transcriptData || !transcriptData.transcript || transcriptData.transcript.length === 0 ? (
           <div className="text-center py-12">
-            <div className="bg-muted/30 rounded-lg p-6 space-y-2">
+            <div className="bg-muted/30 rounded-lg p-6 space-y-4">
               <Phone className="h-12 w-12 mx-auto text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Transkription bearbetas fortfarande...
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Detta kan ta upp till 30 sekunder efter samtalet avslutats.
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Transkription hittades inte för detta äldre samtal.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Detta kan hända för samtal som gjordes innan systemet uppgraderades.
+                </p>
+              </div>
+              {retryCount < 2 && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setRetryCount(prev => prev + 1);
+                    loadTranscript();
+                  }}
+                >
+                  Försök igen ({retryCount + 1}/3)
+                </Button>
+              )}
             </div>
           </div>
         ) : (
