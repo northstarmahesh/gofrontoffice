@@ -167,6 +167,7 @@ serve(async (req) => {
           duration: payload.metadata?.call_duration_secs 
             ? `${payload.metadata.call_duration_secs}s` 
             : null,
+          conversation_id: payload.conversation_id,
           updated_at: new Date().toISOString()
         })
         .eq('id', activityLogId);
@@ -202,7 +203,8 @@ serve(async (req) => {
           direction: 'inbound',
           duration: payload.metadata?.call_duration_secs 
             ? `${payload.metadata.call_duration_secs}s` 
-            : null
+            : null,
+          conversation_id: payload.conversation_id
         })
         .select('id')
         .single();

@@ -56,10 +56,10 @@ const CallTranscriptDialog = ({
   const loadTranscript = async () => {
     setLoading(true);
     try {
-      // Step 1: Get the activity log to extract conversation UUID from summary
+      // Step 1: Get conversation_id directly from activity_logs
       const { data: activityLog, error: logError } = await supabase
         .from('activity_logs')
-        .select('*')
+        .select('conversation_id')
         .eq('id', activityLogId)
         .single();
 
@@ -70,24 +70,19 @@ const CallTranscriptDialog = ({
         return;
       }
 
-      // Step 2: Extract conversation_id from summary field
-      // Format: "Call received - UUID: CON-ea2a6eb4-9bd9-40ae-9be3-e2bc59a6d672"
-      const conversationIdMatch = activityLog.summary?.match(/UUID:\s*(CON-[a-f0-9-]+)/i);
-      const conversationId = conversationIdMatch?.[1];
-
-      if (!conversationId) {
-        console.warn('No conversation ID found in activity log summary');
+      if (!activityLog?.conversation_id) {
+        console.warn('No conversation ID found in activity log');
         setTranscriptData(null);
         setLoading(false);
         return;
       }
 
-      // Step 3: Direct lookup using conversation_id
+      // Step 2: Direct lookup using conversation_id
       const { data: callLog, error: callError } = await supabase
         .from('elevenlabs_call_logs')
         .select('*')
-        .eq('conversation_id', conversationId)
-        .maybeSingle(); // Use maybeSingle() instead of single() to handle empty results gracefully
+        .eq('conversation_id', activityLog.conversation_id)
+        .maybeSingle();
 
       if (callError) {
         console.error('Error fetching call log:', callError);
@@ -96,7 +91,7 @@ const CallTranscriptDialog = ({
         return;
       }
 
-      // Step 4: Handle result
+      // Step 3: Handle result
       if (callLog && callLog.transcript) {
         const typedData: CallTranscriptData = {
           conversation_id: callLog.conversation_id,

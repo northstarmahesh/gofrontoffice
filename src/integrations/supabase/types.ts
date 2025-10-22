@@ -20,6 +20,7 @@ export type Database = {
           clinic_id: string | null
           contact_info: string | null
           contact_name: string | null
+          conversation_id: string | null
           created_at: string | null
           direction: string | null
           duration: string | null
@@ -37,6 +38,7 @@ export type Database = {
           clinic_id?: string | null
           contact_info?: string | null
           contact_name?: string | null
+          conversation_id?: string | null
           created_at?: string | null
           direction?: string | null
           duration?: string | null
@@ -54,6 +56,7 @@ export type Database = {
           clinic_id?: string | null
           contact_info?: string | null
           contact_name?: string | null
+          conversation_id?: string | null
           created_at?: string | null
           direction?: string | null
           duration?: string | null
