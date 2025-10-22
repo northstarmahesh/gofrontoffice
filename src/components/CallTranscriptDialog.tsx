@@ -59,7 +59,7 @@ const CallTranscriptDialog = ({
       // Step 1: Get conversation_id directly from activity_logs
       const { data: activityLog, error: logError } = await supabase
         .from('activity_logs')
-        .select('conversation_id')
+        .select('conversation_id, clinic_id, created_at')
         .eq('id', activityLogId)
         .single();
 
@@ -71,7 +71,53 @@ const CallTranscriptDialog = ({
       }
 
       if (!activityLog?.conversation_id) {
-        console.warn('No conversation ID found in activity log');
+        console.warn('No conversation ID found in activity log, attempting fallback by time');
+        // Fallback: try to match by clinic and closest created_at time
+        const { data: recentCalls, error: recentErr } = await supabase
+          .from('elevenlabs_call_logs')
+          .select('*')
+          .eq('clinic_id', activityLog.clinic_id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (recentErr) {
+          console.error('Error fetching recent call logs:', recentErr);
+          setTranscriptData(null);
+          setLoading(false);
+          return;
+        }
+
+        if (recentCalls && recentCalls.length > 0) {
+          const targetTime = new Date(activityLog.created_at).getTime();
+          let closest: any = null;
+          let minDiff = Number.POSITIVE_INFINITY;
+
+          for (const c of recentCalls) {
+            const t = new Date((c as any).created_at).getTime();
+            const diff = Math.abs(t - targetTime);
+            if (diff < minDiff) {
+              minDiff = diff;
+              closest = c;
+            }
+          }
+
+          // Accept match if within 15 minutes window
+          if (closest && minDiff <= 15 * 60 * 1000) {
+            const typedData: CallTranscriptData = {
+              conversation_id: (closest as any).conversation_id,
+              transcript: (((closest as any).transcript as unknown) as TranscriptTurn[]) || [],
+              metadata: (((closest as any).metadata as unknown) as CallMetadata) || {},
+              duration_seconds: (closest as any).duration_seconds || 0,
+              created_at: (closest as any).created_at,
+              call_direction: (closest as any).call_direction || 'inbound',
+            };
+            setTranscriptData(typedData);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // No suitable fallback match
         setTranscriptData(null);
         setLoading(false);
         return;
@@ -139,13 +185,14 @@ const CallTranscriptDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh]">
+      <DialogContent className="max-w-3xl max-h-[85vh]" aria-describedby="call-transcript-desc">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Phone className="h-5 w-5" />
             Samtal med {contactName || contactPhone || 'Okänd'}
           </DialogTitle>
         </DialogHeader>
+        <p id="call-transcript-desc" className="sr-only">Detaljer och transkription för telefonsamtalet.</p>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
