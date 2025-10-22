@@ -3,11 +3,30 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Phone, MessageSquare, Instagram, Facebook, Mail, CheckCircle2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Phone, MessageSquare, Instagram, Facebook, Mail, CheckCircle2, AlertCircle, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+
+const SWEDISH_VOICES = [
+  {
+    id: "4xkUqaR9MYOJHoaC1Nak",
+    name: "Aria",
+    description: "Professionell kvinnlig röst",
+  },
+  {
+    id: "hMTrLL2ZiyJiyKrdg2z4",
+    name: "Liam",
+    description: "Tydlig manlig röst",
+  },
+  {
+    id: "RILOU7YmBhvwJGDGjNmP",
+    name: "River",
+    description: "Varm neutral röst",
+  },
+];
 
 interface ChannelSettingsProps {
   locationId: string;
@@ -37,6 +56,8 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
     instagram: false,
     messenger: false,
   });
+  const [selectedVoice, setSelectedVoice] = useState<string>("4xkUqaR9MYOJHoaC1Nak"); // Default: Aria
+  const [savingVoice, setSavingVoice] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -57,6 +78,17 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
 
       if (clinicUser?.clinic_id) {
         setClinicId(clinicUser.clinic_id);
+
+        // Load current voice selection
+        const { data: clinicData } = await supabase
+          .from("clinics")
+          .select("selected_elevenlabs_voice_id")
+          .eq("id", clinicUser.clinic_id)
+          .maybeSingle();
+
+        if (clinicData?.selected_elevenlabs_voice_id) {
+          setSelectedVoice(clinicData.selected_elevenlabs_voice_id);
+        }
       }
 
       const { data: settings, error: settingsError } = await supabase
@@ -210,6 +242,57 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
     toast.success(`${channelName} mode: ${newValue ? "Autopilot" : "Co-pilot"}`);
   };
 
+  const handleSaveVoice = async () => {
+    if (!clinicId) {
+      toast.error("Clinic ID not found");
+      return;
+    }
+
+    if (!isAdmin && !permissions.can_manage_integrations) {
+      toast.error("You don't have permission to change voice settings");
+      return;
+    }
+
+    setSavingVoice(true);
+    try {
+      // Update clinic voice selection in database
+      const { error: dbError } = await supabase
+        .from("clinics")
+        .update({ selected_elevenlabs_voice_id: selectedVoice })
+        .eq("id", clinicId);
+
+      if (dbError) throw dbError;
+
+      // Call backend to update ElevenLabs agent
+      const { data, error: fnError } = await supabase.functions.invoke('elevenlabs-agent-update', {
+        body: {
+          clinic_id: clinicId,
+          update_type: 'voice',
+          voice_id: selectedVoice
+        }
+      });
+
+      if (fnError) {
+        console.error("Agent update error:", fnError);
+        toast.error("Voice saved locally but agent update failed. Please try again.");
+        return;
+      }
+
+      if (!data?.success) {
+        console.error("Agent update failed:", data);
+        toast.error("Voice saved locally but agent update failed. Please try again.");
+        return;
+      }
+
+      toast.success("AI voice updated successfully!");
+    } catch (error) {
+      console.error("Error saving voice:", error);
+      toast.error("Failed to save voice");
+    } finally {
+      setSavingVoice(false);
+    }
+  };
+
   if (loading) {
     return <p className="text-muted-foreground">Loading...</p>;
   }
@@ -266,6 +349,49 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
             </div>
           </div>
         </RadioGroup>
+      </Card>
+
+      {/* AI Voice Settings */}
+      <Card className="p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="rounded-xl bg-purple-500/10 p-2.5">
+            <Volume2 className="h-5 w-5 text-purple-500" />
+          </div>
+          <div>
+            <h3 className="font-semibold">AI Voice Settings</h3>
+            <p className="text-xs text-muted-foreground">Choose voice for phone calls</p>
+          </div>
+        </div>
+
+        <RadioGroup value={selectedVoice} onValueChange={setSelectedVoice}>
+          <div className="space-y-2">
+            {SWEDISH_VOICES.map((voice) => (
+              <div key={voice.id} className="flex items-center space-x-2 rounded-lg border p-3">
+                <RadioGroupItem value={voice.id} id={voice.id} />
+                <Label htmlFor={voice.id} className="flex-1 cursor-pointer">
+                  <p className="font-medium">{voice.name}</p>
+                  <p className="text-xs text-muted-foreground">{voice.description}</p>
+                </Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={true}
+                  className="text-xs"
+                >
+                  Preview
+                </Button>
+              </div>
+            ))}
+          </div>
+        </RadioGroup>
+
+        <Button
+          onClick={handleSaveVoice}
+          disabled={savingVoice}
+          className="w-full mt-4"
+        >
+          {savingVoice ? "Saving..." : "Save Voice"}
+        </Button>
       </Card>
 
       {/* Messaging Channels */}
