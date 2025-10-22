@@ -47,13 +47,19 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
     loadEntries();
     checkAgentStatus();
     
-    // Poll for status updates every 5 seconds
+    // Smart polling: only when there are active syncs
     const pollInterval = setInterval(() => {
-      loadEntries();
-    }, 5000);
+      const hasActiveSyncs = entries.some(
+        e => e.sync_status === 'syncing' || e.sync_status === 'pending'
+      );
+      
+      if (hasActiveSyncs) {
+        loadEntries(true); // Silent background update
+      }
+    }, 8000); // 8 seconds
     
     return () => clearInterval(pollInterval);
-  }, [clinicId]);
+  }, [clinicId, entries]);
 
   const checkAgentStatus = async () => {
     const { data } = await supabase
@@ -65,8 +71,10 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
     setAgentExists(!!data?.elevenlabs_agent_id);
   };
 
-  const loadEntries = async () => {
-    setLoading(true);
+  const loadEntries = async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+    }
     const { data, error } = await supabase
       .from("clinic_knowledge_base")
       .select("*")
@@ -102,7 +110,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
             .eq('id', stuck.id);
         }
         // Reload to show updated status
-        setTimeout(() => loadEntries(), 1000);
+        setTimeout(() => loadEntries(true), 1000);
       }
       
       setEntries(entries);
@@ -150,7 +158,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
         }
       }
       
-      loadEntries();
+      loadEntries(true);
     } catch (error: any) {
       console.error("Error adding URLs:", error);
       toast.error(error.message || "Failed to add URLs");
@@ -212,7 +220,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
         triggerSync(newEntry.id);
       }
       
-      loadEntries();
+      loadEntries(true);
     } catch (error: any) {
       console.error("Error uploading document:", error);
       toast.error(error.message || "Failed to upload document");
@@ -269,7 +277,7 @@ export const KnowledgeBase = ({ clinicId }: KnowledgeBaseProps) => {
       } else {
         toast.success("Sync started");
         // Poll for status updates
-        setTimeout(() => loadEntries(), 2000);
+        setTimeout(() => loadEntries(true), 2000);
       }
     } catch (error) {
       console.error("Error triggering sync:", error);
