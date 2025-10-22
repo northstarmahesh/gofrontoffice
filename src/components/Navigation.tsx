@@ -1,7 +1,7 @@
 import { Activity, Users, CheckSquare, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type View = "tasks" | "activity" | "contacts" | "settings";
+type View = "tasks" | "status" | "contacts" | "settings";
 
 interface NavigationProps {
   currentView: View;
@@ -11,7 +11,7 @@ interface NavigationProps {
 const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
   const navItems = [
     { id: "tasks" as View, icon: CheckSquare, label: "TASKS" },
-    { id: "activity" as View, icon: Activity, label: "ACTIVITY" },
+    { id: "status" as View, icon: Activity, label: "STATUS" },
     { id: "contacts" as View, icon: Users, label: "CONTACTS" },
     { id: "settings" as View, icon: SettingsIcon, label: "SETTINGS" },
   ];

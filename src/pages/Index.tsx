@@ -14,7 +14,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import frontOfficeLogo from "@/assets/front-office-logo-yellow-full.png";
-import Activity from "@/components/Activity";
+import Status from "@/components/Status";
 import Settings from "@/components/Settings";
 import Contacts from "@/components/Contacts";
 import Tasks from "@/components/Tasks";
@@ -22,7 +22,7 @@ import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 import { useInvitationAcceptance } from "@/hooks/useInvitationAcceptance";
 
-type View = "tasks" | "activity" | "contacts" | "settings";
+type View = "tasks" | "status" | "contacts" | "settings";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -249,8 +249,11 @@ const Index = () => {
     }
 
     switch (currentView) {
-      case "activity":
-        return <Activity />;
+      case "status":
+        return <Status
+          onNavigateToTasks={() => setCurrentView("tasks")}
+          onNavigateToClinic={() => setCurrentView("settings")}
+        />;
       case "contacts":
         return <Contacts selectedContactName={selectedContactName} onNavigateToTools={() => {
           setCurrentView("settings");
@@ -260,7 +263,10 @@ const Index = () => {
       case "settings":
         return <Settings />;
       default:
-        return <Activity />;
+        return <Status
+          onNavigateToTasks={() => setCurrentView("tasks")}
+          onNavigateToClinic={() => setCurrentView("settings")}
+        />;
     }
   };
 
