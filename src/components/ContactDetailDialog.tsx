@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { User, Phone, Clock, MessageSquare, Mail, Instagram, Facebook, PhoneIncoming, PhoneOutgoing, X, Edit, Save, Bot } from "lucide-react";
+import { User, Phone, Clock, MessageSquare, Mail, Instagram, Facebook, PhoneIncoming, PhoneOutgoing, X, Edit, Save, Bot, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import CallTranscriptDialog from "./CallTranscriptDialog";
 
 interface ActivityLog {
   id: string;
@@ -64,6 +65,8 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
     isConnected: boolean;
     hasUsed: boolean;
   }[]>([]);
+  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
+  const [selectedActivityLogId, setSelectedActivityLogId] = useState<string>("");
 
   useEffect(() => {
     if (open && (contactId || contactName)) {
@@ -557,6 +560,7 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
   if (!contactName) return null;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-full sm:max-w-3xl lg:max-w-4xl max-h-[95vh] p-3 sm:p-6">
         <DialogHeader>
@@ -839,10 +843,26 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
                                       <p className="text-sm text-foreground leading-relaxed">{log.summary}</p>
                                     </div>
                                   )}
-                                  
+
                                   {/* Timestamp */}
                                   <div className="text-xs text-muted-foreground pt-1 border-t border-border/50">
                                     {formatDateTime(log.created_at)}
+                                  </div>
+
+                                  {/* View Transcript Button */}
+                                  <div className="pt-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedActivityLogId(log.id);
+                                        setTranscriptDialogOpen(true);
+                                      }}
+                                      className="w-full gap-2"
+                                    >
+                                      <FileText className="h-4 w-4" />
+                                      View Full Transcript
+                                    </Button>
                                   </div>
                                 </div>
                               </Card>
@@ -949,6 +969,16 @@ const ContactDetailDialog = ({ contactId, contactName, contactInfo, open, onOpen
         </ScrollArea>
       </DialogContent>
     </Dialog>
+
+    {/* Call Transcript Dialog */}
+    <CallTranscriptDialog
+      open={transcriptDialogOpen}
+      onOpenChange={setTranscriptDialogOpen}
+      activityLogId={selectedActivityLogId}
+      contactName={contactName}
+      contactPhone={contactInfo}
+    />
+    </>
   );
 };
 
