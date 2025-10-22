@@ -137,13 +137,13 @@ serve(async (req) => {
     // Phone number is NOT in ElevenLabs payload - we'll get it from activity_log
     let phoneNumber: string | null = null;
 
-    // Find existing activity log by conversation_id in summary field
+    // Find existing activity log by conversation_id
     console.log('Looking for existing activity log with conversation_id:', payload.conversation_id);
     const { data: existingLog, error: logSearchError } = await supabase
       .from('activity_logs')
       .select('id, user_id, contact_info')
       .eq('clinic_id', clinic.id)
-      .ilike('summary', `%${payload.conversation_id}%`)
+      .eq('conversation_id', payload.conversation_id)
       .maybeSingle();
 
     if (logSearchError) {
@@ -157,6 +157,7 @@ serve(async (req) => {
       console.log('Found existing activity log:', existingLog.id);
       activityLogId = existingLog.id;
       userId = existingLog.user_id;
+      phoneNumber = existingLog.contact_info;
 
       // Update existing activity log
       const { error: updateError } = await supabase
@@ -198,7 +199,7 @@ serve(async (req) => {
           title: `Call - ${payload.conversation_id}`,
           summary: formattedTranscript,
           contact_info: phoneNumber || 'Unknown',
-          contact_name: 'Caller',
+          contact_name: phoneNumber || 'Unknown',
           status: 'completed',
           direction: 'inbound',
           duration: payload.metadata?.call_duration_secs 

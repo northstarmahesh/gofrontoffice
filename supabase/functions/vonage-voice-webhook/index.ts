@@ -140,6 +140,7 @@ serve(async (req) => {
         contact_name: normalizedFrom,
         contact_info: normalizedFrom,
         direction: 'inbound',
+        conversation_id: conversation_uuid,
       });
 
     // Return NCCO with initial greeting, then connect to Eleven Labs SIP
