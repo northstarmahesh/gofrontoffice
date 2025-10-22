@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight, TrendingUp, DollarSign, Calendar, CalendarIcon, ChevronDown, ChevronUp, Pencil, History, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Bot, User, MessageSquare, Phone, Mail, Instagram, Send, MapPin, AlertCircle, ArrowRight, TrendingUp, DollarSign, Calendar, CalendarIcon, ChevronDown, ChevronUp, Pencil, Download, FileText, FileSpreadsheet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TaskDetailDialog from "./TaskDetailDialog";
 import ContactDetailDialog from "./ContactDetailDialog";
@@ -894,19 +894,14 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
             {isContactTask && task.contact_name && (
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className={cn("font-bold text-foreground", compactView ? "text-lg" : "text-2xl")}>
-                      {task.contact_name}
-                    </h3>
-                    <Badge variant="outline" className="text-xs">
-                      {isInlineExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    </Badge>
-                  </div>
-                  {task.contact_info && (isInlineExpanded || !compactView) && (
+                  <h3 className={cn("font-bold text-foreground", compactView ? "text-lg" : "text-2xl")}>
+                    {task.contact_name}
+                  </h3>
+                  {task.contact_info && (
                     <p className="text-sm text-muted-foreground mt-1">{task.contact_info}</p>
                   )}
                 </div>
-                {hasDraft && isInlineExpanded && (
+                {hasDraft && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -914,9 +909,8 @@ const Tasks = ({ onNavigateToContact }: TasksProps) => {
                       e.stopPropagation();
                       handleTaskClick(task);
                     }}
-                    className="text-sm flex items-center gap-1.5 flex-shrink-0"
+                    className="text-sm flex-shrink-0"
                   >
-                    <History className="h-4 w-4" />
                     Full Conversation
                   </Button>
                 )}
