@@ -75,8 +75,16 @@ serve(async (req) => {
     }
 
     // Parse payload
-    const payload: WebhookPayload = JSON.parse(body);
-    console.log('Parsed payload:', {
+    const rawPayload = JSON.parse(body);
+    
+    // 🔍 DIAGNOSTIC: Log complete RAW payload structure
+    console.log('========== RAW PAYLOAD START ==========');
+    console.log(JSON.stringify(rawPayload, null, 2));
+    console.log('========== RAW PAYLOAD END ==========');
+    
+    // Type cast after logging
+    const payload: WebhookPayload = rawPayload;
+    console.log('Parsed payload summary:', {
       agent_id: payload.agent_id,
       conversation_id: payload.conversation_id,
       status: payload.status,
