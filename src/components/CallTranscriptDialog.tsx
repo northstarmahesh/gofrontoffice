@@ -10,14 +10,14 @@ import { toast } from "sonner";
 interface TranscriptTurn {
   role: 'user' | 'agent';
   message: string;
-  timestamp: number;
+  time_in_call_secs: number; // ElevenLabs uses seconds from call start
 }
 
 interface CallMetadata {
-  call_duration_seconds?: number;
-  phone_number?: string;
-  started_at?: string;
-  ended_at?: string;
+  call_duration_secs?: number; // ElevenLabs uses this field name
+  start_time_unix_secs?: number;
+  accepted_time_unix_secs?: number;
+  cost?: number;
 }
 
 interface CallTranscriptData {
@@ -126,14 +126,11 @@ const CallTranscriptDialog = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatMessageTime = (timestamp: number) => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleTimeString('sv-SE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
+  const formatMessageTime = (timeInCallSecs: number) => {
+    // Format as MM:SS from call start
+    const minutes = Math.floor(timeInCallSecs / 60);
+    const seconds = timeInCallSecs % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const formatCallTime = (dateString: string) => {
@@ -180,7 +177,7 @@ const CallTranscriptDialog = ({
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Längd:</span>
                   <Badge variant="outline" className="font-mono">
-                    {formatDuration(transcriptData.duration_seconds || transcriptData.metadata?.call_duration_seconds)}
+                    {formatDuration(transcriptData.duration_seconds || transcriptData.metadata?.call_duration_secs)}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
@@ -228,7 +225,7 @@ const CallTranscriptDialog = ({
                             </>
                           )}
                           <span className="text-xs opacity-70">
-                            {formatMessageTime(turn.timestamp)}
+                            {formatMessageTime(turn.time_in_call_secs)}
                           </span>
                         </div>
                         <Card

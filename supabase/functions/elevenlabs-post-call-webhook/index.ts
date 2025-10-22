@@ -9,27 +9,28 @@ const corsHeaders = {
 interface TranscriptTurn {
   role: 'user' | 'agent';
   message: string;
-  timestamp: number;
+  time_in_call_secs: number; // ElevenLabs uses this field name
 }
 
-interface WebhookPayload {
-  agent_id: string;
-  conversation_id: string;
-  status: string;
-  transcript: TranscriptTurn[];
-  metadata: {
-    call_duration_seconds?: number;
-    total_cost?: number;
-    phone_number?: string;
-    started_at?: string;
-    ended_at?: string;
+interface ElevenLabsWebhookPayload {
+  type: string;
+  event_timestamp: number;
+  data: {
+    agent_id: string;
+    conversation_id: string;
+    status: string;
+    user_id?: string | null;
+    transcript: TranscriptTurn[];
+    metadata: {
+      start_time_unix_secs?: number;
+      accepted_time_unix_secs?: number;
+      call_duration_secs?: number; // ElevenLabs uses this field name
+      cost?: number;
+      authorization_method?: string;
+    };
+    call_recording_url?: string | null;
+    recording_signed_url?: string | null;
   };
-  analysis?: {
-    summary?: string;
-  };
-  has_audio?: boolean;
-  has_user_audio?: boolean;
-  has_response_audio?: boolean;
 }
 
 serve(async (req) => {
@@ -75,21 +76,18 @@ serve(async (req) => {
     }
 
     // Parse payload
-    const rawPayload = JSON.parse(body);
+    const rawPayload: ElevenLabsWebhookPayload = JSON.parse(body);
     
-    // 🔍 DIAGNOSTIC: Log complete RAW payload structure
-    console.log('========== RAW PAYLOAD START ==========');
-    console.log(JSON.stringify(rawPayload, null, 2));
-    console.log('========== RAW PAYLOAD END ==========');
+    // Extract data from ElevenLabs webhook structure
+    const payload = rawPayload.data;
     
-    // Type cast after logging
-    const payload: WebhookPayload = rawPayload;
-    console.log('Parsed payload summary:', {
+    console.log('ElevenLabs webhook processed:', {
+      type: rawPayload.type,
       agent_id: payload.agent_id,
       conversation_id: payload.conversation_id,
       status: payload.status,
       transcript_length: payload.transcript?.length,
-      phone_number: payload.metadata?.phone_number
+      call_duration_secs: payload.metadata?.call_duration_secs
     });
 
     // Initialize Supabase client
@@ -134,20 +132,18 @@ serve(async (req) => {
 
     // Format transcript
     const formattedTranscript = formatTranscript(payload.transcript || []);
-    const summary = payload.analysis?.summary || formattedTranscript.substring(0, 500);
+    const summary = formattedTranscript.substring(0, 500);
 
-    // Normalize phone number
-    const phoneNumber = payload.metadata?.phone_number 
-      ? normalizePhoneNumber(payload.metadata.phone_number)
-      : null;
+    // Phone number is NOT in ElevenLabs payload - we'll get it from activity_log
+    let phoneNumber: string | null = null;
 
-    // Find existing activity log by conversation_id or create new one
-    console.log('Looking for existing activity log');
+    // Find existing activity log by conversation_id in summary field
+    console.log('Looking for existing activity log with conversation_id:', payload.conversation_id);
     const { data: existingLog, error: logSearchError } = await supabase
       .from('activity_logs')
-      .select('id, user_id')
+      .select('id, user_id, contact_info')
       .eq('clinic_id', clinic.id)
-      .or(`title.ilike.%${payload.conversation_id}%,contact_info.eq.${phoneNumber}`)
+      .ilike('summary', `%${payload.conversation_id}%`)
       .maybeSingle();
 
     if (logSearchError) {
@@ -168,8 +164,8 @@ serve(async (req) => {
         .update({
           summary: formattedTranscript,
           status: 'completed',
-          duration: payload.metadata?.call_duration_seconds 
-            ? `${payload.metadata.call_duration_seconds}s` 
+          duration: payload.metadata?.call_duration_secs 
+            ? `${payload.metadata.call_duration_secs}s` 
             : null,
           updated_at: new Date().toISOString()
         })
@@ -204,8 +200,8 @@ serve(async (req) => {
           contact_name: 'Caller',
           status: 'completed',
           direction: 'inbound',
-          duration: payload.metadata?.call_duration_seconds 
-            ? `${payload.metadata.call_duration_seconds}s` 
+          duration: payload.metadata?.call_duration_secs 
+            ? `${payload.metadata.call_duration_secs}s` 
             : null
         })
         .select('id')
@@ -228,7 +224,7 @@ serve(async (req) => {
         conversation_id: payload.conversation_id,
         transcript: payload.transcript || [],
         metadata: payload.metadata || {},
-        duration_seconds: payload.metadata?.call_duration_seconds || null,
+        duration_seconds: payload.metadata?.call_duration_secs || null,
         call_direction: 'inbound'
       });
 
@@ -355,12 +351,11 @@ function formatTranscript(transcript: TranscriptTurn[]): string {
 
   return transcript
     .map(turn => {
-      const date = new Date(turn.timestamp * 1000);
-      const timestamp = date.toLocaleTimeString('sv-SE', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
+      // ElevenLabs uses time_in_call_secs (seconds from start of call)
+      const minutes = Math.floor(turn.time_in_call_secs / 60);
+      const seconds = turn.time_in_call_secs % 60;
+      const timestamp = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      
       const speaker = turn.role === 'user' ? 'Patient' : 'AI Assistent';
       return `[${timestamp}] ${speaker}: ${turn.message}`;
     })
