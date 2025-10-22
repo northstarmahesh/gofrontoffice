@@ -206,20 +206,19 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
     );
   };
 
-  const handleChannelAutoPilotToggle = async (channel: keyof typeof channelAutoPilot) => {
+  const handleChannelAutoPilotToggle = async (channel: keyof typeof channelAutoPilot, autoPilot: boolean) => {
     if (!isAdmin && !permissions.can_change_ai_mode) {
       toast.error("You don't have permission to change AI mode");
       return;
     }
 
-    const newValue = !channelAutoPilot[channel];
-    setChannelAutoPilot((prev) => ({ ...prev, [channel]: newValue }));
+    setChannelAutoPilot((prev) => ({ ...prev, [channel]: autoPilot }));
 
     const updateKey = `${channel}_auto_pilot`;
-    await updateSettings({ [updateKey]: newValue });
+    await updateSettings({ [updateKey]: autoPilot });
 
     const channelName = channel.charAt(0).toUpperCase() + channel.slice(1);
-    toast.success(`${channelName} mode: ${newValue ? "Autopilot" : "Co-pilot"}`);
+    toast.success(`${channelName} mode: ${autoPilot ? "Autopilot" : "Co-pilot"}`);
   };
 
   if (loading) {
@@ -292,8 +291,10 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
                 <MessageSquare className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <Label htmlFor="sms" className="text-sm font-medium">SMS</Label>
-                  {connectionStatus.sms && (
+                  {connectionStatus.sms ? (
                     <p className="text-xs text-muted-foreground">Connected</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Meta integration required</p>
                   )}
                 </div>
               </div>
@@ -303,10 +304,10 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
                 onCheckedChange={() => handleChannelToggle("sms")}
               />
             </div>
-            {channels.sms && (
+            {channels.sms && connectionStatus.sms && (
               <div className="flex gap-2 pl-8">
                 <button
-                  onClick={() => handleChannelAutoPilotToggle("sms")}
+                  onClick={() => handleChannelAutoPilotToggle("sms", true)}
                   className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
                     channelAutoPilot.sms
                       ? "bg-primary text-primary-foreground"
@@ -316,7 +317,7 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
                   Autopilot
                 </button>
                 <button
-                  onClick={() => handleChannelAutoPilotToggle("sms")}
+                  onClick={() => handleChannelAutoPilotToggle("sms", false)}
                   className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
                     !channelAutoPilot.sms
                       ? "bg-primary text-primary-foreground"
@@ -329,25 +330,50 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
             )}
           </div>
 
-          {/* WhatsApp - Coming Soon */}
-          <div className="rounded-lg border p-4 opacity-60">
+          {/* WhatsApp */}
+          <div className="rounded-lg border p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <MessageSquare className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="whatsapp" className="text-sm font-medium">WhatsApp</Label>
-                    <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Meta integration required</p>
+                  <Label htmlFor="whatsapp" className="text-sm font-medium">WhatsApp</Label>
+                  {connectionStatus.whatsapp ? (
+                    <p className="text-xs text-muted-foreground">Connected</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Meta integration required</p>
+                  )}
                 </div>
               </div>
               <Switch
                 id="whatsapp"
-                checked={false}
-                disabled={true}
+                checked={channels.whatsapp}
+                onCheckedChange={() => handleChannelToggle("whatsapp")}
               />
             </div>
+            {channels.whatsapp && connectionStatus.whatsapp && (
+              <div className="flex gap-2 pl-8">
+                <button
+                  onClick={() => handleChannelAutoPilotToggle("whatsapp", true)}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                    channelAutoPilot.whatsapp
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  Autopilot
+                </button>
+                <button
+                  onClick={() => handleChannelAutoPilotToggle("whatsapp", false)}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                    !channelAutoPilot.whatsapp
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  Co-pilot
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Instagram */}
@@ -357,8 +383,10 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
                 <Instagram className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <Label htmlFor="instagram" className="text-sm font-medium">Instagram DM</Label>
-                  {connectionStatus.instagram && (
+                  {connectionStatus.instagram ? (
                     <p className="text-xs text-muted-foreground">Connected</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Meta integration required</p>
                   )}
                 </div>
               </div>
@@ -368,10 +396,10 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
                 onCheckedChange={() => handleChannelToggle("instagram")}
               />
             </div>
-            {channels.instagram && (
+            {channels.instagram && connectionStatus.instagram && (
               <div className="flex gap-2 pl-8">
                 <button
-                  onClick={() => handleChannelAutoPilotToggle("instagram")}
+                  onClick={() => handleChannelAutoPilotToggle("instagram", true)}
                   className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
                     channelAutoPilot.instagram
                       ? "bg-primary text-primary-foreground"
@@ -381,7 +409,7 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
                   Autopilot
                 </button>
                 <button
-                  onClick={() => handleChannelAutoPilotToggle("instagram")}
+                  onClick={() => handleChannelAutoPilotToggle("instagram", false)}
                   className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
                     !channelAutoPilot.instagram
                       ? "bg-primary text-primary-foreground"
@@ -401,8 +429,10 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
                 <Facebook className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <Label htmlFor="messenger" className="text-sm font-medium">Messenger</Label>
-                  {connectionStatus.messenger && (
+                  {connectionStatus.messenger ? (
                     <p className="text-xs text-muted-foreground">Connected</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Meta integration required</p>
                   )}
                 </div>
               </div>
@@ -412,10 +442,10 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
                 onCheckedChange={() => handleChannelToggle("messenger")}
               />
             </div>
-            {channels.messenger && (
+            {channels.messenger && connectionStatus.messenger && (
               <div className="flex gap-2 pl-8">
                 <button
-                  onClick={() => handleChannelAutoPilotToggle("messenger")}
+                  onClick={() => handleChannelAutoPilotToggle("messenger", true)}
                   className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
                     channelAutoPilot.messenger
                       ? "bg-primary text-primary-foreground"
@@ -425,7 +455,7 @@ export const ChannelSettings = ({ locationId }: ChannelSettingsProps) => {
                   Autopilot
                 </button>
                 <button
-                  onClick={() => handleChannelAutoPilotToggle("messenger")}
+                  onClick={() => handleChannelAutoPilotToggle("messenger", false)}
                   className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
                     !channelAutoPilot.messenger
                       ? "bg-primary text-primary-foreground"
