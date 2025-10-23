@@ -21,14 +21,14 @@ import Tasks from "@/components/Tasks";
 import Navigation from "@/components/Navigation";
 import { toast } from "sonner";
 import { useInvitationAcceptance } from "@/hooks/useInvitationAcceptance";
+import { useAuth } from "@/contexts/AuthContext";
 
 type View = "tasks" | "activity" | "contacts" | "settings";
 
 const Index = () => {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<View>("tasks");
-  const [user, setUser] = useState<any>(null);
-  const [session, setSession] = useState<any>(null);
+  const { user, session, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [hasClinic, setHasClinic] = useState<boolean | null>(null);
   const [selectedContactName, setSelectedContactName] = useState<string | undefined>(undefined);
@@ -42,44 +42,32 @@ const Index = () => {
 
   useEffect(() => {
     let mounted = true;
-    
+
     // Aggressive fallback: force loading to false after 2 seconds no matter what
     const emergencyTimeout = setTimeout(() => {
-      console.log('Emergency timeout - forcing app to load');
       if (mounted) {
         setLoading(false);
       }
     }, 2000);
 
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (event === 'SIGNED_OUT' || !session) {
-        navigate("/auth", { replace: true });
-      }
-    });
+    if (authLoading) {
+      return () => {
+        mounted = false;
+        clearTimeout(emergencyTimeout);
+      };
+    }
 
-    // Check for existing session
-    const initAuth = async () => {
+    if (!session) {
+      navigate("/auth", { replace: true });
+      setLoading(false);
+      return () => {
+        mounted = false;
+        clearTimeout(emergencyTimeout);
+      };
+    }
+
+    const init = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (!mounted) return;
-        
-        if (error || !session) {
-          navigate("/auth", { replace: true });
-          setLoading(false);
-          return;
-        }
-
-        setSession(session);
-        setUser(session.user);
-        
-        // Quick clinic check with timeout
         try {
           await Promise.race([
             checkClinicStatus(session.user.id),
@@ -89,24 +77,19 @@ const Index = () => {
           console.log("Clinic check timeout or error - showing onboarding");
           setHasClinic(false);
           setCurrentView("settings");
-        } finally {
-          setLoading(false);
         }
-      } catch (error) {
-        console.error("Init error:", error);
-        setLoading(false);
-        navigate("/auth", { replace: true });
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
 
-    initAuth();
+    init();
 
     return () => {
       mounted = false;
       clearTimeout(emergencyTimeout);
-      subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [authLoading, session, navigate]);
 
 
   const checkClinicStatus = async (userId: string) => {

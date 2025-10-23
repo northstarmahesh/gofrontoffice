@@ -12,6 +12,8 @@ import { z } from "zod";
 import logo from "@/assets/front-office-logo-updated.png";
 import { CheckCircle, Building2, Phone as PhoneIcon, MessageSquare, Instagram, Chrome, Send, Calendar } from "lucide-react";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Ogiltig e-postadress" }).max(255),
   password: z.string().min(6, { message: "Lösenordet måste vara minst 6 tecken" }).max(100),
@@ -24,35 +26,13 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
 
+  const { session, loading } = useAuth();
+
   useEffect(() => {
-    let mounted = true;
-
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (mounted && session) {
-          navigate("/", { replace: true });
-        }
-      } catch (error) {
-        console.error("Session check error:", error);
-      }
-    };
-
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-      
-      if (event === 'SIGNED_IN' && session) {
-        navigate("/", { replace: true });
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+    if (!loading && session) {
+      navigate("/", { replace: true });
+    }
+  }, [session, loading, navigate]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();

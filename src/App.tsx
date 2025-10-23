@@ -15,29 +15,33 @@ import NotFound from "./pages/NotFound";
 import InviteAccept from "./pages/InviteAccept";
 import CRM from "./pages/CRM";
 
+import { AuthProvider } from "@/contexts/AuthContext";
+
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/crm" element={<CRM />} />
-        <Route path="/team" element={<Team />} />
-        <Route path="/invite/:token" element={<InviteAccept />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/usage-billing" element={<UsageBilling />} />
-        <Route path="/auth-settings" element={<AuthSettings />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-        </TooltipProvider>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/crm" element={<CRM />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/invite/:token" element={<InviteAccept />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/usage-billing" element={<UsageBilling />} />
+              <Route path="/auth-settings" element={<AuthSettings />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </TooltipProvider>
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
