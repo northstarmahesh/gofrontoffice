@@ -69,7 +69,7 @@ Deno.test('Bokadirekt Availability - Validate booking handoff email structure', 
 
   // Build email HTML (same structure as in function)
   const emailHtml = `
-    <h2>Ny bokningsförfrågan via Front Office</h2>
+    <h2>Ny bokningsförfrågan via Go Front Office</h2>
     
     <h3>Klinikinfo</h3>
     <p><strong>Klinik:</strong> ${clinicName}</p>

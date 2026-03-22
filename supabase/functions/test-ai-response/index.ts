@@ -32,7 +32,7 @@ serve(async (req: Request) => {
     }
 
     // Build the system prompt
-    const defaultPrompt = `You are a professional front office assistant for ${clinicName || "a healthcare clinic"}. You help patients/customers with:
+    const defaultPrompt = `You are a professional go front office assistant for ${clinicName || "a healthcare clinic"}. You help patients/customers with:
 - Scheduling appointments
 - Answering questions about services
 - General inquiries

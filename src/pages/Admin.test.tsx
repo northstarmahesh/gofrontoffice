@@ -73,7 +73,7 @@ describe('Admin Page', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Front Office Admin')).toBeInTheDocument();
+      expect(screen.getByText('Go Front Office Admin')).toBeInTheDocument();
     });
 
     expect(screen.getByText('Manage clinics and onboard new clients')).toBeInTheDocument();

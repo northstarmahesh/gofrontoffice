@@ -2,6 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fade-in on scroll */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered notification cascade */
+@keyframes notificationPop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.outcome-card:nth-child(1) { animation: notificationPop 0.4s ease-out 0.1s both; }
+.outcome-card:nth-child(2) { animation: notificationPop 0.4s ease-out 0.3s both; }
+.outcome-card:nth-child(3) { animation: notificationPop 0.4s ease-out 0.5s both; }
+.outcome-card:nth-child(4) { animation: notificationPop 0.4s ease-out 0.7s both; }
+
+/* Subtle pulse for live indicator */
+@keyframes softPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.live-dot {
+  animation: softPulse 2s ease-in-out infinite;
+}
+
 @keyframes fadeInOut {
   0%, 100% {
     opacity: 1;
@@ -19,7 +63,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Front Office brand colors - White & Orange */
+    /* Go Front Office brand colors - White & Orange */
     --background: 0 0% 100%; /* Pure white */
     --foreground: 0 0% 13%; /* Almost black */
 
@@ -29,7 +73,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 13%;
 
-    /* Orange primary - Front Office brand */
+    /* Orange primary - Go Front Office brand */
     --primary: 20 100% 55%; /* #FF6B18 orange */
     --primary-foreground: 0 0% 100%;
     --primary-light: 20 100% 65%;

@@ -135,14 +135,14 @@ const Auth = () => {
       <div className="w-full max-w-4xl space-y-12 relative z-10">
         {/* Logo */}
         <div className="flex justify-center">
-          <img src={logo} alt="Front Office" className="h-24 md:h-28 w-auto" />
+          <img src={logo} alt="Go Front Office" className="h-24 md:h-28 w-auto" />
         </div>
 
         {/* Main Content */}
         <div className="space-y-8">
           {/* Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center text-foreground leading-tight">
-            Säg 👋 till Front Office din digitala assistant
+            Säg 👋 till Go Front Office din digitala assistant
           </h1>
 
           {/* Login Card */}
@@ -298,7 +298,7 @@ const Auth = () => {
           {/* Partner Logos */}
           <div className="max-w-3xl mx-auto pt-8">
             <h3 className="text-center text-sm font-semibold text-muted-foreground mb-8">
-              FrontOffice samarbetar med:
+              GoFrontOffice samarbetar med:
             </h3>
             <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-6 items-center justify-items-center">
               {partners.map((partner) => {
@@ -328,7 +328,7 @@ const Auth = () => {
                   </div>
                   <div className="flex-1 space-y-3">
                     <p className="text-base italic text-foreground">
-                      "Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på - att ta hand om våra kunder - medan allt administrativt sköts automatiskt. Otroligt värdefullt!"
+                      "Go Front Office har sparat oss så mycket tid. Vi kan nu fokusera på det vi är bäst på - att ta hand om våra kunder - medan allt administrativt sköts automatiskt. Otroligt värdefullt!"
                     </p>
                     <div className="flex items-center justify-between">
                       <div>

@@ -36,7 +36,7 @@ serve(async (req) => {
       body: JSON.stringify({
         api_key: VONAGE_API_KEY,
         api_secret: VONAGE_API_SECRET,
-        from: from || 'FrontOffice',
+        from: from || 'GoFrontOffice',
         to: to.replace(/\+/g, ''), // Remove + from phone number for Vonage
         text: message,
         type: 'unicode', // Support all characters including Swedish

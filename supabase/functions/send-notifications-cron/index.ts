@@ -301,8 +301,8 @@ async function sendEmailNotification(
     <h1>Hej ${user.full_name}!</h1>
     <p>Du har ${tasks.length} väntande uppgift${tasks.length === 1 ? '' : 'er'} att granska:</p>
     <ul>${tasksList}</ul>
-    <p>Logga in på Front Office för att hantera dessa uppgifter.</p>
-    <p>Med vänliga hälsningar,<br>Front Office</p>
+    <p>Logga in på Go Front Office för att hantera dessa uppgifter.</p>
+    <p>Med vänliga hälsningar,<br>Go Front Office</p>
   `;
 
   const response = await fetch('https://api.resend.com/emails', {
@@ -312,7 +312,7 @@ async function sendEmailNotification(
       Authorization: `Bearer ${resendApiKey}`,
     },
     body: JSON.stringify({
-      from: 'Front Office <notifications@resend.dev>',
+      from: 'Go Front Office <notifications@resend.dev>',
       to: [user.email],
       subject: `Du har ${tasks.length} väntande uppgift${tasks.length === 1 ? '' : 'er'}`,
       html: emailHtml,
@@ -342,7 +342,7 @@ async function sendSmsNotification(
 
   const message = `Hej ${user.full_name}! Du har ${tasks.length} väntande uppgift${
     tasks.length === 1 ? '' : 'er'
-  } att granska i Front Office.`;
+  } att granska i Go Front Office.`;
 
   const response = await fetch('https://rest.nexmo.com/sms/json', {
     method: 'POST',
@@ -350,7 +350,7 @@ async function sendSmsNotification(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'FrontOffice',
+      from: 'GoFrontOffice',
       to: user.phone,
       text: message,
       api_key: vonageApiKey,
@@ -383,13 +383,13 @@ async function sendAnalyticsEmail(
     .join('');
 
   const emailHtml = `
-    <h1>Veckorapport - Front Office</h1>
+    <h1>Veckorapport - Go Front Office</h1>
     <p>Hej ${user.full_name}!</p>
-    <p>Här är din veckorapport från Front Office:</p>
+    <p>Här är din veckorapport från Go Front Office:</p>
     <h2>Totalt antal interaktioner: ${totalInteractions}</h2>
     <ul>${analyticsItems}</ul>
-    <p>Logga in på Front Office för att se mer detaljerad statistik.</p>
-    <p>Med vänliga hälsningar,<br>Front Office</p>
+    <p>Logga in på Go Front Office för att se mer detaljerad statistik.</p>
+    <p>Med vänliga hälsningar,<br>Go Front Office</p>
   `;
 
   const response = await fetch('https://api.resend.com/emails', {
@@ -399,9 +399,9 @@ async function sendAnalyticsEmail(
       Authorization: `Bearer ${resendApiKey}`,
     },
     body: JSON.stringify({
-      from: 'Front Office <notifications@resend.dev>',
+      from: 'Go Front Office <notifications@resend.dev>',
       to: [user.email],
-      subject: 'Din veckorapport från Front Office',
+      subject: 'Din veckorapport från Go Front Office',
       html: emailHtml,
     }),
   });
@@ -427,7 +427,7 @@ async function sendAnalyticsSms(
     throw new Error('Vonage credentials not configured');
   }
 
-  const message = `Din veckorapport från Front Office: ${totalInteractions} interaktioner denna vecka. Logga in för mer detaljer.`;
+  const message = `Din veckorapport från Go Front Office: ${totalInteractions} interaktioner denna vecka. Logga in för mer detaljer.`;
 
   const response = await fetch('https://rest.nexmo.com/sms/json', {
     method: 'POST',
@@ -435,7 +435,7 @@ async function sendAnalyticsSms(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'FrontOffice',
+      from: 'GoFrontOffice',
       to: user.phone,
       text: message,
       api_key: vonageApiKey,

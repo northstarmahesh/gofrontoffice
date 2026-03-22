@@ -206,7 +206,7 @@ async function handleBookingHandoff(payload: BookingHandoffRequest) {
 
     // Format the email
     const emailHtml = `
-      <h2>Ny bokningsförfrågan via Front Office</h2>
+      <h2>Ny bokningsförfrågan via Go Front Office</h2>
       
       <h3>Klinikinfo</h3>
       <p><strong>Klinik:</strong> ${clinic.name}</p>
@@ -229,7 +229,7 @@ async function handleBookingHandoff(payload: BookingHandoffRequest) {
       <p><a href="${calendar_url}">${calendar_url}</a></p>
       
       <hr>
-      <p style="color: #666; font-size: 12px;">Detta meddelande skickades automatiskt från Front Office AI-assistenten.</p>
+      <p style="color: #666; font-size: 12px;">Detta meddelande skickades automatiskt från Go Front Office AI-assistenten.</p>
     `;
 
     // Send email via Resend API
@@ -241,7 +241,7 @@ async function handleBookingHandoff(payload: BookingHandoffRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Front Office <onboarding@resend.dev>',
+        from: 'Go Front Office <onboarding@resend.dev>',
         to: [clinic.admin_email],
         subject: `Ny bokningsförfrågan - ${customer_name}`,
         html: emailHtml,

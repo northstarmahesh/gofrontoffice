@@ -120,7 +120,7 @@ const InviteAccept = () => {
       <div className="min-h-screen bg-gradient-to-b from-white via-orange-50/40 to-orange-400/60 flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8">
           <div className="flex justify-center">
-            <img src={logo} alt="Front Office" className="h-20 w-auto" />
+            <img src={logo} alt="Go Front Office" className="h-20 w-auto" />
           </div>
           
           <Card className="border-2 border-destructive/20">
@@ -146,7 +146,7 @@ const InviteAccept = () => {
     <div className="min-h-screen bg-gradient-to-b from-white via-orange-50/40 to-orange-400/60 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-center">
-          <img src={logo} alt="Front Office" className="h-20 w-auto" />
+          <img src={logo} alt="Go Front Office" className="h-20 w-auto" />
         </div>
 
         <Card className="shadow-2xl border-2 border-primary/20 bg-white">

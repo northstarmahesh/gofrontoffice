@@ -134,7 +134,7 @@ const AuthSettings = () => {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Authentication Methods</h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Manage how you log in to Front Office. We recommend using BankID for the most secure and convenient experience.
+              Manage how you log in to Go Front Office. We recommend using BankID for the most secure and convenient experience.
             </p>
 
             <div className="space-y-4">

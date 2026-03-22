@@ -62,7 +62,7 @@ serve(async (req: Request) => {
       throw new Error("SMS service not configured");
     }
 
-    const message = `Din Front Office verifieringskod är: ${otp}. Koden är giltig i 10 minuter.`;
+    const message = `Din Go Front Office verifieringskod är: ${otp}. Koden är giltig i 10 minuter.`;
 
     const twilioResponse = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,

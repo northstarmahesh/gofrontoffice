@@ -163,7 +163,7 @@ export const ClinicOnboarding = ({ onComplete }: ClinicOnboardingProps) => {
   const handleComplete = () => {
     if (clinicId) {
       onComplete(clinicId);
-      toast.success("Welcome to Front Office! 🎉");
+      toast.success("Welcome to Go Front Office! 🎉");
     }
   };
 

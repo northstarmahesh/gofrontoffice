@@ -22,10 +22,10 @@ const generateEmailHTML = (invitedByName: string, clinicName: string, role: stri
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; margin: 0 auto; padding: 40px 40px 48px; border-radius: 8px;">
           <tr>
             <td>
-              <h1 style="color: #333; font-size: 28px; font-weight: bold; margin: 0 0 24px 0;">Välkommen till Front Office! 👋</h1>
+              <h1 style="color: #333; font-size: 28px; font-weight: bold; margin: 0 0 24px 0;">Välkommen till Go Front Office! 👋</h1>
               
               <p style="color: #333; font-size: 16px; line-height: 26px; margin: 16px 0;">
-                <strong>${invitedByName}</strong> har bjudit in dig till <strong>${clinicName}</strong> på Front Office.
+                <strong>${invitedByName}</strong> har bjudit in dig till <strong>${clinicName}</strong> på Go Front Office.
               </p>
 
               <p style="color: #333; font-size: 16px; line-height: 26px; margin: 16px 0;">
@@ -60,7 +60,7 @@ const generateEmailHTML = (invitedByName: string, clinicName: string, role: stri
               </p>
 
               <p style="color: #8898aa; font-size: 12px; line-height: 16px; margin-top: 32px;">
-                Front Office - Din digitala assistent
+                Go Front Office - Din digitala assistent
               </p>
             </td>
           </tr>
@@ -134,9 +134,9 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Front Office <onboarding@resend.dev>',
+        from: 'Go Front Office <onboarding@resend.dev>',
         to: [invitation.email],
-        subject: `Du är inbjuden till ${clinicName} på Front Office`,
+        subject: `Du är inbjuden till ${clinicName} på Go Front Office`,
         html,
       }),
     });

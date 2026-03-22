@@ -298,7 +298,7 @@ const Index = () => {
           <div className="flex items-center gap-3">
             <img 
               src={frontOfficeLogo} 
-              alt="Front Office Logo" 
+              alt="Go Front Office Logo" 
               className="h-20 w-auto"
             />
           </div>

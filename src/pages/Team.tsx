@@ -74,7 +74,7 @@ const Team = () => {
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/90">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <img src={frontOfficeLogo} alt="Front Office" className="h-8" />
+            <img src={frontOfficeLogo} alt="Go Front Office" className="h-8" />
           </div>
           
           <DropdownMenu>
