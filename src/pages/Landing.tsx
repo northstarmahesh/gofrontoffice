@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -115,65 +115,203 @@ const integrations = [
 ];
 
 // ─── INDUSTRIES ──────────────────────────────────────────────
+type StoryStep = {
+  time: string;
+  label: string;
+  type: "ringing" | "answered" | "whatsapp" | "outcome" | "widget" | "cobrowse";
+  // ringing / answered
+  callerName?: string;
+  callerNumber?: string;
+  transcript?: { speaker: "ai" | "customer"; text: string }[];
+  // whatsapp
+  waMessages?: { sender: "ai" | "customer"; text: string }[];
+  // outcome
+  outcomeEmoji?: string;
+  outcomeTitle?: string;
+  outcomeDetail?: string;
+  // widget (in-app help banner)
+  widgetApp?: string; // e.g. "your-app.io/integrations"
+  widgetPage?: string; // page title
+  widgetUserName?: string;
+  widgetMessage?: string;
+  widgetDay?: string; // e.g. "Day 4 · Free Trial"
+  // cobrowse (AI guiding through app)
+  cobrowseField?: string;
+  cobrowseHint?: string;
+};
+
+const STEP_DURATION = 5000; // ms per step
+
 const industries: Record<string, {
   name: string; icon: typeof Building2; headline: string; sub: string;
-  outcomes: { emoji: string; label: string; detail: string }[];
+  problems: string[];
+  steps: StoryStep[];
   agents: string[]; result: string; resultLink: string;
 }> = {
   "self-storage": {
     name: "Self-Storage", icon: Building2,
     headline: "Stop depending on one superstar.",
     sub: "Give superhuman powers to your entire team.",
-    outcomes: [
-      { emoji: "📅", label: "Viewing booked", detail: "11:43 PM — prospect called after hours, tour booked for tomorrow" },
-      { emoji: "🔐", label: "Gate code sent", detail: "Identity verified, access code delivered in 8 seconds" },
-      { emoji: "💳", label: "Payment collected", detail: "€450 overdue 12 days — reminder call, paid within the hour" },
-      { emoji: "🟠", label: "Lead in CRM", detail: "New prospect qualified, unit size + move-in date captured" },
+    problems: [
+      "Prospect calls at 11 PM. Voicemail.",
+      "Tenant texts for gate code. Seen 2 hours later.",
+      "3 rents overdue. No time to chase.",
+      "Walk-in asks about units. Nobody free.",
+    ],
+    steps: [
+      {
+        time: "20:21", label: "Phone rings", type: "ringing",
+        callerName: "Erik Lindström", callerNumber: "+46 70 123 45 67",
+      },
+      {
+        time: "20:21", label: "AI answers", type: "answered",
+        callerName: "Erik Lindström", callerNumber: "+46 70 123 45 67",
+        transcript: [
+          { speaker: "ai", text: "Hi Erik, this is Easy Storage. How can I help you tonight?" },
+          { speaker: "customer", text: "Hi! I need a 10 square meter unit, do you have anything available?" },
+          { speaker: "ai", text: "Yes! We have a ground floor unit with drive-up access — €89 per month. Want to book a viewing?" },
+        ],
+      },
+      {
+        time: "20:22", label: "WhatsApp confirmation", type: "whatsapp",
+        waMessages: [
+          { sender: "ai", text: "Hi Erik! Your viewing is confirmed for tomorrow at 10:00 AM. Here's the address and gate code: 4821. See you then! 📍" },
+          { sender: "customer", text: "Perfect, thanks!" },
+        ],
+      },
+      {
+        time: "20:22", label: "Lead in CRM", type: "outcome",
+        outcomeEmoji: "🟢", outcomeTitle: "HubSpot — New lead captured",
+        outcomeDetail: "Erik Lindström · 10m² unit · viewing booked · move-in: next week",
+      },
     ],
     agents: ["Receptionist", "Support Agent", "Facility Manager", "Collections"],
-    result: "See how Hamza at Easy Storage Jordan saves 10hrs/week with his voice agent team.",
+    result: "See how Hamza at Easy Storage Jordan saves 10hrs/week →",
     resultLink: "https://easystoragejordan.com",
   },
   solar: {
     name: "Solar", icon: Sun,
     headline: "The fastest callback wins.",
-    sub: "Your competitors respond in seconds. You respond in hours.",
-    outcomes: [
-      { emoji: "📞", label: "Lead called back", detail: "28 seconds after form fill — before the competitor even saw it" },
-      { emoji: "📅", label: "Site visit booked", detail: "Roof type, energy usage, timeline — all qualified. Visit tomorrow 10 AM" },
-      { emoji: "📊", label: "Call scored", detail: "Rep's objection handling: 8/10. Coaching note: 'mirror the hesitation'" },
-      { emoji: "💚", label: "Follow-up sent", detail: "WhatsApp: 'Hi Erik, confirming your site visit. See you tomorrow!'" },
+    sub: "Your competitors respond in hours. You respond in seconds.",
+    problems: [
+      "Lead fills out form. Callback in 42 hours.",
+      "Rep ignores the 'small' rooftop job.",
+      "'Not ready yet' lead — never followed up.",
+      "200 leads in the pipeline collecting dust.",
+    ],
+    steps: [
+      {
+        time: "14:01", label: "Lead fills form — phone rings", type: "ringing",
+        callerName: "Anna Björk", callerNumber: "+46 73 987 65 43",
+      },
+      {
+        time: "14:01", label: "AI calls back in 28 seconds", type: "answered",
+        callerName: "Anna Björk", callerNumber: "+46 73 987 65 43",
+        transcript: [
+          { speaker: "ai", text: "Hi Anna, I'm calling from Solar Plus — you just requested a quote. I'd love to ask a few quick questions about your roof." },
+          { speaker: "customer", text: "Wow, that was fast! Yes, go ahead." },
+          { speaker: "ai", text: "Great! Your south-facing 180 square meter roof is ideal. I've got a site visit slot tomorrow at 10 AM — does that work?" },
+        ],
+      },
+      {
+        time: "14:03", label: "WhatsApp — visit confirmed", type: "whatsapp",
+        waMessages: [
+          { sender: "ai", text: "Hi Anna! Confirming your site visit tomorrow at 10:00 AM. Our installer Erik will be there. Here's what to expect: 📋" },
+          { sender: "customer", text: "Amazing, thank you!" },
+        ],
+      },
+      {
+        time: "14:03", label: "Call scored & logged", type: "outcome",
+        outcomeEmoji: "📊", outcomeTitle: "Call scored — objection handling: 9/10",
+        outcomeDetail: "Anna Björk · 180m² roof · site visit booked · ICP score: 94",
+      },
     ],
     agents: ["SDR", "Receptionist", "Sales Coach", "Customer Success"],
-    result: "See how Dark Edition generates €80k ACV with their voice agent team.",
+    result: "See how Dark Edition generates €80k ACV →",
     resultLink: "https://darkedition.se",
   },
   health: {
     name: "Health Clinics", icon: Heart,
     headline: "Your front desk is overwhelmed.",
     sub: "It's time to add superhuman backup.",
-    outcomes: [
-      { emoji: "📅", label: "Appointment booked", detail: "Patient called at 7 PM — consultation booked for Thursday 9 AM" },
-      { emoji: "📱", label: "Reminder sent", detail: "SMS: 'Hi Maria, just a reminder about your appointment tomorrow at 9'" },
-      { emoji: "💚", label: "Post-visit check-in", detail: "'How are you feeling after your visit? Any questions about your prescription?'" },
-      { emoji: "🟠", label: "New patient onboarded", detail: "Insurance info collected, medical history form sent, all before arrival" },
+    problems: [
+      "Patient on hold 45 seconds. Hangs up.",
+      "No-show — the reminder never went out.",
+      "New patient paperwork — manual, slow.",
+      "Post-visit follow-up? What follow-up.",
+    ],
+    steps: [
+      {
+        time: "19:45", label: "Patient calls after hours", type: "ringing",
+        callerName: "Maria Johansson", callerNumber: "+46 76 555 12 34",
+      },
+      {
+        time: "19:45", label: "AI answers instantly", type: "answered",
+        callerName: "Maria Johansson", callerNumber: "+46 76 555 12 34",
+        transcript: [
+          { speaker: "ai", text: "Hi Maria, this is Moonrise Health. How can I help you this evening?" },
+          { speaker: "customer", text: "I'd like to book an appointment with Dr. Svensson." },
+          { speaker: "ai", text: "Of course! Dr. Svensson has Thursday at 9 AM or Friday at 2 PM. Which works for you?" },
+        ],
+      },
+      {
+        time: "19:46", label: "Booking + patient form sent", type: "whatsapp",
+        waMessages: [
+          { sender: "ai", text: "Hi Maria! Your appointment with Dr. Svensson is confirmed: Thursday 9:00 AM. Fill out this form before your visit to skip the waiting room 📋" },
+          { sender: "customer", text: "Thursday morning, perfect. Thank you!" },
+        ],
+      },
+      {
+        time: "19:46", label: "Patient onboarded", type: "outcome",
+        outcomeEmoji: "✅", outcomeTitle: "New patient — fully onboarded",
+        outcomeDetail: "Maria Johansson · Dr. Svensson · Thu 9 AM · patient form sent · insurance pending",
+      },
     ],
     agents: ["Receptionist", "Support Agent", "Onboarding Expert", "Customer Success"],
-    result: "See how Philippa at Moonrise Health increased inbound sales by 30%.",
+    result: "See how Moonrise Health increased inbound sales by 30% →",
     resultLink: "https://moonrise.health",
   },
   b2b: {
     name: "B2B Sales", icon: Briefcase,
-    headline: "Leads go cold. Trial users churn.",
-    sub: "Your reps can't do both. You need speed-to-lead AND onboarding.",
-    outcomes: [
-      { emoji: "🟢", label: "Deal moved forward", detail: "Pipedrive: 'Demo booked' — lead qualified, ICP score 92" },
-      { emoji: "📅", label: "Demo booked", detail: "Inbound lead → qualified → demo on calendar in 45 seconds" },
-      { emoji: "🎓", label: "Trial user activated", detail: "Onboarding call completed — user found value in first session" },
-      { emoji: "📊", label: "Rep coached", detail: "Call review: 'Strong discovery, missed buying signal at 4:12'" },
+    headline: "Trial users churn because nobody helps them.",
+    sub: "Your AI meets them inside the product — right when they're stuck.",
+    problems: [
+      "Trial user signs up. Zero guidance. Churns day 3.",
+      "Integration page — 70% drop-off. Nobody helps.",
+      "Support ticket 2 days later. Too late, they're gone.",
+      "Onboarding call? They never book it.",
     ],
-    agents: ["SDR", "Onboarding Expert", "Sales Coach", "Customer Success"],
-    result: "See how Jacob at Triggerbee accelerated trial activation with AI onboarding.",
+    steps: [
+      {
+        time: "Day 4", label: "User stuck on integrations", type: "widget",
+        widgetApp: "your-app.io/integrations/setup",
+        widgetPage: "Integration Setup",
+        widgetUserName: "Jonas",
+        widgetMessage: "I can walk you through the API setup in 2 minutes. How do you want help?",
+        widgetDay: "Day 4 · Free Trial",
+      },
+      {
+        time: "Day 4", label: "AI guides through setup", type: "cobrowse",
+        widgetApp: "your-app.io/integrations/setup",
+        widgetPage: "Integration Setup",
+        cobrowseField: "API Key",
+        cobrowseHint: "Paste your API key in the highlighted field — I'll stay on the line.",
+      },
+      {
+        time: "Day 4", label: "Follow-up via WhatsApp", type: "whatsapp",
+        waMessages: [
+          { sender: "ai", text: "Nice work, Jonas! Your integration is live. Here's a 2-min video on setting up your first campaign 🎬" },
+          { sender: "customer", text: "That was way easier than I expected, thanks!" },
+        ],
+      },
+      {
+        time: "Day 4", label: "User activated in CRM", type: "outcome",
+        outcomeEmoji: "🎓", outcomeTitle: "Trial user — activated",
+        outcomeDetail: "Jonas Eriksson · Integration complete · first campaign created · activation score: 94",
+      },
+    ],
+    agents: ["Onboarding Expert", "SDR", "Sales Coach", "Customer Success"],
+    result: "See how Triggerbee accelerated trial activation →",
     resultLink: "https://triggerbee.com",
   },
 };
@@ -324,6 +462,30 @@ const ContactForm = () => {
 const Landing = () => {
   const navigate = useNavigate();
   const [activeIndustry, setActiveIndustry] = useState("self-storage");
+  const [demoStep, setDemoStep] = useState(0);
+  const [stepPaused, setStepPaused] = useState(false);
+
+  // Auto-advance demo steps
+  useEffect(() => {
+    setDemoStep(0);
+    setStepPaused(false);
+  }, [activeIndustry]);
+
+  useEffect(() => {
+    if (stepPaused) return;
+    const maxSteps = industries[activeIndustry]?.steps.length ?? 4;
+    const timer = setInterval(() => {
+      setDemoStep(prev => (prev + 1) % maxSteps);
+    }, STEP_DURATION);
+    return () => clearInterval(timer);
+  }, [activeIndustry, stepPaused]);
+
+  const goToStep = useCallback((i: number) => {
+    setDemoStep(i);
+    setStepPaused(true);
+    // Resume auto-advance after 12 seconds of inactivity
+    setTimeout(() => setStepPaused(false), 12000);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -533,127 +695,338 @@ const Landing = () => {
                 })}
               </TabsList>
             </div>
-            {Object.entries(industries).map(([k, v]) => (
+            {Object.entries(industries).map(([k, v]) => {
+              const step = v.steps[demoStep] || v.steps[0];
+              return (
               <TabsContent key={k} value={k}>
                 <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                  {/* Headline */}
-                  <div className="p-8 md:p-10 border-b border-gray-100 text-center">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-1">{v.headline}</h3>
-                    <p className="text-gray-500">{v.sub}</p>
-                  </div>
 
-                  {/* Before → After */}
+                  {/* Two-column: Problems ← | → Phone story */}
                   <div className="grid md:grid-cols-2">
-                    {/* BEFORE — the pain */}
-                    <div className="p-8 md:p-10 bg-red-50/30 border-b md:border-b-0 md:border-r border-gray-100 relative">
-                      <div className="flex items-center gap-2 mb-5">
-                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center"><span className="text-xs">❌</span></div>
-                        <h4 className="text-sm font-bold text-red-700 uppercase tracking-wider">Before</h4>
-                      </div>
+
+                    {/* LEFT — Problems + headline */}
+                    <div className="p-8 md:p-10 lg:p-12 flex flex-col justify-center">
+                      <h3 className="text-2xl md:text-3xl font-bold mb-2">{v.headline}</h3>
+                      <p className="text-gray-500 mb-8">{v.sub}</p>
                       <div className="space-y-3">
-                        {v.outcomes.map((o, i) => (
-                          <div key={`before-${i}`} className="outcome-card flex items-start gap-3 bg-white/60 rounded-xl border border-red-100/50 p-3.5">
-                            <div className="w-8 h-8 rounded-lg bg-red-100/50 flex items-center justify-center flex-shrink-0">
-                              <span className="text-sm">😩</span>
+                        {v.problems.map((p, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-xs">✕</span>
                             </div>
-                            <div>
-                              <div className="text-sm font-semibold text-red-800">
-                                {k === "self-storage" && ["Prospect calls at 11 PM. Voicemail.", "Tenant texts for gate code. Seen 2hrs later.", "3 rents overdue. No time to chase.", "Walk-in asks about units. No one free."][i]}
-                                {k === "solar" && ["Lead fills form. Callback in 42 hours.", "Rep ignores 'small' rooftop job.", "'Not ready' lead — never followed up.", "Old pipeline — 200 leads collecting dust."][i]}
-                                {k === "health" && ["Patient on hold 45 seconds. Hangs up.", "No-show — reminder never went out.", "New patient paperwork — manual, slow.", "Post-visit follow-up? What follow-up."][i]}
-                                {k === "b2b" && ["Inbound lead. Rep in a meeting. No callback.", "Trial user signs up. No guidance. Churns.", "Qualification? Depends which rep picks up.", "Call review? Nobody has time."][i]}
-                              </div>
-                            </div>
+                            <span className="text-sm text-gray-600">{p}</span>
                           </div>
                         ))}
                       </div>
+                      {/* Agents in this team */}
+                      <div className="mt-8 pt-6 border-t border-gray-100">
+                        <div className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-3">Agents in the team</div>
+                        <div className="flex flex-wrap gap-2">
+                          {v.agents.map((a) => {
+                            const td = teammates.find((t) => t.name === a);
+                            return (
+                              <span key={a} className={`text-xs bg-gradient-to-r ${td?.gradient || "from-gray-100 to-gray-50"} border ${td?.border || "border-gray-200/60"} rounded-full px-3 py-1.5 font-semibold text-gray-700 flex items-center gap-1.5`}>
+                                <span>{td?.emoji}</span> {a}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      {/* Case study */}
+                      <a href={v.resultLink} target="_blank" rel="noopener noreferrer" className="mt-4 flex items-center gap-3 bg-primary/5 border border-primary/15 rounded-xl px-4 py-3 group hover:bg-primary/10 transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Eye className="w-4 h-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{v.result}</span>
+                      </a>
                     </div>
 
-                    {/* AFTER — phone mockup with notifications */}
-                    <div className="p-8 md:p-10 bg-gray-950 relative flex justify-center">
+                    {/* RIGHT — Phone mockup with step-through */}
+                    <div className="bg-gray-950 p-8 md:p-10 lg:p-12 flex flex-col items-center justify-center min-h-[520px]">
                       {/* Phone frame */}
-                      <div className="w-[280px] rounded-[2rem] bg-gray-900 border border-gray-700 p-3 shadow-2xl">
-                        {/* Notch */}
-                        <div className="flex justify-between items-center px-4 pt-1 pb-3 text-white/50 text-[10px]">
-                          <span>9:41</span>
-                          <div className="w-20 h-5 bg-gray-800 rounded-full" />
-                          <span>📶</span>
-                        </div>
-                        {/* Screen */}
-                        <div className="bg-gray-100 rounded-2xl p-4 min-h-[320px]">
-                          {/* Date header */}
-                          <div className="text-center mb-4">
-                            <div className="text-2xl font-bold text-gray-900">Today</div>
-                            <div className="text-xs text-gray-400">Front Office</div>
+                      <div className="w-[300px] rounded-[2.5rem] bg-gray-900 border border-gray-700/80 p-3 shadow-2xl">
+                        {/* Status bar */}
+                        <div className="flex justify-between items-center px-5 pt-2 pb-2 text-white/50 text-[11px] font-medium">
+                          <span>{step.time}</span>
+                          <div className="w-24 h-6 bg-gray-800 rounded-full" />
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px]">5G</span>
+                            <span>📶</span>
                           </div>
-                          {/* Notification cards */}
-                          <div className="space-y-2.5">
-                            {/* Warm transfer — human in the loop */}
-                            <div className="outcome-card bg-red-50 rounded-xl p-3 border border-red-100/50">
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center gap-1.5"><span className="text-sm">🔥</span><span className="text-[10px] font-bold text-red-700">Warm Transfer</span></div>
-                                <span className="text-[9px] text-gray-400">now</span>
+                        </div>
+
+                        {/* Screen content — changes per step */}
+                        <div className="bg-gray-100 rounded-[1.75rem] overflow-hidden min-h-[380px] flex flex-col">
+
+                          {/* ── RINGING ── */}
+                          {step.type === "ringing" && (
+                            <div className="flex-1 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 flex flex-col items-center justify-center text-center px-6">
+                              <div className="text-gray-400 text-[11px] uppercase tracking-widest mb-6">incoming call</div>
+                              <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center mx-auto mb-5 text-3xl">
+                                {step.callerName?.charAt(0)}
                               </div>
-                              <div className="text-xs font-bold text-gray-900">
-                                {k === "self-storage" && "Erik is ON THE LINE"}
-                                {k === "solar" && "Anna is ON THE LINE"}
-                                {k === "health" && "Dr. Svensson requested"}
-                                {k === "b2b" && "VP Sales wants to talk"}
-                              </div>
-                              <div className="text-[10px] text-gray-500 mt-0.5">
-                                {k === "self-storage" && "Qualified. 3 units. Pick up now."}
-                                {k === "solar" && "Qualified. 180m² roof. Pick up now."}
-                                {k === "health" && "Complex case. Patient on hold."}
-                                {k === "b2b" && "Enterprise lead. Qualified. Pick up."}
+                              <div className="text-white font-bold text-xl mb-1">{step.callerName}</div>
+                              <div className="text-gray-400 text-sm font-mono mb-8">{step.callerNumber}</div>
+                              <div className="flex items-center gap-12">
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/30">
+                                    <Phone className="w-6 h-6 text-white rotate-[135deg]" />
+                                  </div>
+                                  <span className="text-gray-400 text-[10px]">Decline</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30 call-ring">
+                                    <Phone className="w-6 h-6 text-white" />
+                                  </div>
+                                  <span className="text-gray-400 text-[10px]">Accept</span>
+                                </div>
                               </div>
                             </div>
-                            {/* Outcome notifications */}
-                            {v.outcomes.slice(0, 3).map((o) => (
-                              <div key={o.label} className={`outcome-card rounded-xl p-3 border ${
-                                o.emoji === "📅" ? "bg-blue-50 border-blue-100/50" :
-                                o.emoji === "💳" ? "bg-amber-50 border-amber-100/50" :
-                                o.emoji === "💚" ? "bg-green-50 border-green-100/50" :
-                                o.emoji === "🟠" || o.emoji === "🟢" ? "bg-orange-50 border-orange-100/50" :
-                                "bg-violet-50 border-violet-100/50"
-                              }`}>
-                                <div className="flex items-center justify-between mb-1">
-                                  <div className="flex items-center gap-1.5"><span className="text-sm">{o.emoji}</span><span className="text-[10px] font-bold text-gray-600">{o.label}</span></div>
-                                  <span className="text-[9px] text-gray-400">{["12m ago", "28m ago", "1h ago"][v.outcomes.indexOf(o)]}</span>
+                          )}
+
+                          {/* ── ANSWERED — live call with transcript ── */}
+                          {step.type === "answered" && (
+                            <div className="flex-1 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 flex flex-col px-5 pt-5 pb-4">
+                              <div className="flex items-center justify-between mb-4">
+                                <div>
+                                  <div className="text-white font-bold text-sm">{step.callerName}</div>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 live-dot" />
+                                    <span className="text-green-400 text-[11px] font-medium">Connected</span>
+                                  </div>
                                 </div>
-                                <div className="text-[10px] text-gray-600 leading-snug">{o.detail.split("—")[0]}</div>
+                                <div className="text-gray-500 text-[10px] font-mono">🤖 AI answering</div>
                               </div>
-                            ))}
-                          </div>
+                              {/* Waveform */}
+                              <div className="mb-4">
+                                <AudioWave className="w-full h-8" color="#22c55e" />
+                              </div>
+                              {/* Live transcript */}
+                              <div className="flex-1 space-y-2.5 overflow-hidden">
+                                {step.transcript?.map((t, i) => (
+                                  <div key={i} className="wa-msg">
+                                    <div className="flex items-start gap-2">
+                                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[9px] ${
+                                        t.speaker === "ai" ? "bg-green-500/20 text-green-400" : "bg-gray-700 text-gray-400"
+                                      }`}>
+                                        {t.speaker === "ai" ? "🤖" : "👤"}
+                                      </div>
+                                      <div className={`text-[12px] leading-relaxed ${
+                                        t.speaker === "ai" ? "text-green-300/90" : "text-gray-300/80"
+                                      }`}>
+                                        {t.text}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ── WHATSAPP ── */}
+                          {step.type === "whatsapp" && (
+                            <div className="flex-1 flex flex-col bg-[#ECE5DD]">
+                              <div className="bg-[#075E54] px-4 py-3 flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm">🤖</div>
+                                <div>
+                                  <div className="text-white text-sm font-semibold">Front Office</div>
+                                  <div className="text-green-200 text-[10px]">online</div>
+                                </div>
+                              </div>
+                              <div className="flex-1 p-3 space-y-1.5 overflow-hidden" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8c8c8' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}>
+                                {step.waMessages?.map((msg, i) => (
+                                  <div key={i} className={`wa-msg flex ${msg.sender === "customer" ? "justify-end" : "justify-start"}`}>
+                                    <div className={`max-w-[85%] rounded-lg px-3 py-2 text-[13px] leading-snug shadow-sm ${
+                                      msg.sender === "customer"
+                                        ? "bg-[#DCF8C6] text-gray-900 rounded-tr-none"
+                                        : "bg-white text-gray-900 rounded-tl-none"
+                                    }`}>
+                                      <div>{msg.text}</div>
+                                      <div className="flex items-center justify-end gap-1 mt-0.5">
+                                        <span className="text-[10px] text-gray-400">{step.time}</span>
+                                        {msg.sender === "customer" && <span className="text-[10px] text-blue-500">✓✓</span>}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="bg-[#F0F0F0] px-3 py-2 flex items-center gap-2">
+                                <div className="flex-1 bg-white rounded-full px-4 py-2 text-xs text-gray-400">Type a message</div>
+                                <div className="w-8 h-8 rounded-full bg-[#075E54] flex items-center justify-center">
+                                  <Mic className="w-4 h-4 text-white" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ── OUTCOME ── */}
+                          {step.type === "outcome" && (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center px-6 bg-white">
+                              <div className="text-4xl mb-4">{step.outcomeEmoji}</div>
+                              <div className="text-sm font-bold text-gray-900 mb-2">{step.outcomeTitle}</div>
+                              <div className="text-xs text-gray-500 leading-relaxed max-w-[220px]">{step.outcomeDetail}</div>
+                              <div className="mt-6 w-full max-w-[200px] bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+                                <div className="flex items-center gap-2 justify-center">
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                  <span className="text-xs font-semibold text-emerald-700">Done — no human needed</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ── WIDGET — in-app help popup ── */}
+                          {step.type === "widget" && (
+                            <div className="flex-1 flex flex-col bg-[#F5F3EF]">
+                              {/* Browser chrome */}
+                              <div className="bg-[#E8E5E0] px-4 py-2.5 flex items-center gap-3 border-b border-[#D5D2CC]">
+                                <div className="flex gap-1.5">
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+                                </div>
+                                <div className="flex-1 bg-white rounded-md px-3 py-1 text-[10px] text-gray-500 font-mono truncate">
+                                  {step.widgetApp}
+                                </div>
+                                {step.widgetDay && (
+                                  <span className="text-[9px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full">{step.widgetDay}</span>
+                                )}
+                              </div>
+                              {/* App content */}
+                              <div className="flex-1 px-5 pt-5 pb-3 relative">
+                                <div className="text-sm font-bold text-gray-900 mb-4">{step.widgetPage}</div>
+                                {/* Fake form fields */}
+                                <div className="space-y-3 mb-4 opacity-40">
+                                  <div className="h-3 w-16 bg-gray-300 rounded" />
+                                  <div className="h-8 w-full bg-white rounded-lg border border-gray-200" />
+                                  <div className="h-3 w-20 bg-gray-300 rounded" />
+                                  <div className="h-8 w-full bg-white rounded-lg border border-gray-200" />
+                                </div>
+                                {/* Widget popup */}
+                                <div className="wa-msg absolute bottom-3 left-3 right-3 bg-gray-900 rounded-xl p-4 shadow-2xl border border-gray-700">
+                                  <div className="flex items-start gap-3 mb-3">
+                                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                                      <span className="text-sm">👋</span>
+                                    </div>
+                                    <div>
+                                      <div className="text-white text-[13px] font-bold">Hey {step.widgetUserName} — looks like you're stuck</div>
+                                      <div className="text-gray-400 text-[11px] mt-0.5">{step.widgetMessage}</div>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    <div className="bg-primary rounded-lg py-2.5 text-center cursor-pointer hover:bg-primary/90 transition-colors">
+                                      <div className="text-white text-[11px] font-bold">Talk to me</div>
+                                      <div className="text-white/60 text-[9px]">Voice call</div>
+                                    </div>
+                                    <div className="bg-gray-800 rounded-lg py-2.5 text-center">
+                                      <div className="text-gray-300 text-[11px] font-bold">Chat</div>
+                                      <div className="text-gray-500 text-[9px]">Text</div>
+                                    </div>
+                                    <div className="bg-gray-800 rounded-lg py-2.5 text-center">
+                                      <div className="text-gray-300 text-[11px] font-bold">WhatsApp</div>
+                                      <div className="text-gray-500 text-[9px]">Send to phone</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ── COBROWSE — AI guiding through app ── */}
+                          {step.type === "cobrowse" && (
+                            <div className="flex-1 flex flex-col bg-[#F5F3EF]">
+                              {/* Browser chrome */}
+                              <div className="bg-[#E8E5E0] px-4 py-2.5 flex items-center gap-3 border-b border-[#D5D2CC]">
+                                <div className="flex gap-1.5">
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+                                </div>
+                                <div className="flex-1 bg-white rounded-md px-3 py-1 text-[10px] text-gray-500 font-mono truncate">
+                                  {step.widgetApp}
+                                </div>
+                              </div>
+                              {/* App content with highlighted field */}
+                              <div className="flex-1 px-5 pt-5 pb-3 relative">
+                                <div className="text-sm font-bold text-gray-900 mb-4">{step.widgetPage}</div>
+                                <div className="space-y-3">
+                                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{step.cobrowseField}</div>
+                                  <div className="relative">
+                                    <div className="h-9 w-full bg-white rounded-lg border-2 border-primary ring-4 ring-primary/20 flex items-center px-3">
+                                      <span className="text-[11px] text-gray-400 font-mono">sk-a8f2...x9q1</span>
+                                    </div>
+                                    <div className="absolute -top-1 -right-1 bg-primary text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                      ← paste here
+                                    </div>
+                                    {/* AI cursor */}
+                                    <div className="absolute top-3 right-12 text-primary">
+                                      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M1 1l4.5 10L7 7l4-1.5z"/></svg>
+                                      <span className="ml-1 bg-primary text-white text-[8px] px-1.5 py-0.5 rounded-full font-medium shadow-sm">AI</span>
+                                    </div>
+                                  </div>
+                                  <div className="opacity-30 space-y-3 mt-2">
+                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Webhook URL</div>
+                                    <div className="h-9 w-full bg-white rounded-lg border border-gray-200" />
+                                  </div>
+                                </div>
+                                {/* Agent speaking bar */}
+                                <div className="absolute bottom-3 left-3 right-3 bg-gray-900 rounded-xl px-4 py-3 flex items-center gap-3 shadow-2xl border border-gray-700">
+                                  <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                                    <Volume2 className="w-3.5 h-3.5 text-white" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-white text-[11px] font-bold">Agent speaking...</div>
+                                    <div className="text-gray-400 text-[10px] truncate">"{step.cobrowseHint}"</div>
+                                  </div>
+                                  <div className="bg-red-500 text-white text-[9px] font-bold px-2.5 py-1 rounded-md flex-shrink-0">End</div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                        </div>
+                      </div>
+
+                      {/* Step indicators + labels */}
+                      <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-[300px]">
+                        {/* Progress dots */}
+                        <div className="flex items-center gap-2">
+                          {v.steps.map((s, i) => (
+                            <button
+                              key={i}
+                              onClick={() => goToStep(i)}
+                              className={`relative h-1.5 rounded-full transition-all duration-300 ${
+                                i === demoStep ? "w-8 bg-primary" : "w-3 bg-gray-600 hover:bg-gray-400"
+                              }`}
+                            >
+                              {i === demoStep && !stepPaused && (
+                                <div className="absolute inset-0 rounded-full bg-primary/50 origin-left step-progress" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Current step label */}
+                        <div className="text-center">
+                          <span className="text-gray-500 text-xs font-mono">{step.time}</span>
+                          <span className="text-gray-600 text-xs ml-2">{step.label}</span>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Agent fit + case study */}
-                  <div className="p-6 md:px-10 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs text-gray-400 font-medium">Powered by:</span>
-                      {v.agents.map((a) => {
-                        const td = teammates.find((t) => t.name === a);
-                        return <span key={a} className="text-xs bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1 font-medium text-gray-600">{td?.emoji} {a}</span>;
-                      })}
-                    </div>
-                    <a href={v.resultLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-medium text-primary hover:underline">
-                      {v.result} <ArrowRight className="w-3.5 h-3.5" />
-                    </a>
                   </div>
                 </div>
               </TabsContent>
-            ))}
+              );
+            })}
           </Tabs>
         </div>
       </section>
 
-      {/* VIDEO — See it in action */}
-      <section className="bg-gradient-to-b from-gray-100/50 via-gray-50 to-white">
-        <div className="max-w-4xl mx-auto px-6 py-16 md:py-24">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-1.5 text-sm font-medium text-gray-600 mb-4 shadow-sm">
+      {/* VIDEO + VOICE SAMPLES */}
+      <section className="bg-gray-950 text-white">
+        <div className="max-w-5xl mx-auto px-6 py-16 md:py-24">
+          {/* Video */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-full px-4 py-1.5 text-sm font-medium text-gray-300 mb-4">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="currentColor" /></svg>
               Watch
             </div>
@@ -661,15 +1034,66 @@ const Landing = () => {
               See Front Office in action
             </h2>
           </div>
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200 bg-gray-900 aspect-video">
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-800 bg-gray-900 aspect-video mb-20">
             {/* Replace with: <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" className="absolute inset-0 w-full h-full" allow="autoplay; fullscreen" allowFullScreen /> */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-gradient-to-br from-gray-800 to-gray-950">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mb-4 border border-white/20 hover:bg-white/20 transition-colors cursor-pointer">
                 <svg className="w-8 h-8 ml-1" viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="white" /></svg>
               </div>
               <p className="text-lg font-semibold">Build your voice AI team with Front Office</p>
-              <p className="text-sm text-gray-400 mt-1">Video coming soon</p>
+              <p className="text-sm text-gray-500 mt-1">Video coming soon</p>
             </div>
+          </div>
+
+          {/* Voice samples */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              Hear the voice. 30+ languages.
+            </h2>
+            <p className="text-gray-400 max-w-xl mx-auto">Real conversations. Real voices. Not a chatbot — an AI teammate that speaks your brand.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            {[
+              { flag: "🇬🇧", lang: "English", useCase: "After-hours lead follow-up", duration: "0:28",
+                transcript: '"Hey Sarah, it\'s [Company Name]. I noticed we never connected after you enquired about the 10 square meter unit. Are you still looking?"' },
+              { flag: "🇸🇪", lang: "Svenska", useCase: "Tidigare kund uppföljning", duration: "0:26",
+                transcript: '"Hej Erik, det är [Företagsnamn]. Du var med i Ledarskapsgruppen förra terminen. Vi har en ny omgång som startar — vill du höra mer?"' },
+              { flag: "🇩🇪", lang: "Deutsch", useCase: "Terminbuchung Check-in", duration: "0:30",
+                transcript: '"Hallo Anna, hier ist [Firmenname]. Du warst letztes Jahr bei meinem Business-Coaching. Wir starten eine neue Runde — hast du Interesse?"' },
+              { flag: "🇪🇸", lang: "Español", useCase: "Reactivación de clientes", duration: "0:27",
+                transcript: '"Hola Carlos, soy [Nombre]. Participaste en el Programa de Liderazgo. Tenemos una nueva edición — ¿te gustaría saber más?"' },
+            ].map((sample) => (
+              <div key={sample.lang} className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-2xl">{sample.flag}</span>
+                  <div>
+                    <div className="font-bold text-sm">{sample.lang}</div>
+                    <div className="text-gray-500 text-xs">{sample.useCase}</div>
+                  </div>
+                </div>
+                {/* Audio player */}
+                <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg px-3 py-2.5 mb-4">
+                  <button className="w-9 h-9 rounded-full bg-primary hover:bg-primary/90 flex items-center justify-center flex-shrink-0 transition-all hover:scale-105 active:scale-95">
+                    <svg className="w-4 h-4 ml-0.5 text-white" viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="currentColor" /></svg>
+                  </button>
+                  <div className="flex-1">
+                    <AudioWave className="w-full h-5" color="#F97316" />
+                  </div>
+                  <span className="text-xs text-gray-500 font-mono flex-shrink-0">{sample.duration}</span>
+                </div>
+                {/* Transcript */}
+                <div className="border-l-2 border-primary/30 pl-3">
+                  <p className="text-sm text-gray-400 italic leading-relaxed">{sample.transcript}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Language tags */}
+          <div className="mt-10 flex flex-wrap justify-center gap-2">
+            {["🇬🇧 English", "🇸🇪 Svenska", "🇩🇪 Deutsch", "🇪🇸 Español", "🇳🇱 Nederlands", "🇳🇴 Norsk", "🇫🇷 Français", "🇫🇮 Suomi"].map((l) => (
+              <span key={l} className="text-xs bg-gray-800 border border-gray-700 rounded-full px-3 py-1.5 text-gray-300 font-medium">{l}</span>
+            ))}
+            <span className="text-xs bg-gray-800 border border-primary/30 rounded-full px-3 py-1.5 text-primary font-bold">+ 29 more</span>
           </div>
         </div>
       </section>
@@ -712,9 +1136,9 @@ const Landing = () => {
           </div>
           <div className="grid md:grid-cols-3 gap-10">
             {[
-              { n: "1", title: "We learn your business together", desc: "A 30-minute onboarding call with our team. We learn your tone, your processes, and exactly how you want conversations handled. You approve everything before it goes live.", color: "bg-blue-50 border-blue-200/40 text-blue-600" },
-              { n: "2", title: "We connect and test everything", desc: "CRM, calendar, phone, helpdesk — we plug into your stack, configure the workflows, and run test calls with you until you're confident.", color: "bg-emerald-50 border-emerald-200/40 text-emerald-600" },
-              { n: "3", title: "Your agents go live — with guardrails", desc: "Real calls, real conversations. Every interaction logged and reviewable. Your team can jump in anytime. Agents escalate to humans whenever needed.", color: "bg-primary/10 border-primary/20 text-primary" },
+              { n: "1", title: "Tell us how you work", desc: "Your tone, your processes, how you want conversations handled. You approve everything before it goes live.", color: "bg-blue-50 border-blue-200/40 text-blue-600" },
+              { n: "2", title: "We connect and test everything", desc: "CRM, calendar, phone, helpdesk — we plug into your stack, configure the workflows, and run test calls until you're confident.", color: "bg-emerald-50 border-emerald-200/40 text-emerald-600" },
+              { n: "3", title: "Get detailed recordings and transcripts", desc: "Every interaction logged and reviewable. Full transcripts, call recordings, and detailed analytics — so you always know what's happening.", color: "bg-primary/10 border-primary/20 text-primary" },
             ].map((s) => (
               <div key={s.n} className="text-center">
                 <div className={`w-14 h-14 rounded-2xl ${s.color} border flex items-center justify-center mx-auto mb-5`}><span className="text-2xl font-black">{s.n}</span></div>
@@ -758,9 +1182,9 @@ const Landing = () => {
       <section id="pricing" className="max-w-6xl mx-auto px-6 py-16 md:py-24">
         <div className="text-center mb-12">
           <Badge variant="outline" className="mb-4 text-xs font-semibold tracking-wider uppercase px-3 py-1 border-gray-200 text-gray-500">Founder-Friendly Pricing</Badge>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Pay once to set up. Then pay for what you use.</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Three ways to get started.</h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            One setup fee per agent, then usage-based pricing — <strong className="text-gray-700">⅕ to ¹⁄₁₀ the cost of a full-time employee</strong>. But they work 24/7.
+            One setup fee per agent. Per-use after that — <strong className="text-gray-700">never locked into monthly contracts</strong>.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
@@ -770,24 +1194,14 @@ const Landing = () => {
               <div className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">Starter</div>
               <div className="text-xs text-gray-400 mb-4">You handle testing & go-live</div>
               <div className="text-4xl font-extrabold mb-1">€500</div>
-              <div className="text-sm text-gray-500 mb-6">per agent · one-time</div>
+              <div className="text-sm text-gray-500 mb-6">per agent · one-time setup</div>
               <div className="space-y-2.5 text-sm text-gray-600">
                 {[
-                  { text: "Agent configuration & voice training", included: true },
-                  { text: "Brand voice & tone setup", included: true },
-                  { text: "Phone number provisioning", included: true },
-                  { text: "You test & deploy yourself", included: true },
-                  { text: "CRM / calendar integrations", included: false },
-                  { text: "Our team tests & deploys for you", included: false },
-                ].map(f => (
-                  <div key={f.text} className={`flex items-center gap-2 ${!f.included ? "opacity-40" : ""}`}>
-                    {f.included
-                      ? <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      : <div className="w-4 h-4 rounded-full border border-gray-300 flex-shrink-0" />
-                    }
-                    {f.text}
-                  </div>
-                ))}
+                  "Agent configuration & voice training",
+                  "Brand voice & tone setup",
+                  "Phone number provisioning",
+                  "You test & deploy yourself",
+                ].map(f => <div key={f} className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />{f}</div>)}
               </div>
             </CardContent>
           </Card>
@@ -799,7 +1213,7 @@ const Landing = () => {
               <div className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">Managed</div>
               <div className="text-xs text-gray-400 mb-4">We handle everything — you just approve</div>
               <div className="flex items-baseline gap-1 mb-1"><span className="text-sm text-gray-500">from </span><span className="text-4xl font-extrabold">€1,950</span></div>
-              <div className="text-sm text-gray-500 mb-6">per agent · one-time</div>
+              <div className="text-sm text-gray-500 mb-6">per agent · one-time setup</div>
               <div className="space-y-2.5 text-sm text-gray-600">
                 {[
                   "Everything in Starter",
@@ -813,33 +1227,43 @@ const Landing = () => {
             </CardContent>
           </Card>
 
-          {/* Usage */}
+          {/* Build Your Own */}
           <Card className="border-gray-200 shadow-none bg-white">
             <CardContent className="p-8">
-              <div className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">Usage</div>
-              <div className="text-xs text-gray-400 mb-4">Outcome-based pricing</div>
-              <div className="text-4xl font-extrabold mb-1">Per use</div>
-              <div className="text-sm text-gray-500 mb-6">after setup · ongoing</div>
+              <div className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">Build Your Own</div>
+              <div className="text-xs text-gray-400 mb-4">Full control — we give you the tools</div>
+              <div className="text-4xl font-extrabold mb-1">Custom</div>
+              <div className="text-sm text-gray-500 mb-6">tailored to your stack</div>
               <div className="space-y-2.5 text-sm text-gray-600">
                 {[
-                  "Per-minute call pricing",
-                  "⅕–¹⁄₁₀ cost of an FTE",
-                  "24/7, 365 days a year",
-                  "Scale up or down anytime",
+                  "API access & documentation",
+                  "Custom voice & conversation flows",
+                  "Your own integrations & webhooks",
+                  "White-label ready",
+                  "Technical onboarding support",
                 ].map(f => <div key={f} className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />{f}</div>)}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
-                  <input type="checkbox" className="rounded border-gray-300 text-primary" />
-                  <span>Add ongoing support & tuning <span className="text-xs text-gray-400">(billed separately)</span></span>
-                </label>
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Per-use pricing bar */}
+        <div className="mt-10 bg-gray-50 border border-gray-200 rounded-2xl p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <div className="text-lg font-bold text-gray-900 mb-1">Per-use after setup. No monthly contracts.</div>
+              <div className="text-sm text-gray-500">Pay per minute of call time — <strong className="text-gray-700">⅕ to ¹⁄₁₀ the cost of a full-time employee</strong>. Scale up or down anytime. 24/7, 365 days.</div>
+            </div>
+            <div className="flex-shrink-0 bg-white border border-gray-200 rounded-xl px-5 py-3.5 text-center">
+              <div className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-1">Optional add-on</div>
+              <div className="text-sm font-semibold text-gray-700">Ongoing support & tuning</div>
+              <div className="text-xs text-gray-400">billed separately</div>
+            </div>
+          </div>
+        </div>
+
         {/* Multi-agent discount */}
-        <div className="mt-8 text-center">
+        <div className="mt-6 text-center">
           <div className="inline-flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-6 py-4">
             <Users className="w-5 h-5 text-emerald-600" />
             <div className="text-left">
