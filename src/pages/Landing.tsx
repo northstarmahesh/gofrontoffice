@@ -492,6 +492,22 @@ const Landing = () => {
               </div>
             ))}
           </div>
+
+          {/* Feature ticker */}
+          <div className="flex flex-wrap justify-center gap-3 mt-10">
+            {[
+              { icon: "🌍", label: "30+ languages" },
+              { icon: "🔌", label: "300+ integrations" },
+              { icon: "🎙️", label: "Clone your voice" },
+              { icon: "⚡", label: "<1s response" },
+              { icon: "🔒", label: "ISO 27001 certified" },
+            ].map((f) => (
+              <div key={f.label} className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-full px-4 py-2">
+                <span className="text-sm">{f.icon}</span>
+                <span className="text-sm font-medium text-gray-700">{f.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -521,42 +537,71 @@ const Landing = () => {
               <TabsContent key={k} value={k}>
                 <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                   {/* Headline */}
-                  <div className="p-8 md:p-10 border-b border-gray-100">
+                  <div className="p-8 md:p-10 border-b border-gray-100 text-center">
                     <h3 className="text-2xl md:text-3xl font-bold mb-1">{v.headline}</h3>
                     <p className="text-gray-500">{v.sub}</p>
                   </div>
 
-                  {/* Outcomes — visual, the hero of this section */}
-                  <div className="p-8 md:p-10">
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">What happens automatically</h4>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      {v.outcomes.map((o) => (
-                        <div key={o.label} className="outcome-card flex items-start gap-3 bg-gradient-to-r from-emerald-50/50 to-white rounded-xl border border-emerald-100/50 p-4 hover:shadow-sm transition-all">
-                          <span className="text-2xl mt-0.5">{o.emoji}</span>
-                          <div>
-                            <div className="text-sm font-bold text-gray-900">{o.label}</div>
-                            <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{o.detail}</div>
+                  {/* Before → After */}
+                  <div className="grid md:grid-cols-2">
+                    {/* BEFORE — the pain */}
+                    <div className="p-8 md:p-10 bg-red-50/30 border-b md:border-b-0 md:border-r border-gray-100 relative">
+                      <div className="flex items-center gap-2 mb-5">
+                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center"><span className="text-xs">❌</span></div>
+                        <h4 className="text-sm font-bold text-red-700 uppercase tracking-wider">Before</h4>
+                      </div>
+                      <div className="space-y-3">
+                        {v.outcomes.map((o, i) => (
+                          <div key={`before-${i}`} className="outcome-card flex items-start gap-3 bg-white/60 rounded-xl border border-red-100/50 p-3.5">
+                            <div className="w-8 h-8 rounded-lg bg-red-100/50 flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">😩</span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-red-800">
+                                {k === "self-storage" && ["Prospect calls at 11 PM. Voicemail.", "Tenant texts for gate code. Seen 2hrs later.", "3 rents overdue. No time to chase.", "Walk-in asks about units. No one free."][i]}
+                                {k === "solar" && ["Lead fills form. Callback in 42 hours.", "Rep ignores 'small' rooftop job.", "'Not ready' lead — never followed up.", "Old pipeline — 200 leads collecting dust."][i]}
+                                {k === "health" && ["Patient on hold 45 seconds. Hangs up.", "No-show — reminder never went out.", "New patient paperwork — manual, slow.", "Post-visit follow-up? What follow-up."][i]}
+                                {k === "b2b" && ["Inbound lead. Rep in a meeting. No callback.", "Trial user signs up. No guidance. Churns.", "Qualification? Depends which rep picks up.", "Call review? Nobody has time."][i]}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* AFTER — the outcomes */}
+                    <div className="p-8 md:p-10 bg-emerald-50/20 relative">
+                      <div className="flex items-center gap-2 mb-5">
+                        <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center"><span className="text-xs">✅</span></div>
+                        <h4 className="text-sm font-bold text-emerald-700 uppercase tracking-wider">After</h4>
+                      </div>
+                      <div className="space-y-3">
+                        {v.outcomes.map((o) => (
+                          <div key={o.label} className="outcome-card flex items-start gap-3 bg-white/80 rounded-xl border border-emerald-100/50 p-3.5">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">{o.emoji}</span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-emerald-800">{o.label}</div>
+                              <div className="text-xs text-emerald-600/70 mt-0.5">{o.detail}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Agent fit — compact, secondary */}
-                  <div className="px-8 md:px-10 pb-6 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-gray-400 font-medium mr-1">Powered by:</span>
-                    {v.agents.map((a) => {
-                      const td = teammates.find((t) => t.name === a);
-                      return <span key={a} className="text-xs bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1 font-medium text-gray-600">{td?.emoji} {a}</span>;
-                    })}
-                  </div>
-
-                  {/* Result — case study link */}
-                  <div className="px-8 md:px-10 pb-8">
-                    <a href={v.resultLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 bg-gray-50 hover:bg-primary/5 rounded-xl p-4 group transition-colors">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                      <p className="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors">{v.result}</p>
-                      <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary ml-auto flex-shrink-0 transition-colors" />
+                  {/* Agent fit + case study */}
+                  <div className="p-6 md:px-10 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-gray-400 font-medium">Powered by:</span>
+                      {v.agents.map((a) => {
+                        const td = teammates.find((t) => t.name === a);
+                        return <span key={a} className="text-xs bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1 font-medium text-gray-600">{td?.emoji} {a}</span>;
+                      })}
+                    </div>
+                    <a href={v.resultLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+                      {v.result} <ArrowRight className="w-3.5 h-3.5" />
                     </a>
                   </div>
                 </div>
@@ -798,85 +843,95 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ONE PLATFORM — visual grid */}
-      <section className="relative bg-gradient-to-br from-orange-50/30 via-white to-blue-50/20 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none opacity-[0.04]">
+      {/* ONE PLATFORM — powerful visual */}
+      <section className="relative bg-gray-950 text-white overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none opacity-[0.08]">
           <AudioWave className="w-full h-full" color="#F97316" />
         </div>
-        <div className="max-w-6xl mx-auto px-6 py-16 md:py-24 relative z-10">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
-              Your front office operating system.
+        <div className="max-w-6xl mx-auto px-6 py-20 md:py-28 relative z-10">
+          <div className="text-center mb-16">
+            <Badge className="bg-white/10 text-white/70 border-white/10 text-xs font-semibold tracking-wider uppercase px-3 py-1 mb-5">
+              One platform. Five tools replaced.
+            </Badge>
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">
+              Your front office<br />operating system.
             </h2>
-            <p className="text-gray-500 max-w-lg mx-auto">
-              No duct-taping. No tab-switching. Agents come with all the skills.
+            <p className="text-lg text-gray-400 max-w-lg mx-auto">
+              No duct-taping. No tab-switching. Everything your agents need — built in.
             </p>
           </div>
 
+          {/* Central hub */}
+          <div className="flex justify-center mb-12">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center shadow-2xl shadow-primary/20">
+              <PhoneCall className="w-9 h-9 text-white" />
+            </div>
+          </div>
+
+          {/* 4 pillars */}
           <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto">
             {/* AI Models */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all group">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">🧠 Every AI model</h3>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 rounded-full px-3 py-1">€200+/mo saved</span>
+            <div className="bg-white/[0.06] backdrop-blur-sm rounded-2xl border border-white/10 p-7 hover:bg-white/[0.1] transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl font-bold">Every AI model</h3>
+                <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 rounded-full px-3 py-1">€200+/mo saved</span>
               </div>
-              <p className="text-sm text-gray-500 mb-4">We route to the best model for every task. You get all of them.</p>
-              <div className="flex gap-2 overflow-hidden">
-                <div className="flex gap-2 animate-scroll">
-                  {["ChatGPT", "Claude", "Gemini", "ElevenLabs", "Deepgram", "Whisper", "ChatGPT", "Claude", "Gemini", "ElevenLabs", "Deepgram", "Whisper"].map((m, i) => (
-                    <span key={`${m}-${i}`} className="flex-shrink-0 text-xs bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 font-medium text-gray-700">{m}</span>
-                  ))}
-                </div>
+              <p className="text-sm text-gray-400 mb-5">Best model for every task, automatically. Voice, language, reasoning — all covered.</p>
+              <div className="flex flex-wrap gap-2">
+                {["🤖 ChatGPT", "🧠 Claude", "✨ Gemini", "🔊 ElevenLabs", "🎙️ Deepgram", "👂 Whisper"].map((m) => (
+                  <span key={m} className="text-sm bg-white/10 border border-white/5 rounded-lg px-3 py-2 font-medium text-white/80">{m}</span>
+                ))}
               </div>
             </div>
 
             {/* Channels */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all group">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">📱 Every channel</h3>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 rounded-full px-3 py-1">All included</span>
+            <div className="bg-white/[0.06] backdrop-blur-sm rounded-2xl border border-white/10 p-7 hover:bg-white/[0.1] transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl font-bold">Every channel</h3>
+                <span className="text-xs font-bold text-blue-400 bg-blue-400/10 rounded-full px-3 py-1">All included</span>
               </div>
-              <p className="text-sm text-gray-500 mb-4">One inbox. One conversation per customer. Campaigns included.</p>
-              <div className="flex gap-2 overflow-hidden">
-                <div className="flex gap-2 animate-scroll" style={{ animationDuration: "25s" }}>
-                  {["📞 Phone", "💚 WhatsApp", "📸 Instagram", "💬 Messenger", "✉️ Email", "📱 SMS", "📞 Phone", "💚 WhatsApp", "📸 Instagram", "💬 Messenger", "✉️ Email", "📱 SMS"].map((c, i) => (
-                    <span key={`${c}-${i}`} className="flex-shrink-0 text-xs bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 font-medium text-gray-700">{c}</span>
-                  ))}
-                </div>
+              <p className="text-sm text-gray-400 mb-5">One inbox. One thread per customer. Campaigns included.</p>
+              <div className="flex flex-wrap gap-2">
+                {["📞 Phone", "💚 WhatsApp", "📸 Instagram", "💬 Messenger", "✉️ Email", "📱 SMS"].map((c) => (
+                  <span key={c} className="text-sm bg-white/10 border border-white/5 rounded-lg px-3 py-2 font-medium text-white/80">{c}</span>
+                ))}
               </div>
             </div>
 
             {/* Automation */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all group">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">⚡ Built-in automation</h3>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 rounded-full px-3 py-1">€50+/mo saved</span>
+            <div className="bg-white/[0.06] backdrop-blur-sm rounded-2xl border border-white/10 p-7 hover:bg-white/[0.1] transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl font-bold">Built-in automation</h3>
+                <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 rounded-full px-3 py-1">€50+/mo saved</span>
               </div>
-              <p className="text-sm text-gray-500 mb-4">Actions trigger in real-time during live calls. No middleware.</p>
-              <div className="flex gap-2 overflow-hidden">
-                <div className="flex gap-2 animate-scroll" style={{ animationDuration: "20s" }}>
-                  {["Zapier", "Make", "n8n", "Webhooks", "REST API", "Zapier", "Make", "n8n", "Webhooks", "REST API"].map((a, i) => (
-                    <span key={`${a}-${i}`} className="flex-shrink-0 text-xs bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 font-medium text-gray-700">{a}</span>
-                  ))}
-                </div>
+              <p className="text-sm text-gray-400 mb-5">Actions fire in real-time during live calls. No zap limits. No middleware.</p>
+              <div className="flex flex-wrap gap-2">
+                {["⚡ Zapier", "🔧 Make", "🔗 n8n", "🪝 Webhooks", "🔌 REST API"].map((a) => (
+                  <span key={a} className="text-sm bg-white/10 border border-white/5 rounded-lg px-3 py-2 font-medium text-white/80">{a}</span>
+                ))}
               </div>
             </div>
 
             {/* Analytics */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all group">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">📊 Qualitative data at scale</h3>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 rounded-full px-3 py-1">All included</span>
+            <div className="bg-white/[0.06] backdrop-blur-sm rounded-2xl border border-white/10 p-7 hover:bg-white/[0.1] transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl font-bold">Qualitative data at scale</h3>
+                <span className="text-xs font-bold text-blue-400 bg-blue-400/10 rounded-full px-3 py-1">All included</span>
               </div>
-              <p className="text-sm text-gray-500 mb-4">Every call transcribed. Every conversation scored. Dashboards built in.</p>
-              <div className="flex gap-2 overflow-hidden">
-                <div className="flex gap-2 animate-scroll" style={{ animationDuration: "22s" }}>
-                  {["Transcription", "Call scoring", "NPS tracking", "Dashboards", "Sentiment", "Transcription", "Call scoring", "NPS tracking", "Dashboards", "Sentiment"].map((a, i) => (
-                    <span key={`${a}-${i}`} className="flex-shrink-0 text-xs bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 font-medium text-gray-700">{a}</span>
-                  ))}
-                </div>
+              <p className="text-sm text-gray-400 mb-5">Every call transcribed and scored. Insights you'd need a research team to get.</p>
+              <div className="flex flex-wrap gap-2">
+                {["📝 Transcription", "📊 Call scoring", "⭐ NPS", "📈 Dashboards", "💬 Sentiment"].map((a) => (
+                  <span key={a} className="text-sm bg-white/10 border border-white/5 rounded-lg px-3 py-2 font-medium text-white/80">{a}</span>
+                ))}
               </div>
             </div>
+          </div>
+
+          {/* Bottom line */}
+          <div className="text-center mt-12">
+            <p className="text-lg font-semibold text-white/60">
+              All of this comes standard. <span className="text-primary font-bold">No add-ons. No upgrades. No surprises.</span>
+            </p>
           </div>
         </div>
       </section>
