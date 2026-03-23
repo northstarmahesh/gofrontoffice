@@ -569,24 +569,62 @@ const Landing = () => {
                       </div>
                     </div>
 
-                    {/* AFTER — the outcomes */}
-                    <div className="p-8 md:p-10 bg-emerald-50/20 relative">
-                      <div className="flex items-center gap-2 mb-5">
-                        <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center"><span className="text-xs">✅</span></div>
-                        <h4 className="text-sm font-bold text-emerald-700 uppercase tracking-wider">After</h4>
-                      </div>
-                      <div className="space-y-3">
-                        {v.outcomes.map((o) => (
-                          <div key={o.label} className="outcome-card flex items-start gap-3 bg-white/80 rounded-xl border border-emerald-100/50 p-3.5">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                              <span className="text-sm">{o.emoji}</span>
-                            </div>
-                            <div>
-                              <div className="text-sm font-semibold text-emerald-800">{o.label}</div>
-                              <div className="text-xs text-emerald-600/70 mt-0.5">{o.detail}</div>
-                            </div>
+                    {/* AFTER — phone mockup with notifications */}
+                    <div className="p-8 md:p-10 bg-gray-950 relative flex justify-center">
+                      {/* Phone frame */}
+                      <div className="w-[280px] rounded-[2rem] bg-gray-900 border border-gray-700 p-3 shadow-2xl">
+                        {/* Notch */}
+                        <div className="flex justify-between items-center px-4 pt-1 pb-3 text-white/50 text-[10px]">
+                          <span>9:41</span>
+                          <div className="w-20 h-5 bg-gray-800 rounded-full" />
+                          <span>📶</span>
+                        </div>
+                        {/* Screen */}
+                        <div className="bg-gray-100 rounded-2xl p-4 min-h-[320px]">
+                          {/* Date header */}
+                          <div className="text-center mb-4">
+                            <div className="text-2xl font-bold text-gray-900">Today</div>
+                            <div className="text-xs text-gray-400">Front Office</div>
                           </div>
-                        ))}
+                          {/* Notification cards */}
+                          <div className="space-y-2.5">
+                            {/* Warm transfer — human in the loop */}
+                            <div className="outcome-card bg-red-50 rounded-xl p-3 border border-red-100/50">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-1.5"><span className="text-sm">🔥</span><span className="text-[10px] font-bold text-red-700">Warm Transfer</span></div>
+                                <span className="text-[9px] text-gray-400">now</span>
+                              </div>
+                              <div className="text-xs font-bold text-gray-900">
+                                {k === "self-storage" && "Erik is ON THE LINE"}
+                                {k === "solar" && "Anna is ON THE LINE"}
+                                {k === "health" && "Dr. Svensson requested"}
+                                {k === "b2b" && "VP Sales wants to talk"}
+                              </div>
+                              <div className="text-[10px] text-gray-500 mt-0.5">
+                                {k === "self-storage" && "Qualified. 3 units. Pick up now."}
+                                {k === "solar" && "Qualified. 180m² roof. Pick up now."}
+                                {k === "health" && "Complex case. Patient on hold."}
+                                {k === "b2b" && "Enterprise lead. Qualified. Pick up."}
+                              </div>
+                            </div>
+                            {/* Outcome notifications */}
+                            {v.outcomes.slice(0, 3).map((o) => (
+                              <div key={o.label} className={`outcome-card rounded-xl p-3 border ${
+                                o.emoji === "📅" ? "bg-blue-50 border-blue-100/50" :
+                                o.emoji === "💳" ? "bg-amber-50 border-amber-100/50" :
+                                o.emoji === "💚" ? "bg-green-50 border-green-100/50" :
+                                o.emoji === "🟠" || o.emoji === "🟢" ? "bg-orange-50 border-orange-100/50" :
+                                "bg-violet-50 border-violet-100/50"
+                              }`}>
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-1.5"><span className="text-sm">{o.emoji}</span><span className="text-[10px] font-bold text-gray-600">{o.label}</span></div>
+                                  <span className="text-[9px] text-gray-400">{["12m ago", "28m ago", "1h ago"][v.outcomes.indexOf(o)]}</span>
+                                </div>
+                                <div className="text-[10px] text-gray-600 leading-snug">{o.detail.split("—")[0]}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -669,13 +707,14 @@ const Landing = () => {
         </div>
         <div className="max-w-6xl mx-auto px-6 py-16 md:py-24 relative z-10">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Add a voice agent in 3 simple steps.</h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">Getting started is simple. We're with you every step.</h2>
+            <p className="text-gray-500 max-w-xl mx-auto">No risk. No lock-in. A real human guides your setup and stays available whenever you need them.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-10">
             {[
-              { n: "1", title: "Talk to your onboarding agent", desc: "Tell our AI about your business, tone, and the conversations you need handled. No forms.", color: "bg-blue-50 border-blue-200/40 text-blue-600" },
-              { n: "2", title: "We connect your tools", desc: "CRM, calendar, phone, helpdesk, spreadsheets — we plug into your existing stack.", color: "bg-emerald-50 border-emerald-200/40 text-emerald-600" },
-              { n: "3", title: "Your agents go live", desc: "Real calls, real conversations, real results. Every interaction logged. Getting smarter daily.", color: "bg-primary/10 border-primary/20 text-primary" },
+              { n: "1", title: "We learn your business together", desc: "A 30-minute onboarding call with our team. We learn your tone, your processes, and exactly how you want conversations handled. You approve everything before it goes live.", color: "bg-blue-50 border-blue-200/40 text-blue-600" },
+              { n: "2", title: "We connect and test everything", desc: "CRM, calendar, phone, helpdesk — we plug into your stack, configure the workflows, and run test calls with you until you're confident.", color: "bg-emerald-50 border-emerald-200/40 text-emerald-600" },
+              { n: "3", title: "Your agents go live — with guardrails", desc: "Real calls, real conversations. Every interaction logged and reviewable. Your team can jump in anytime. Agents escalate to humans whenever needed.", color: "bg-primary/10 border-primary/20 text-primary" },
             ].map((s) => (
               <div key={s.n} className="text-center">
                 <div className={`w-14 h-14 rounded-2xl ${s.color} border flex items-center justify-center mx-auto mb-5`}><span className="text-2xl font-black">{s.n}</span></div>
@@ -683,6 +722,13 @@ const Landing = () => {
                 <p className="text-gray-500 leading-relaxed">{s.desc}</p>
               </div>
             ))}
+          </div>
+          {/* Human in the loop reassurance */}
+          <div className="mt-10 flex justify-center">
+            <div className="inline-flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-6 py-3">
+              <Users className="w-5 h-5 text-blue-600" />
+              <p className="text-sm text-blue-800"><strong>Always a human in the loop.</strong> Your team can monitor, review, and jump into any call at any time. AI handles the volume — humans handle the judgment.</p>
+            </div>
           </div>
         </div>
       </section>
