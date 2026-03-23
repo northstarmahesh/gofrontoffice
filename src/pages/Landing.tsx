@@ -118,7 +118,7 @@ const integrations = [
 type StoryStep = {
   time: string;
   label: string;
-  type: "ringing" | "answered" | "whatsapp" | "outcome" | "widget" | "cobrowse";
+  type: "ringing" | "answered" | "whatsapp" | "outcome" | "widget" | "cobrowse" | "speedlead" | "multiconvo";
   // ringing / answered
   callerName?: string;
   callerNumber?: string;
@@ -130,160 +130,147 @@ type StoryStep = {
   outcomeTitle?: string;
   outcomeDetail?: string;
   // widget (in-app help banner)
-  widgetApp?: string; // e.g. "your-app.io/integrations"
-  widgetPage?: string; // page title
+  widgetApp?: string;
+  widgetPage?: string;
   widgetUserName?: string;
   widgetMessage?: string;
-  widgetDay?: string; // e.g. "Day 4 · Free Trial"
+  widgetDay?: string;
   // cobrowse (AI guiding through app)
   cobrowseField?: string;
   cobrowseHint?: string;
+  // speedlead (form submission + counter)
+  leadSource?: string;
+  leadName?: string;
+  speedSeconds?: number;
+  // multiconvo (simultaneous conversations)
+  convos?: { name: string; status: string; emoji: string }[];
 };
 
 const STEP_DURATION = 5000; // ms per step
 
 const industries: Record<string, {
   name: string; icon: typeof Building2; headline: string; sub: string;
-  problems: string[];
   steps: StoryStep[];
   agents: string[]; result: string; resultLink: string;
 }> = {
   "self-storage": {
     name: "Self-Storage", icon: Building2,
-    headline: "Stop depending on one superstar.",
-    sub: "Give superhuman powers to your entire team.",
-    problems: [
-      "Prospect calls at 11 PM. Voicemail.",
-      "Tenant texts for gate code. Seen 2 hours later.",
-      "3 rents overdue. No time to chase.",
-      "Walk-in asks about units. Nobody free.",
-    ],
+    headline: "20:21. Nobody's in the office. Your AI is.",
+    sub: "Every call answered. Every lead captured. Even at midnight.",
     steps: [
       {
-        time: "20:21", label: "Phone rings", type: "ringing",
+        time: "20:21", label: "Phone rings — after hours", type: "ringing",
         callerName: "Erik Lindström", callerNumber: "+46 70 123 45 67",
       },
       {
-        time: "20:21", label: "AI answers", type: "answered",
+        time: "20:21", label: "AI answers instantly", type: "answered",
         callerName: "Erik Lindström", callerNumber: "+46 70 123 45 67",
         transcript: [
           { speaker: "ai", text: "Hi Erik, this is Easy Storage. How can I help you tonight?" },
           { speaker: "customer", text: "Hi! I need a 10 square meter unit, do you have anything available?" },
-          { speaker: "ai", text: "Yes! We have a ground floor unit with drive-up access — €89 per month. Want to book a viewing?" },
+          { speaker: "ai", text: "Yes! Ground floor, drive-up access — €89 per month. Want to book a viewing?" },
         ],
       },
       {
-        time: "20:22", label: "WhatsApp confirmation", type: "whatsapp",
+        time: "20:22", label: "Viewing confirmed + gate code", type: "whatsapp",
         waMessages: [
-          { sender: "ai", text: "Hi Erik! Your viewing is confirmed for tomorrow at 10:00 AM. Here's the address and gate code: 4821. See you then! 📍" },
+          { sender: "ai", text: "Hi Erik! Your viewing is confirmed for tomorrow at 10:00 AM. Gate code: 4821. See you then! 📍" },
           { sender: "customer", text: "Perfect, thanks!" },
         ],
       },
       {
-        time: "20:22", label: "Lead in CRM", type: "outcome",
+        time: "20:22", label: "Lead captured in HubSpot", type: "outcome",
         outcomeEmoji: "🟢", outcomeTitle: "HubSpot — New lead captured",
         outcomeDetail: "Erik Lindström · 10m² unit · viewing booked · move-in: next week",
       },
     ],
     agents: ["Receptionist", "Support Agent", "Facility Manager", "Collections"],
-    result: "See how Hamza at Easy Storage Jordan saves 10hrs/week →",
+    result: "Case study: Easy Storage Jordan saves 10hrs/week →",
     resultLink: "https://easystoragejordan.com",
   },
   solar: {
     name: "Solar", icon: Sun,
-    headline: "The fastest callback wins.",
-    sub: "Your competitors respond in hours. You respond in seconds.",
-    problems: [
-      "Lead fills out form. Callback in 42 hours.",
-      "Rep ignores the 'small' rooftop job.",
-      "'Not ready yet' lead — never followed up.",
-      "200 leads in the pipeline collecting dust.",
-    ],
+    headline: "Lead submits form. AI calls back in 28 seconds.",
+    sub: "Before your competitor even sees the notification.",
     steps: [
       {
-        time: "14:01", label: "Lead fills form — phone rings", type: "ringing",
-        callerName: "Anna Björk", callerNumber: "+46 73 987 65 43",
+        time: "14:01", label: "Form submitted — AI calls in 28s", type: "speedlead",
+        leadSource: "solarpanel.se/get-quote",
+        leadName: "Anna Björk",
+        speedSeconds: 28,
       },
       {
-        time: "14:01", label: "AI calls back in 28 seconds", type: "answered",
+        time: "14:01", label: "AI qualifies the lead", type: "answered",
         callerName: "Anna Björk", callerNumber: "+46 73 987 65 43",
         transcript: [
-          { speaker: "ai", text: "Hi Anna, I'm calling from Solar Plus — you just requested a quote. I'd love to ask a few quick questions about your roof." },
+          { speaker: "ai", text: "Hi Anna, I'm calling from Solar Plus — you just requested a quote. Quick question about your roof?" },
           { speaker: "customer", text: "Wow, that was fast! Yes, go ahead." },
-          { speaker: "ai", text: "Great! Your south-facing 180 square meter roof is ideal. I've got a site visit slot tomorrow at 10 AM — does that work?" },
+          { speaker: "ai", text: "Your 180m² south-facing roof is ideal. I've got tomorrow at 10 AM for a site visit — shall I book it?" },
         ],
       },
       {
-        time: "14:03", label: "WhatsApp — visit confirmed", type: "whatsapp",
+        time: "14:03", label: "Quote sent via WhatsApp", type: "whatsapp",
         waMessages: [
-          { sender: "ai", text: "Hi Anna! Confirming your site visit tomorrow at 10:00 AM. Our installer Erik will be there. Here's what to expect: 📋" },
-          { sender: "customer", text: "Amazing, thank you!" },
+          { sender: "ai", text: "Hi Anna! Here's your solar estimate for 180m²: €12,400 before subsidies. Site visit confirmed tomorrow 10 AM. Our installer Erik will be there. ☀️" },
+          { sender: "customer", text: "That's exactly what I was hoping for, thank you!" },
         ],
       },
       {
-        time: "14:03", label: "Call scored & logged", type: "outcome",
-        outcomeEmoji: "📊", outcomeTitle: "Call scored — objection handling: 9/10",
-        outcomeDetail: "Anna Björk · 180m² roof · site visit booked · ICP score: 94",
+        time: "14:03", label: "Deal created in Pipedrive", type: "outcome",
+        outcomeEmoji: "📊", outcomeTitle: "Pipedrive — Deal created",
+        outcomeDetail: "Anna Björk · 180m² roof · €12,400 quote · site visit tomorrow · ICP: 94",
       },
     ],
     agents: ["SDR", "Receptionist", "Sales Coach", "Customer Success"],
-    result: "See how Dark Edition generates €80k ACV →",
+    result: "Case study: Dark Edition generates €80k ACV →",
     resultLink: "https://darkedition.se",
   },
   health: {
     name: "Health Clinics", icon: Heart,
-    headline: "Your front desk is overwhelmed.",
-    sub: "It's time to add superhuman backup.",
-    problems: [
-      "Patient on hold 45 seconds. Hangs up.",
-      "No-show — the reminder never went out.",
-      "New patient paperwork — manual, slow.",
-      "Post-visit follow-up? What follow-up.",
-    ],
+    headline: "3 patients calling. All handled at once.",
+    sub: "Your AI front desk never puts anyone on hold.",
     steps: [
       {
-        time: "19:45", label: "Patient calls after hours", type: "ringing",
-        callerName: "Maria Johansson", callerNumber: "+46 76 555 12 34",
+        time: "09:15", label: "3 calls at once — all answered", type: "multiconvo",
+        convos: [
+          { name: "Maria J.", status: "Booking with Dr. Svensson", emoji: "📅" },
+          { name: "Lars K.", status: "Prescription refill request", emoji: "💊" },
+          { name: "Sofia A.", status: "Post-visit check-in", emoji: "💚" },
+        ],
       },
       {
-        time: "19:45", label: "AI answers instantly", type: "answered",
+        time: "09:16", label: "Maria books an appointment", type: "answered",
         callerName: "Maria Johansson", callerNumber: "+46 76 555 12 34",
         transcript: [
-          { speaker: "ai", text: "Hi Maria, this is Moonrise Health. How can I help you this evening?" },
-          { speaker: "customer", text: "I'd like to book an appointment with Dr. Svensson." },
-          { speaker: "ai", text: "Of course! Dr. Svensson has Thursday at 9 AM or Friday at 2 PM. Which works for you?" },
+          { speaker: "ai", text: "Hi Maria, this is Moonrise Health. Dr. Svensson has Thursday at 9 AM or Friday at 2 PM — which works?" },
+          { speaker: "customer", text: "Thursday morning, please." },
+          { speaker: "ai", text: "Done! I'm sending you the patient intake form now so you can skip the waiting room." },
         ],
       },
       {
-        time: "19:46", label: "Booking + patient form sent", type: "whatsapp",
+        time: "09:17", label: "Patient intake form sent", type: "whatsapp",
         waMessages: [
-          { sender: "ai", text: "Hi Maria! Your appointment with Dr. Svensson is confirmed: Thursday 9:00 AM. Fill out this form before your visit to skip the waiting room 📋" },
-          { sender: "customer", text: "Thursday morning, perfect. Thank you!" },
+          { sender: "ai", text: "Hi Maria! Appointment confirmed: Dr. Svensson, Thursday 9:00 AM. Please fill out this intake form before your visit — it takes 2 minutes. 📋" },
+          { sender: "customer", text: "Done! See you Thursday." },
         ],
       },
       {
-        time: "19:46", label: "Patient onboarded", type: "outcome",
-        outcomeEmoji: "✅", outcomeTitle: "New patient — fully onboarded",
-        outcomeDetail: "Maria Johansson · Dr. Svensson · Thu 9 AM · patient form sent · insurance pending",
+        time: "09:17", label: "Patient onboarded", type: "outcome",
+        outcomeEmoji: "✅", outcomeTitle: "Patient fully onboarded",
+        outcomeDetail: "Maria Johansson · Dr. Svensson · Thu 9 AM · intake form completed · insurance verified",
       },
     ],
     agents: ["Receptionist", "Support Agent", "Onboarding Expert", "Customer Success"],
-    result: "See how Moonrise Health increased inbound sales by 30% →",
+    result: "Case study: Moonrise Health +30% inbound sales →",
     resultLink: "https://moonrise.health",
   },
   b2b: {
     name: "B2B Sales", icon: Briefcase,
-    headline: "Trial users churn because nobody helps them.",
-    sub: "Your AI meets them inside the product — right when they're stuck.",
-    problems: [
-      "Trial user signs up. Zero guidance. Churns day 3.",
-      "Integration page — 70% drop-off. Nobody helps.",
-      "Support ticket 2 days later. Too late, they're gone.",
-      "Onboarding call? They never book it.",
-    ],
+    headline: "User stuck on setup. AI shows up to help.",
+    sub: "Inside the product, right when they need it.",
     steps: [
       {
-        time: "Day 4", label: "User stuck on integrations", type: "widget",
+        time: "Day 4", label: "User stuck — widget pops up", type: "widget",
         widgetApp: "your-app.io/integrations/setup",
         widgetPage: "Integration Setup",
         widgetUserName: "Jonas",
@@ -298,7 +285,7 @@ const industries: Record<string, {
         cobrowseHint: "Paste your API key in the highlighted field — I'll stay on the line.",
       },
       {
-        time: "Day 4", label: "Follow-up via WhatsApp", type: "whatsapp",
+        time: "Day 4", label: "Next steps via WhatsApp", type: "whatsapp",
         waMessages: [
           { sender: "ai", text: "Nice work, Jonas! Your integration is live. Here's a 2-min video on setting up your first campaign 🎬" },
           { sender: "customer", text: "That was way easier than I expected, thanks!" },
@@ -307,11 +294,11 @@ const industries: Record<string, {
       {
         time: "Day 4", label: "User activated in CRM", type: "outcome",
         outcomeEmoji: "🎓", outcomeTitle: "Trial user — activated",
-        outcomeDetail: "Jonas Eriksson · Integration complete · first campaign created · activation score: 94",
+        outcomeDetail: "Jonas Eriksson · Integration complete · first campaign live · activation score: 94",
       },
     ],
     agents: ["Onboarding Expert", "SDR", "Sales Coach", "Customer Success"],
-    result: "See how Triggerbee accelerated trial activation →",
+    result: "Case study: Triggerbee trial activation →",
     resultLink: "https://triggerbee.com",
   },
 };
@@ -701,25 +688,15 @@ const Landing = () => {
               <TabsContent key={k} value={k}>
                 <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
 
-                  {/* Two-column: Problems ← | → Phone story */}
+                  {/* Two-column: Headline ← | → Phone story */}
                   <div className="grid md:grid-cols-2">
 
-                    {/* LEFT — Problems + headline */}
+                    {/* LEFT — Headline + agents + case study */}
                     <div className="p-8 md:p-10 lg:p-12 flex flex-col justify-center">
                       <h3 className="text-2xl md:text-3xl font-bold mb-2">{v.headline}</h3>
-                      <p className="text-gray-500 mb-8">{v.sub}</p>
-                      <div className="space-y-3">
-                        {v.problems.map((p, i) => (
-                          <div key={i} className="flex items-start gap-3">
-                            <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-xs">✕</span>
-                            </div>
-                            <span className="text-sm text-gray-600">{p}</span>
-                          </div>
-                        ))}
-                      </div>
+                      <p className="text-gray-500 mb-8 text-lg">{v.sub}</p>
                       {/* Agents in this team */}
-                      <div className="mt-8 pt-6 border-t border-gray-100">
+                      <div>
                         <div className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-3">Agents in the team</div>
                         <div className="flex flex-wrap gap-2">
                           {v.agents.map((a) => {
@@ -945,7 +922,6 @@ const Landing = () => {
                                   {step.widgetApp}
                                 </div>
                               </div>
-                              {/* App content with highlighted field */}
                               <div className="flex-1 px-5 pt-5 pb-3 relative">
                                 <div className="text-sm font-bold text-gray-900 mb-4">{step.widgetPage}</div>
                                 <div className="space-y-3">
@@ -954,10 +930,7 @@ const Landing = () => {
                                     <div className="h-9 w-full bg-white rounded-lg border-2 border-primary ring-4 ring-primary/20 flex items-center px-3">
                                       <span className="text-[11px] text-gray-400 font-mono">sk-a8f2...x9q1</span>
                                     </div>
-                                    <div className="absolute -top-1 -right-1 bg-primary text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                                      ← paste here
-                                    </div>
-                                    {/* AI cursor */}
+                                    <div className="absolute -top-1 -right-1 bg-primary text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">← paste here</div>
                                     <div className="absolute top-3 right-12 text-primary">
                                       <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M1 1l4.5 10L7 7l4-1.5z"/></svg>
                                       <span className="ml-1 bg-primary text-white text-[8px] px-1.5 py-0.5 rounded-full font-medium shadow-sm">AI</span>
@@ -968,7 +941,6 @@ const Landing = () => {
                                     <div className="h-9 w-full bg-white rounded-lg border border-gray-200" />
                                   </div>
                                 </div>
-                                {/* Agent speaking bar */}
                                 <div className="absolute bottom-3 left-3 right-3 bg-gray-900 rounded-xl px-4 py-3 flex items-center gap-3 shadow-2xl border border-gray-700">
                                   <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                                     <Volume2 className="w-3.5 h-3.5 text-white" />
@@ -979,6 +951,69 @@ const Landing = () => {
                                   </div>
                                   <div className="bg-red-500 text-white text-[9px] font-bold px-2.5 py-1 rounded-md flex-shrink-0">End</div>
                                 </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ── SPEEDLEAD — form submitted, AI calls back fast ── */}
+                          {step.type === "speedlead" && (
+                            <div className="flex-1 flex flex-col bg-[#F5F3EF]">
+                              <div className="bg-[#E8E5E0] px-4 py-2.5 flex items-center gap-3 border-b border-[#D5D2CC]">
+                                <div className="flex gap-1.5">
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+                                </div>
+                                <div className="flex-1 bg-white rounded-md px-3 py-1 text-[10px] text-gray-500 font-mono truncate">
+                                  {step.leadSource}
+                                </div>
+                              </div>
+                              <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+                                {/* Success checkmark */}
+                                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-3">
+                                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                                </div>
+                                <div className="text-sm font-bold text-gray-900 mb-1">Quote request submitted</div>
+                                <div className="text-xs text-gray-500 mb-6">{step.leadName}</div>
+                                {/* Speed counter */}
+                                <div className="bg-gray-900 rounded-2xl px-6 py-4 text-center">
+                                  <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">AI calling back in</div>
+                                  <div className="text-4xl font-black text-primary font-mono speed-counter">{step.speedSeconds}s</div>
+                                  <div className="mt-2 flex items-center justify-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 live-dot" />
+                                    <span className="text-green-400 text-[11px] font-medium">Dialing {step.leadName?.split(" ")[0]}...</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ── MULTICONVO — handling multiple calls at once ── */}
+                          {step.type === "multiconvo" && (
+                            <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-900 to-gray-800 px-5 pt-5 pb-4">
+                              <div className="text-center mb-4">
+                                <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-1 font-medium">right now</div>
+                                <div className="text-white font-bold text-sm">3 conversations · simultaneously</div>
+                              </div>
+                              <div className="flex-1 space-y-2.5">
+                                {step.convos?.map((c, i) => (
+                                  <div key={i} className="wa-msg bg-gray-800/80 rounded-xl p-3.5 border border-gray-700/50">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-sm">{c.emoji}</div>
+                                        <span className="text-white text-[13px] font-semibold">{c.name}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 live-dot" />
+                                        <span className="text-green-400 text-[10px]">Live</span>
+                                      </div>
+                                    </div>
+                                    <div className="text-gray-400 text-[11px] pl-9">{c.status}</div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="mt-3 text-center">
+                                <span className="text-gray-500 text-[10px]">No patient on hold · No missed calls · All handled by AI</span>
                               </div>
                             </div>
                           )}
@@ -1407,40 +1442,54 @@ const Landing = () => {
       </section>
 
 
-      {/* MEET THE FOUNDER */}
+      {/* MEET THE FOUNDERS */}
       <section className="bg-white border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-16 md:py-24">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-extrabold tracking-tight">Meet the founder</h2>
+        <div className="max-w-5xl mx-auto px-6 py-16 md:py-24">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold tracking-tight">Meet the founders</h2>
           </div>
-          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-            <img
-              src="https://i.postimg.cc/MMqhW3yc/mahesh-profile.png"
-              alt="Mahesh Kumar"
-              className="w-32 h-32 rounded-2xl object-cover shadow-lg border-2 border-gray-100 flex-shrink-0"
-            />
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-1">Mahesh Kumar</h3>
-              <p className="text-sm text-primary font-medium mb-4">Founder, Front Office</p>
-              <p className="text-gray-500 leading-relaxed mb-4">
-                17 years of building startups across healthcare, real estate, and tech. I started Front Office
-                because I kept seeing the same problem: small and mid-size businesses lose customers not because
-                their product is bad, but because nobody picks up the phone. The front desk is overwhelmed.
-                The after-hours calls go to voicemail. The follow-ups don't happen.
-              </p>
-              <p className="text-gray-500 leading-relaxed mb-5">
-                I believe every business deserves a world-class front office — and AI makes that possible
-                at a fraction of the cost. We're based in Stockholm, serving teams across Europe and beyond.
-              </p>
-              <a
-                href="https://www.linkedin.com/in/connectmahesh/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-              >
-                Connect on LinkedIn →
-              </a>
-            </div>
+          <div className="grid md:grid-cols-2 gap-8">
+            {[
+              {
+                name: "Mahesh Kumar",
+                role: "Co-founder",
+                image: "https://i.postimg.cc/MMqhW3yc/mahesh-profile.png",
+                short: "17 years building startups across healthcare, real estate, and tech. Based in Stockholm.",
+                full: "I started Front Office because I kept seeing the same problem: businesses lose customers not because their product is bad, but because nobody picks up the phone. The front desk is overwhelmed. The after-hours calls go to voicemail. The follow-ups don't happen. I believe every business deserves a world-class front office — and AI makes that possible at a fraction of the cost.",
+                linkedin: "https://www.linkedin.com/in/connectmahesh/",
+                past: "Epicenter · Result · ClassPass · MoonRise",
+              },
+              {
+                name: "Christoffer Granfelt",
+                role: "Co-founder",
+                image: "https://i.postimg.cc/yN6bv4xM/Christoffer-Profile-pic.png",
+                short: "Serial entrepreneur and ecosystem builder. Deep experience in scaling B2B ventures across the Nordics.",
+                full: "Christoffer has built and scaled multiple companies at the intersection of tech and business services. From founding Instant Courts to leading initiatives at Epicenter and SIME, he brings a track record of turning early-stage ideas into revenue-generating businesses. At Front Office, he leads partnerships and go-to-market across Europe.",
+                linkedin: "https://www.linkedin.com/in/christoffer-granfelt-383a601/",
+                past: "Epicenter · SIME · Instant Courts",
+              },
+            ].map((founder) => (
+              <div key={founder.name} className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <div className="flex items-center gap-4 mb-4">
+                  <img src={founder.image} alt={founder.name} className="w-16 h-16 rounded-xl object-cover border border-gray-200" />
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">{founder.name}</h3>
+                    <p className="text-sm text-primary font-medium">{founder.role}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{founder.past}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 leading-relaxed mb-2">{founder.short}</p>
+                <details className="group">
+                  <summary className="text-xs font-medium text-primary cursor-pointer hover:underline list-none flex items-center gap-1">
+                    Read more <span className="group-open:rotate-180 transition-transform text-[10px]">▼</span>
+                  </summary>
+                  <p className="text-sm text-gray-500 leading-relaxed mt-2">{founder.full}</p>
+                </details>
+                <a href={founder.linkedin} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline mt-3">
+                  Connect on LinkedIn →
+                </a>
+              </div>
+            ))}
           </div>
         </div>
       </section>
