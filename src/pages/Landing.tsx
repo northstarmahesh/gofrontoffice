@@ -118,7 +118,7 @@ const integrations = [
 const industries: Record<string, {
   name: string; icon: typeof Building2; headline: string; sub: string;
   outcomes: { emoji: string; label: string; detail: string }[];
-  agents: string[]; result: string;
+  agents: string[]; result: string; resultLink: string;
 }> = {
   "self-storage": {
     name: "Self-Storage", icon: Building2,
@@ -131,7 +131,8 @@ const industries: Record<string, {
       { emoji: "🟠", label: "Lead in CRM", detail: "New prospect qualified, unit size + move-in date captured" },
     ],
     agents: ["Receptionist", "Support Agent", "Facility Manager", "Collections"],
-    result: "Knowledge stays. Everyone gets superpowers. Key-person dependency: gone.",
+    result: "See how Hamza at Easy Storage Jordan saves 10hrs/week with his voice agent team.",
+    resultLink: "https://easystoragejordan.com",
   },
   solar: {
     name: "Solar", icon: Sun,
@@ -144,7 +145,8 @@ const industries: Record<string, {
       { emoji: "💚", label: "Follow-up sent", detail: "WhatsApp: 'Hi Erik, confirming your site visit. See you tomorrow!'" },
     ],
     agents: ["SDR", "Receptionist", "Sales Coach", "Customer Success"],
-    result: "Every lead called in seconds. Full lifecycle covered.",
+    result: "See how Dark Edition generates €80k ACV with their voice agent team.",
+    resultLink: "https://darkedition.se",
   },
   health: {
     name: "Health Clinics", icon: Heart,
@@ -157,7 +159,8 @@ const industries: Record<string, {
       { emoji: "🟠", label: "New patient onboarded", detail: "Insurance info collected, medical history form sent, all before arrival" },
     ],
     agents: ["Receptionist", "Support Agent", "Onboarding Expert", "Customer Success"],
-    result: "Every call answered. Follow-ups automated. Staff focused on care.",
+    result: "See how Philippa at Moonrise Health increased inbound sales by 30%.",
+    resultLink: "https://moonrise.health",
   },
   b2b: {
     name: "B2B Sales", icon: Briefcase,
@@ -170,7 +173,8 @@ const industries: Record<string, {
       { emoji: "📊", label: "Rep coached", detail: "Call review: 'Strong discovery, missed buying signal at 4:12'" },
     ],
     agents: ["SDR", "Onboarding Expert", "Sales Coach", "Customer Success"],
-    result: "Every lead called back. Every trial user guided to value. Reps close — AI does the rest.",
+    result: "See how Jacob at Triggerbee accelerated trial activation with AI onboarding.",
+    resultLink: "https://triggerbee.com",
   },
 };
 
@@ -547,12 +551,13 @@ const Landing = () => {
                     })}
                   </div>
 
-                  {/* Result */}
+                  {/* Result — case study link */}
                   <div className="px-8 md:px-10 pb-8">
-                    <div className="flex items-start gap-2.5 bg-gray-50 rounded-xl p-4">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm font-medium text-gray-700">{v.result}</p>
-                    </div>
+                    <a href={v.resultLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 bg-gray-50 hover:bg-primary/5 rounded-xl p-4 group transition-colors">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                      <p className="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors">{v.result}</p>
+                      <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary ml-auto flex-shrink-0 transition-colors" />
+                    </a>
                   </div>
                 </div>
               </TabsContent>
